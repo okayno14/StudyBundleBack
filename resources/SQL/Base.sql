@@ -24,28 +24,22 @@ CREATE TABLE role_route(
     PRIMARY KEY (id_role, id_route)
 );
 
-CREATE TABLE "user"(
-    id BIGINT PRIMARY KEY DEFAULT nextval('hibernate_sequence'),
-    id_role BIGINT NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    pass VARCHAR(255) NOT NULL,
-    lastname VARCHAR(20) NOT NULL,
-    firstname VARCHAR(20) NOT NULL,
-    fathername VARCHAR(20) NOT NULL,
-    FOREIGN KEY (id_role) REFERENCES "role"(id)
-);
-
 CREATE TABLE "group"(
     id BIGINT PRIMARY KEY DEFAULT nextval('hibernate_sequence'),
     "name" VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE user_group(
-    id_user BIGINT NOT NULL,
-    id_group BIGINT NOT NULL,
-    FOREIGN KEY (id_user) REFERENCES "user"(id),
-    FOREIGN KEY (id_group) REFERENCES "group"(id),
-    PRIMARY KEY (id_user, id_group)
+CREATE TABLE "user"(
+    id BIGINT PRIMARY KEY DEFAULT nextval('hibernate_sequence'),
+    email VARCHAR(255) NOT NULL,
+    pass VARCHAR(255) NOT NULL,
+    lastname VARCHAR(20) NOT NULL,
+    firstname VARCHAR(20) NOT NULL,
+    fathername VARCHAR(20) NOT NULL,
+    id_role BIGINT NOT NULL,
+    id_group BIGINT,
+    FOREIGN KEY (id_role) REFERENCES "role"(id),
+    FOREIGN KEY (id_group) REFERENCES "group"(id)
 );
 
 CREATE TABLE course(
