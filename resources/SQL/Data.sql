@@ -30,6 +30,10 @@ INSERT INTO "route" (method,urn) VALUES ('GET', '/user/:id/');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
+INSERT INTO "route" (method,urn) VALUES ('GET', '/user/:email/');
+INSERT INTO role_route VALUES (10,(select max(id) from "route"));
+INSERT INTO role_route VALUES (11,(select max(id) from "route"));
+
 INSERT INTO "route" (method,urn) VALUES ('GET', '/user/:lastName/:firstName/:fatherName');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
@@ -69,3 +73,27 @@ INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('DELETE', '/user/:id');
+
+INSERT INTO "route" (method,urn) VALUES ('POST', '/user/group/:name');
+
+INSERT INTO "route" (method,urn) VALUES ('GET', '/user/group/:id');
+INSERT INTO role_route VALUES (10,(select max(id) from "route"));
+INSERT INTO role_route VALUES (11,(select max(id) from "route"));
+
+INSERT INTO "route" (method,urn) VALUES ('GET', '/user/group/:courseID');
+INSERT INTO role_route VALUES (10,(select max(id) from "route"));
+
+INSERT INTO "route" (method,urn) VALUES ('GET', '/user/group/:name');
+INSERT INTO role_route VALUES (10,(select max(id) from "route"));
+
+INSERT INTO "route" (method,urn) VALUES ('GET', '/user/group/:studentID');
+INSERT INTO role_route VALUES (10,(select max(id) from "route"));
+INSERT INTO role_route VALUES (11,(select max(id) from "route"));
+
+INSERT INTO "route" (method,urn) VALUES ('GET', '/user/group/students/:id');
+INSERT INTO role_route VALUES (10,(select max(id) from "route"));
+INSERT INTO role_route VALUES (11,(select max(id) from "route"));
+
+INSERT INTO "route" (method,urn) VALUES ('PUT', '/user/group/addStudents/:id');
+INSERT INTO "route" (method,urn) VALUES ('PUT', '/user/group/delStudents/:id');
+INSERT INTO "route" (method,urn) VALUES ('DELETE', '/user/group/:id');

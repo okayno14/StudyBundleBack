@@ -8,7 +8,8 @@ CREATE TYPE method_HTTP AS ENUM ('POST', 'GET', 'PUT', 'DELETE','*');
 CREATE TABLE "route"(
     id BIGINT PRIMARY KEY DEFAULT nextval('hibernate_sequence'),
     method method_HTTP NOT NULL,
-    urn VARCHAR(255) NOT NULL UNIQUE
+    urn VARCHAR(255) NOT NULL,
+    UNIQUE (method,urn)
 );
 
 CREATE TABLE "role"(
