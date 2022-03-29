@@ -3,12 +3,12 @@ CREATE DATABASE study_bundle;
 
 CREATE SEQUENCE hibernate_sequence;
 
-CREATE TYPE method_HTTP AS ENUM ('POST', 'GET', 'PUT', 'DELETE');
+CREATE TYPE method_HTTP AS ENUM ('POST', 'GET', 'PUT', 'DELETE','*');
 
 CREATE TABLE "route"(
     id BIGINT PRIMARY KEY DEFAULT nextval('hibernate_sequence'),
     method method_HTTP NOT NULL,
-    urn VARCHAR(255) NOT NULL
+    urn VARCHAR(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE "role"(
@@ -31,7 +31,7 @@ CREATE TABLE "group"(
 
 CREATE TABLE "user"(
     id BIGINT PRIMARY KEY DEFAULT nextval('hibernate_sequence'),
-    email VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
     pass VARCHAR(255) NOT NULL,
     lastname VARCHAR(20) NOT NULL,
     firstname VARCHAR(20) NOT NULL,
