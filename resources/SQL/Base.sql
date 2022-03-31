@@ -33,6 +33,7 @@ CREATE TABLE "group"(
 CREATE TABLE "user"(
     id BIGINT PRIMARY KEY DEFAULT nextval('hibernate_sequence'),
     email VARCHAR(255) NOT NULL UNIQUE,
+    email_state INTEGER NOT NULL,
     pass VARCHAR(255) NOT NULL,
     lastname VARCHAR(20) NOT NULL,
     firstname VARCHAR(20) NOT NULL,

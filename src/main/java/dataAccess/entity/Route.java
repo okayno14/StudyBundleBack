@@ -8,7 +8,7 @@ public class Route implements Serializable
 {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private int         id;
+	private int         id = -1;
 	@Enumerated(EnumType.STRING)
 	private HTTP_Method method;
 	private String      urn;
