@@ -18,7 +18,7 @@ INSERT INTO "role" ("name") VALUES ('Преподаватель');
 INSERT INTO "role" ("name") VALUES ('Студент');
 
 --Пути
-INSERT INTO "route" (method,urn) VALUES ('*', '*');
+INSERT INTO "route" (method,urn) VALUES ('ANY', 'ANY');
 INSERT INTO role_route VALUES (9,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('POST', '/user');

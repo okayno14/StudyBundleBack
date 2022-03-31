@@ -3,7 +3,7 @@ CREATE DATABASE study_bundle;
 
 CREATE SEQUENCE hibernate_sequence;
 
-CREATE TYPE method_HTTP AS ENUM ('POST', 'GET', 'PUT', 'DELETE','*');
+CREATE TYPE method_HTTP AS ENUM ('POST', 'GET', 'PUT', 'DELETE','ANY');
 
 CREATE TABLE "route"(
     id BIGINT PRIMARY KEY DEFAULT nextval('hibernate_sequence'),
