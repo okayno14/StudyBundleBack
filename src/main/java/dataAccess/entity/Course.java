@@ -16,8 +16,7 @@ public class Course
 	@JoinTable(name = "group_course", joinColumns = {@JoinColumn(name = "id_course")},
 			   inverseJoinColumns = {@JoinColumn(name = "id_group")})
 	private Set<Group>      groupes;
-	@OneToMany(mappedBy = "course", fetch = FetchType.EAGER, cascade = CascadeType.ALL,
-			   orphanRemoval = true)
+	@OneToMany(mappedBy = "course", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	private List<CourseACL> courseACL_List;
 
 	public Course()
@@ -72,6 +71,7 @@ public class Course
 		courseACL_List.add(new CourseACL(this, user, rights));
 	}
 
+	//чистит только ссылки в коде. Требуется код для синхронизации с базой
 	public void removeAuthor(User user)
 	{
 		Iterator<CourseACL> iterator = courseACL_List.iterator();
@@ -81,6 +81,8 @@ public class Course
 			if (courseACL_obj.getUser().equals(user))
 			{
 				iterator.remove();
+				courseACL_obj.setCourse(null);
+				courseACL_obj.setUser(null);
 				break;
 			}
 		}

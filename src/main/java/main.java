@@ -33,8 +33,6 @@ public class main
 		group.addStudent(user1);
 		long id2 = group.getId();
 		sessionFactory.getCurrentSession().getTransaction().commit();
-
-
 	}
 
 	public static void testCourse(SessionFactory sessionFactory)
@@ -49,21 +47,24 @@ public class main
 		sessionFactory.getCurrentSession().getTransaction().commit();
 
 		sessionFactory.getCurrentSession().beginTransaction();
-		Course course = new Course("Теория Формальных Языков и Компиляторов (ТФЯиК)");
-		User user = new User("Малявко", "Александр", "Антонович", "a.malyavko@corp.nstu.ru",
-							 roleMap.get(10L));
-		sessionFactory.getCurrentSession().save(user);
-		course.addAuthor(user, Author.AUTHOR);
-		sessionFactory.getCurrentSession().save(course);
+			Course course = new Course("Теория Формальных Языков и Компиляторов (ТФЯиК)");
+			User user = new User("Малявко", "Александр", "Антонович", "a.malyavko@corp.nstu.ru",
+								roleMap.get(10L));
+			sessionFactory.getCurrentSession().save(user);
+			course.addAuthor(user, Author.AUTHOR);
+			sessionFactory.getCurrentSession().save(course);
 		sessionFactory.getCurrentSession().getTransaction().commit();
+
+		sessionFactory.getCurrentSession().beginTransaction();
+			course.removeAuthor(user);
+			//sessionFactory.getCurrentSession().delete(course);
+			//sessionFactory.getCurrentSession().delete(user);
+		sessionFactory.getCurrentSession().getTransaction().commit();
+
 	}
 
 	public static void main(String arg[])
 	{
-		System.out.println(1 + 1);
-		HTTP_Method http_method = HTTP_Method.POST;
-		System.out.println(http_method);
-
 		File          file          = new File("resources/Config/hibernate.cfg.xml");
 		Configuration configuration = new Configuration().configure(file);
 		configuration.addAnnotatedClass(Route.class);
