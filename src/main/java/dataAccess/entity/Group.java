@@ -3,6 +3,7 @@ package dataAccess.entity;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -11,7 +12,7 @@ public class Group implements Serializable
 {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private int       id = -1;
+	private long       id = -1;
 	private String    name;
 	@OneToMany(mappedBy = "group", cascade = CascadeType.REMOVE)
 
@@ -29,6 +30,10 @@ public class Group implements Serializable
 
 	public void addStudent(User user)
 	{
+		if(students.contains(user))
+		{
+			return;
+		}
 		students.add(user);
 		user.setGroup(this);
 	}
@@ -43,7 +48,28 @@ public class Group implements Serializable
 		user.setGroup(null);
 	}
 
-	public int getId()
+	@Override
+	public boolean equals(Object o)
+	{
+		if (this == o)
+		{
+			return true;
+		}
+		if (o == null || getClass() != o.getClass())
+		{
+			return false;
+		}
+		Group group = (Group) o;
+		return id == group.id;
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash(id);
+	}
+
+	public long getId()
 	{
 		return id;
 	}

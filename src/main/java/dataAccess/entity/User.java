@@ -1,6 +1,5 @@
 package dataAccess.entity;
 
-import org.hibernate.Hibernate;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
@@ -13,7 +12,7 @@ public class User implements Serializable
 {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private int     id         = -1;
+	private long    id         = -1;
 	@Transient
 	private String  token;
 	@ManyToOne
@@ -78,7 +77,7 @@ public class User implements Serializable
 		return Objects.hash(id);
 	}
 
-	public int getId()
+	public long getId()
 	{
 		return id;
 	}

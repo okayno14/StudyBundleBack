@@ -63,9 +63,9 @@ CREATE TABLE course_acl(
     id_user BIGINT NOT NULL,
     id_course BIGINT NOT NULL,
     rights author NOT NULL,
-    FOREIGN KEY (id_user) REFERENCES "user"(id),
-    FOREIGN KEY (id_course) REFERENCES course(id),
-    PRIMARY KEY (id_user,id_course)
+    FOREIGN KEY (user_id) REFERENCES "user"(id),
+    FOREIGN KEY (course_id) REFERENCES course(id),
+    PRIMARY KEY (user_id,course_id)
 );
 
 CREATE TABLE bundle_type(

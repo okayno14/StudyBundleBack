@@ -10,7 +10,7 @@ public class Role implements Serializable
 {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private int         id = -1;
+	private long        id = -1;
 	private String      name;
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "role_route", joinColumns = {@JoinColumn(name = "id_role")},
@@ -21,7 +21,7 @@ public class Role implements Serializable
 	{
 	}
 
-	public int getId()
+	public long getId()
 	{
 		return id;
 	}
