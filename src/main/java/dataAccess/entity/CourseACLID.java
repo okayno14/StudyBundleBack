@@ -7,8 +7,8 @@ import java.util.Objects;
 @Embeddable
 public class CourseACLID implements Serializable
 {
-	private long courseID;
-	private long userID;
+	private long courseID = -1;
+	private long userID = -1;
 
 	public CourseACLID()
 	{

@@ -10,14 +10,23 @@ public class Course
 {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private long            id;
+	private long            id             = -1;
 	private String          name;
 	@ManyToMany(fetch = FetchType.EAGER)
-	@JoinTable(name = "group_course", joinColumns = {@JoinColumn(name = "id_course")},
+	@JoinTable(name = "group_course",
+			   joinColumns = {@JoinColumn(name = "id_course")},
 			   inverseJoinColumns = {@JoinColumn(name = "id_group")})
-	private Set<Group>      groupes;
-	@OneToMany(mappedBy = "course", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	private List<CourseACL> courseACL_List;
+	private Set<Group>      groupes        = new HashSet<Group>();
+	@OneToMany(mappedBy = "course",
+			   fetch = FetchType.EAGER,
+			   cascade = CascadeType.ALL)
+	private List<CourseACL> courseACL_List = new ArrayList<CourseACL>();
+	@ManyToMany(fetch = FetchType.EAGER,
+				cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+	@JoinTable(name = "requirement_course",
+			   joinColumns = {@JoinColumn(name = "id_course")},
+			   inverseJoinColumns = {@JoinColumn(name = "id_requirement")})
+	Set<Requirement> requirementSet = new HashSet<Requirement>();
 
 	public Course()
 	{
@@ -25,9 +34,7 @@ public class Course
 
 	public Course(String name)
 	{
-		this.name      = name;
-		groupes        = new HashSet<Group>();
-		courseACL_List = new ArrayList<CourseACL>();
+		this.name = name;
 	}
 
 	public void addGroup(Group group)
@@ -116,6 +123,24 @@ public class Course
 		throw new NoRightException();
 	}
 
+	public void addRequirement(Requirement requirement)
+	{
+		if(requirementSet.contains(requirement))
+		{
+			return;
+		}
+		requirementSet.add(requirement);
+	}
+
+	public void removeRequirement(Requirement requirement)
+	{
+		if(!requirementSet.contains(requirement))
+		{
+			return;
+		}
+		requirementSet.remove(requirement);
+	}
+
 	public long getId()
 	{
 		return id;
@@ -124,5 +149,35 @@ public class Course
 	public void setId(long id)
 	{
 		this.id = id;
+	}
+
+	public String getName()
+	{
+		return name;
+	}
+
+	public void setName(String name)
+	{
+		this.name = name;
+	}
+
+	public Set<Group> getGroupes()
+	{
+		return new HashSet<Group>(groupes);
+	}
+
+	public void setGroupes(Set<Group> groupes)
+	{
+		this.groupes = groupes;
+	}
+
+	public Set<Requirement> getRequirementSet()
+	{
+		return new HashSet<Requirement>(requirementSet);
+	}
+
+	public void setRequirementSet(Set<Requirement> requirementSet)
+	{
+		this.requirementSet = requirementSet;
 	}
 }

@@ -7,15 +7,15 @@ import java.util.Objects;
 import java.util.Set;
 
 @Entity
-@Table(name="\"group\"")
+@Table(name = "\"group\"")
 public class Group implements Serializable
 {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private long       id = -1;
+	private long      id = -1;
 	private String    name;
-	@OneToMany(mappedBy = "group", cascade = CascadeType.REMOVE)
-
+	@OneToMany(mappedBy = "group",
+			   cascade = CascadeType.ALL)
 	private Set<User> students;
 
 	public Group()
@@ -30,7 +30,7 @@ public class Group implements Serializable
 
 	public void addStudent(User user)
 	{
-		if(students.contains(user))
+		if (students.contains(user))
 		{
 			return;
 		}
