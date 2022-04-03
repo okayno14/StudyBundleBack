@@ -10,19 +10,20 @@ public class Course
 {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private long            id             = -1;
-	private String          name;
+	private long           id            = -1;
+	private String         name;
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "group_course",
 			   joinColumns = {@JoinColumn(name = "id_course")},
 			   inverseJoinColumns = {@JoinColumn(name = "id_group")})
-	private Set<Group>      groupes        = new HashSet<Group>();
-	@OneToMany(mappedBy = "course",
-			   fetch = FetchType.EAGER,
-			   cascade = CascadeType.ALL)
-	private List<CourseACL> courseACL_List = new ArrayList<CourseACL>();
+	private Set<Group>     groupes       = new HashSet<Group>();
+	//поменял CascadeType.ALL на MERGE
+	@OneToMany(fetch = FetchType.EAGER,
+			   mappedBy = "course",
+			   cascade = {CascadeType.MERGE, CascadeType.REMOVE})
+	private Set<CourseACL> courseACL_Set = new HashSet<CourseACL>();
 	@ManyToMany(fetch = FetchType.EAGER,
-				cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+				cascade = {CascadeType.PERSIST, CascadeType.MERGE})
 	@JoinTable(name = "requirement_course",
 			   joinColumns = {@JoinColumn(name = "id_course")},
 			   inverseJoinColumns = {@JoinColumn(name = "id_requirement")})
@@ -35,6 +36,12 @@ public class Course
 	public Course(String name)
 	{
 		this.name = name;
+	}
+
+	public Course(String name, User author)
+	{
+		this.name = name;
+		this.addAuthor(author, Author.AUTHOR);
 	}
 
 	public void addGroup(Group group)
@@ -57,14 +64,10 @@ public class Course
 
 	private boolean isContainAuthor(User user)
 	{
-		Iterator<CourseACL> iterator = courseACL_List.iterator();
-		while (iterator.hasNext())
+		CourseACL obj = new CourseACL(this, user, Author.AUTHOR);
+		if (courseACL_Set.contains(obj))
 		{
-			CourseACL courseACL_obj = iterator.next();
-			if (courseACL_obj.getUser().equals(user))
-			{
-				return true;
-			}
+			return true;
 		}
 		return false;
 	}
@@ -75,35 +78,33 @@ public class Course
 		{
 			return;
 		}
-		courseACL_List.add(new CourseACL(this, user, rights));
+		courseACL_Set.add(new CourseACL(this, user, rights));
 	}
 
 	//чистит только ссылки в коде. Требуется код для синхронизации с базой
 	public void removeAuthor(User user)
 	{
-		Iterator<CourseACL> iterator = courseACL_List.iterator();
-		while (iterator.hasNext())
+		CourseACL obj = new CourseACL(this, user, Author.AUTHOR);
+		if (isContainAuthor(user))
 		{
-			CourseACL courseACL_obj = iterator.next();
-			if (courseACL_obj.getUser().equals(user))
-			{
-				iterator.remove();
-				courseACL_obj.setCourse(null);
-				courseACL_obj.setUser(null);
-				break;
-			}
+			courseACL_Set.remove(obj);
 		}
 	}
 
 	public Author checkRights(User user) throws NoRightException
 	{
-		Iterator<CourseACL> iterator = courseACL_List.iterator();
+		CourseACL obj = new CourseACL(this, user, Author.AUTHOR);
+		if (!isContainAuthor(user))
+		{
+			throw new NoRightException();
+		}
+		Iterator<CourseACL> iterator = courseACL_Set.iterator();
 		while (iterator.hasNext())
 		{
-			CourseACL courseACL_obj = iterator.next();
-			if (courseACL_obj.getUser().equals(user))
+			obj = iterator.next();
+			if (obj.getUser().equals(user))
 			{
-				return courseACL_obj.getRights();
+				return obj.getRights();
 			}
 		}
 		throw new NoRightException();
@@ -111,7 +112,7 @@ public class Course
 
 	public CourseACL getCourseACL(User user) throws NoRightException
 	{
-		Iterator<CourseACL> iterator = courseACL_List.iterator();
+		Iterator<CourseACL> iterator = courseACL_Set.iterator();
 		while (iterator.hasNext())
 		{
 			CourseACL courseACL_obj = iterator.next();
@@ -125,7 +126,7 @@ public class Course
 
 	public void addRequirement(Requirement requirement)
 	{
-		if(requirementSet.contains(requirement))
+		if (requirementSet.contains(requirement))
 		{
 			return;
 		}
@@ -134,11 +135,33 @@ public class Course
 
 	public void removeRequirement(Requirement requirement)
 	{
-		if(!requirementSet.contains(requirement))
+		if (!requirementSet.contains(requirement))
 		{
 			return;
 		}
 		requirementSet.remove(requirement);
+	}
+
+	@Override
+	public boolean equals(Object o)
+	{
+		if (this == o)
+		{
+			return true;
+		}
+		if (o == null || getClass() != o.getClass())
+		{
+			return false;
+		}
+		Course course = (Course) o;
+		return name.equals(course.name) && Objects.equals(groupes, course.groupes) && Objects
+				.equals(requirementSet, course.requirementSet);
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash(name, groupes, requirementSet);
 	}
 
 	public long getId()
@@ -179,5 +202,10 @@ public class Course
 	public void setRequirementSet(Set<Requirement> requirementSet)
 	{
 		this.requirementSet = requirementSet;
+	}
+
+	public Set<CourseACL> getCourseACL_Set()
+	{
+		return courseACL_Set;
 	}
 }

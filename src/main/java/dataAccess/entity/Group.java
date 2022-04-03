@@ -15,7 +15,7 @@ public class Group implements Serializable
 	private long      id = -1;
 	private String    name;
 	@OneToMany(mappedBy = "group",
-			   cascade = CascadeType.ALL)
+			   cascade = CascadeType.REMOVE)
 	private Set<User> students;
 
 	public Group()

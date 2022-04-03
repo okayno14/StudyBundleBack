@@ -6,6 +6,7 @@ import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.Objects;
 
 @Entity
 @Table(name = "course_acl")
@@ -35,6 +36,27 @@ public class CourseACL implements Serializable
 		this.user   = user;
 		this.id=new CourseACLID(course.getId(), user.getId());
 		this.rights=rights;
+	}
+
+	@Override
+	public boolean equals(Object o)
+	{
+		if (this == o)
+		{
+			return true;
+		}
+		if (o == null || getClass() != o.getClass())
+		{
+			return false;
+		}
+		CourseACL courseACL = (CourseACL) o;
+		return course.equals(courseACL.course) && user.equals(courseACL.user);
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash(course, user);
 	}
 
 	public CourseACLID getId()

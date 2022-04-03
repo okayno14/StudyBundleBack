@@ -38,13 +38,13 @@ public class Requirement implements Serializable
 			return false;
 		}
 		Requirement that = (Requirement) o;
-		return this.bundleType.getId() == that.bundleType.getId();
+		return quantity == that.quantity && bundleType.equals(that.bundleType);
 	}
 
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash(this.bundleType.getId());
+		return Objects.hash(quantity, bundleType);
 	}
 
 	public long getId()
