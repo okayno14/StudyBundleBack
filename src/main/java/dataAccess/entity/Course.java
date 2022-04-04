@@ -81,7 +81,6 @@ public class Course
 		courseACL_Set.add(new CourseACL(this, user, rights));
 	}
 
-	//чистит только ссылки в коде. Требуется код для синхронизации с базой
 	public void removeAuthor(User user)
 	{
 		CourseACL obj = new CourseACL(this, user, Author.AUTHOR);

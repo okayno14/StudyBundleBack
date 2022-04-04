@@ -26,7 +26,7 @@ public class User implements Serializable
 	private String  lastName;
 	private String  firstName;
 	private String  fatherName;
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne
 	@JoinColumn(name = "id_group", referencedColumnName = "id")
 	private Group   group;
 

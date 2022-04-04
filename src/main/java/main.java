@@ -1,42 +1,14 @@
+import business.bundle.WordParser;
 import dataAccess.entity.*;
-import exception.NoRightException;
-import org.hibernate.HibernateException;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
-import javax.persistence.Query;
+import org.hibernate.Query;
 import java.io.File;
-import java.sql.SQLException;
 import java.util.*;
 
 public class main
 {
-	public static void testUserGroup(SessionFactory sessionFactory)
-	{
-		sessionFactory.getCurrentSession().beginTransaction();
-		Role admin   = sessionFactory.getCurrentSession().get(Role.class, 9);
-		Role teacher = sessionFactory.getCurrentSession().get(Role.class, 10);
-		Role student = sessionFactory.getCurrentSession().get(Role.class, 11);
-		sessionFactory.getCurrentSession().getTransaction().commit();
-
-
-		sessionFactory.getCurrentSession().beginTransaction();
-		User user = new User("Алексеев", "Александр", "Константинович",
-							 "a.alekseev.2018@stud.nstu.ru", student);
-		sessionFactory.getCurrentSession().save(user);
-		long id = user.getId();
-		user = null;
-		sessionFactory.getCurrentSession().getTransaction().commit();
-
-		sessionFactory.getCurrentSession().beginTransaction();
-		User  user1 = sessionFactory.getCurrentSession().get(User.class, id);
-		Group group = new Group("АВТ-816");
-		sessionFactory.getCurrentSession().save(group);
-		group.addStudent(user1);
-		long id2 = group.getId();
-		sessionFactory.getCurrentSession().getTransaction().commit();
-	}
-
 	public static void testCourse(SessionFactory sessionFactory)
 	{
 		Map<Long, BundleType> bundleTypeCache = new HashMap<Long, BundleType>();
@@ -44,6 +16,7 @@ public class main
 		Map<Long, User> userCache = new HashMap<Long, User>();
 		Map<Long,Group> groupCache = new HashMap<Long,Group>();
 		Map<Long,Course> courseCache = new HashMap<Long,Course>();
+		Map<Long, Bundle> bundleCache = new HashMap<Long, Bundle>();
 		sessionFactory.getCurrentSession().beginTransaction();
 			for (long i = 9; i <= 11; i++)
 			{
@@ -104,12 +77,59 @@ public class main
 		sessionFactory.getCurrentSession().beginTransaction();
 			course = courseCache.get(pp);
 			course.addRequirement(new Requirement(4,bundleTypeCache.get(201L)));
-			course.addRequirement(new Requirement(1,bundleTypeCache.get(203L)));
+
+			long lr1=0;
+			//Добавил пустые бандлы предмета для всех студентов в группе
+			for(int i=1;i<=4;i++)
+			{
+				Iterator<User> userIterator = groupCache.get(avt815).getStudents().iterator();
+				while(userIterator.hasNext())
+				{
+					user = userIterator.next();
+
+					Bundle bundle = new Bundle(i,course,bundleTypeCache.get(201L));
+					sessionFactory.getCurrentSession().persist(bundle);
+					bundleCache.put(bundle.getId(),bundle);
+					if(i==1)
+					{
+						lr1=bundle.getId();
+					}
+
+					bundle.addAuthor(user,Author.AUTHOR);
+					sessionFactory.getCurrentSession().merge(bundle);
+				}
+			}
+
+			//course.addRequirement(new Requirement(1,bundleTypeCache.get(203L)));
+
 			sessionFactory.getCurrentSession().merge(course);
+		sessionFactory.getCurrentSession().getTransaction().commit();
+
+		//работа с бандлами
+		sessionFactory.getCurrentSession().beginTransaction();
+			WordParser wordParser = new WordParser();
+			String text = null;
+			try
+			{
+				text = wordParser.parseDoc("resources/doc.docx");
+			}
+			catch (Exception e)
+			{
+				System.out.println(e);
+				e.printStackTrace();
+			}
+
+			bundleCache.get(lr1).getReport().setFileName("doc.docx",text);
+			bundleCache.get(lr1).accept();
+			bundleCache.get(lr1).addAuthor(userCache.get(me),Author.COAUTHOR);
+			sessionFactory.getCurrentSession().merge(bundleCache.get(lr1));
 		sessionFactory.getCurrentSession().getTransaction().commit();
 
 		//-------------------------------------------------------------
 
+		//удаление группы и студентов
+		//удаление связки курса с удаляемой группой
+		//удаление бандлов студентов, состоящих в группе
 		sessionFactory.getCurrentSession().beginTransaction();
 			HQL="select c from Course as c inner join fetch c.groupes as g where g.id = :id";
 			q=sessionFactory.getCurrentSession().createQuery(HQL);
@@ -130,10 +150,31 @@ public class main
 				}
 				course.removeGroup(groupCache.get(avt815));
 			}
+
+
+			List<Long> ids = new LinkedList<>();
+			ids.add(userCache.get(me).getId());
+			ids.add(userCache.get(ivan).getId());
+
+			//выборка всех бандлов, в которых авторами являются студенты из удаляемой группы
+			HQL="select b from Bundle as b inner join b.bundleACLSet as acl where acl.id.userID in :id and acl.rights = 'AUTHOR'";
+			q=sessionFactory.getCurrentSession().createQuery(HQL);
+			q.setParameterList("id",ids);
+			List<Bundle> res = q.getResultList();
+
+			Iterator<Bundle> bundleIterator=res.iterator();
+			while (bundleIterator.hasNext())
+			{
+				Bundle bundle = bundleIterator.next();
+				bundleCache.remove(bundle.getId());
+				sessionFactory.getCurrentSession().delete(bundle);
+			}
+
 			sessionFactory.getCurrentSession().delete(groupCache.get(avt815));
 			groupCache.remove(avt815);
 			userCache.remove(me);
 			userCache.remove(ivan);
+
 			avt815=0L;
 			me=0L;
 			ivan=0L;
@@ -171,6 +212,10 @@ public class main
 		configuration.addAnnotatedClass(CourseACLID.class);
 		configuration.addAnnotatedClass(BundleType.class);
 		configuration.addAnnotatedClass(Requirement.class);
+		configuration.addAnnotatedClass(Bundle.class);
+		configuration.addAnnotatedClass(BundleACL.class);
+		configuration.addAnnotatedClass(BundleACLID.class);
+		configuration.addAnnotatedClass(Report.class);
 		SessionFactory sessionFactory = configuration.buildSessionFactory();
 
 		testCourse(sessionFactory);

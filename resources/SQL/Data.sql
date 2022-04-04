@@ -172,6 +172,9 @@ INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 INSERT INTO "route" (method,urn) VALUES ('PUT', '/bundle/delCoAuthor/:id/:coAuthorID');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 
+INSERT INTO "route" (method,urn) VALUES('PUT', '/decline/:id');
+INSERT INTO role_route VALUES (10,(select max(id) from "route"));
+
 INSERT INTO "route" (method,urn) VALUES ('DELETE', '/bundle/:id');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 

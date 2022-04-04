@@ -60,8 +60,8 @@ CREATE TABLE group_course(
 CREATE TYPE author as ENUM ('author', 'coauthor');
 
 CREATE TABLE course_acl(
-    id_user BIGINT NOT NULL,
-    id_course BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    course_id BIGINT NOT NULL,
     rights author NOT NULL,
     FOREIGN KEY (user_id) REFERENCES "user"(id),
     FOREIGN KEY (course_id) REFERENCES course(id),
@@ -88,29 +88,33 @@ CREATE TABLE requirement_course(
     PRIMARY KEY (id_course, id_requirement)
 );
 
+CREATE TYPE bundle_state AS ENUM ('EMPTY', 'CANCELED', 'ACCEPTED');
+
 CREATE TABLE bundle(
     id BIGINT PRIMARY KEY DEFAULT nextval('hibernate_sequence'),
-    file_name VARCHAR(255),
+    folder VARCHAR(255),
     num INTEGER NOT NULL,
+    state bundle_state NOT NULL,
     id_course BIGINT NOT NULL,
     id_bundle_type BIGINT NOT NULL,
+    id_report BIGINT NOT NULL UNIQUE,
     FOREIGN KEY (id_course) REFERENCES course(id),
-    FOREIGN KEY (id_bundle_type) REFERENCES bundle_type(id)
+    FOREIGN KEY (id_bundle_type) REFERENCES bundle_type(id),
+    FOREIGN KEY (id_report) REFERENCES report(id)
 );
 
 CREATE TABLE report(
     id BIGINT PRIMARY KEY DEFAULT nextval('hibernate_sequence'),
+    file_name VARCHAR(255),
     sym_count BIGINT,
     unique_words BIGINT,
     word_count BIGINT,
-    sym_count_no_space BIGINT,
-    id_bundle BIGINT UNIQUE NOT NULL,
-    FOREIGN KEY (id_bundle) REFERENCES bundle(id)
+    sym_count_no_space BIGINT
 );
 
 CREATE TABLE bundle_acl(
-    id_user BIGINT NOT NULL,
-    id_bundle BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    bundle_id BIGINT NOT NULL,
     rights author NOT NULL,
     FOREIGN KEY (id_user) REFERENCES "user"(id),
     FOREIGN KEY (id_bundle) REFERENCES bundle(id),
