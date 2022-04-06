@@ -9,23 +9,28 @@ public class main
 {
 	public static void main(String arg[])
 	{
-		try(BufferedReader fileReader = new BufferedReader(new FileReader("resources/Config/conf.json")))
+		try (BufferedReader fileReader = new BufferedReader(
+				new FileReader("resources/Config/conf.json")))
 		{
 			GsonBuilder gsonBuilder = new GsonBuilder();
 			gsonBuilder.setPrettyPrinting();
 			gsonBuilder.registerTypeAdapter(DateAccessConf.class, new DateAccessConfJSONParser());
-			gsonBuilder.registerTypeAdapter(HTTP_Conf.class,new HTTP_ConfJSONParser());
+			gsonBuilder.registerTypeAdapter(HTTP_Conf.class, new HTTP_ConfJSONParser());
 
 			ConfMain confMain = new ConfMain(gsonBuilder.create());
-			gsonBuilder.registerTypeAdapter(ConfMain.class,confMain);
+			gsonBuilder.registerTypeAdapter(ConfMain.class, confMain);
 
 
-			confMain = gsonBuilder.create().fromJson(fileReader,confMain.getClass());
-			ServerFace serverFace =  new ServerFace(confMain.getHttp_conf(), confMain.getDateAccessConf());
+			confMain = gsonBuilder.create().fromJson(fileReader, confMain.getClass());
+
 
 			//тут блок регистрации парсеров сущностей бизнес-слоя
 
-			int a = 1-2;
+
+			ServerFace serverFace = new ServerFace(confMain.getHttp_conf(),
+												   confMain.getDateAccessConf(),
+												   gsonBuilder.create());
+			System.out.println("Стартуем");
 		}
 		catch (Exception e)
 		{

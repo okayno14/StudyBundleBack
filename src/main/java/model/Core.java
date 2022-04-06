@@ -1,5 +1,10 @@
 package model;
 
+import business.ICourseService;
+import business.IGroupService;
+import business.IRoleService;
+import business.IUserService;
+import business.bundle.IBundleService;
 import business.bundle.WordParser;
 import configuration.DateAccessConf;
 import dataAccess.entity.*;
@@ -14,6 +19,12 @@ public class Core
 {
 	private SessionFactory sessionFactory;
 	private DateAccessConf dateAccessConf;
+
+	private IBundleService iBundleService;
+	private ICourseService iCourseService;
+	private IGroupService  iGroupService;
+	private IRoleService   iRoleService;
+	private IUserService   iUserService;
 
 	private void initHiber(String path)
 	{
@@ -40,7 +51,9 @@ public class Core
 		this.dateAccessConf = dateAccessConf;
 		initHiber(dateAccessConf.getHibernateConf());
 
-		testCourse(sessionFactory);
+		//сборка сервисов
+
+		//testCourse(sessionFactory);
 	}
 
 	private void testCourse(SessionFactory sessionFactory)
@@ -231,5 +244,30 @@ public class Core
 		userCache.remove(teacher);
 		teacher=0;
 		sessionFactory.getCurrentSession().getTransaction().commit();
+	}
+
+	public IBundleService getiBundleService()
+	{
+		return iBundleService;
+	}
+
+	public ICourseService getiCourseService()
+	{
+		return iCourseService;
+	}
+
+	public IGroupService getiGroupService()
+	{
+		return iGroupService;
+	}
+
+	public IRoleService getiRoleService()
+	{
+		return iRoleService;
+	}
+
+	public IUserService getiUserService()
+	{
+		return iUserService;
 	}
 }
