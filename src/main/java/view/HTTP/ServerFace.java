@@ -15,7 +15,6 @@ public class ServerFace implements ControllerListener
 {
 	private HTTP_Conf http_conf;
 
-
 	private IBundleService iBundleService;
 	private ICourseService iCourseService;
 	private IGroupService  iGroupService;
@@ -39,6 +38,11 @@ public class ServerFace implements ControllerListener
 		iUserService   = controller;
 
 		//стартуем сервер
+		endpoints();
+	}
+
+	public static void endpoints()
+	{
 
 	}
 }

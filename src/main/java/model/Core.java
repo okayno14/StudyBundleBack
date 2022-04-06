@@ -8,7 +8,7 @@ import business.bundle.IBundleService;
 import business.bundle.WordParser;
 import configuration.DateAccessConf;
 import dataAccess.entity.*;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
