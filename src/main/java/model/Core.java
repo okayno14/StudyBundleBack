@@ -1,9 +1,6 @@
 package model;
 
-import business.ICourseService;
-import business.IGroupService;
-import business.IRoleService;
-import business.IUserService;
+import business.*;
 import business.bundle.IBundleService;
 import business.bundle.WordParser;
 import configuration.DateAccessConf;
@@ -21,6 +18,7 @@ public class Core
 	private DateAccessConf dateAccessConf;
 
 	private IBundleService iBundleService;
+	private IBundleTypeService iBundleTypeService;
 	private ICourseService iCourseService;
 	private IGroupService  iGroupService;
 	private IRoleService   iRoleService;
@@ -249,6 +247,11 @@ public class Core
 	public IBundleService getiBundleService()
 	{
 		return iBundleService;
+	}
+
+	public IBundleTypeService getiBundleTypeService()
+	{
+		return iBundleTypeService;
 	}
 
 	public ICourseService getiCourseService()

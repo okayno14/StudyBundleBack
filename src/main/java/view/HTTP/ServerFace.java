@@ -1,9 +1,6 @@
 package view.HTTP;
 
-import business.ICourseService;
-import business.IGroupService;
-import business.IRoleService;
-import business.IUserService;
+import business.*;
 import business.bundle.IBundleService;
 import com.google.gson.Gson;
 import configuration.DateAccessConf;
@@ -14,24 +11,25 @@ import controller.ControllerListener;
 public class ServerFace implements ControllerListener
 {
 	private HTTP_Conf http_conf;
+	private Gson gson;
 
 	private IBundleService iBundleService;
+	private IBundleTypeService iBundleTypeService;
 	private ICourseService iCourseService;
 	private IGroupService  iGroupService;
 	private IRoleService   iRoleService;
 	private IUserService   iUserService;
 
-	private Gson gson;
-
 	public ServerFace(HTTP_Conf http_conf, DateAccessConf dateAccessConf, Gson gson)
 	{
 		this.http_conf = http_conf;
 		this.gson=gson;
-		//применяем параметры конфигурации
+		//применяем параметры конфигурации для сервера
 
 		//строим контроллер
 		Controller controller = new Controller(dateAccessConf, this);
 		iBundleService = controller;
+		iBundleTypeService = controller;
 		iCourseService = controller;
 		iGroupService  = controller;
 		iRoleService   = controller;
@@ -43,6 +41,6 @@ public class ServerFace implements ControllerListener
 
 	public static void endpoints()
 	{
-
+		System.out.println("Стартовал сервер");
 	}
 }

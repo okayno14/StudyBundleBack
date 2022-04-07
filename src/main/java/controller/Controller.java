@@ -1,23 +1,21 @@
 package controller;
 
-import business.ICourseService;
-import business.IGroupService;
-import business.IRoleService;
-import business.IUserService;
+import business.*;
 import business.bundle.IBundleService;
 import configuration.DateAccessConf;
 import model.Core;
 
-public class Controller implements IBundleService, ICourseService, IGroupService, IRoleService, IUserService
+public class Controller implements IBundleService, ICourseService, IGroupService, IRoleService, IUserService, IBundleTypeService
 {
-	private Core               core;
-	private ControllerListener listener;
-
 	private IBundleService iBundleService;
+	private IBundleTypeService iBundleTypeService;
 	private ICourseService iCourseService;
 	private IGroupService  iGroupService;
 	private IRoleService   iRoleService;
 	private IUserService   iUserService;
+
+	private ControllerListener listener;
+
 
 	public Controller(DateAccessConf dateAccessConf, ControllerListener listener)
 	{
@@ -25,13 +23,14 @@ public class Controller implements IBundleService, ICourseService, IGroupService
 		this.listener = listener;
 
 		//Инициализация ядра
-		core = new Core(dateAccessConf);
+		Core core = new Core(dateAccessConf);
 
 		//После сборки ядра можем получить реализации сервисов
-		iBundleService=core.getiBundleService();
-		iCourseService=core.getiCourseService();
-		iGroupService=core.getiGroupService();
-		iRoleService=core.getiRoleService();
-		iUserService=core.getiUserService();
+		iBundleService = core.getiBundleService();
+		iBundleTypeService = core.getiBundleTypeService();
+		iCourseService = core.getiCourseService();
+		iGroupService  = core.getiGroupService();
+		iRoleService   = core.getiRoleService();
+		iUserService   = core.getiUserService();
 	}
 }
