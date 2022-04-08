@@ -6,30 +6,21 @@ import exception.DataAccess.ObjectNotFoundException;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.exception.ConstraintViolationException;
-import org.hibernate.query.Query;
 
 import javax.persistence.PersistenceException;
 import java.util.List;
 
-public class BundleTypeRepoHiber implements IBundleTypeRepo
+public class BundleTypeRepoHiber extends RepoHiberBase implements IBundleTypeRepo
 {
-	private SessionFactory sessionFactory;
-	private String         HQL;
-	private Query          q;
-
 	public BundleTypeRepoHiber(SessionFactory sessionFactory)
 	{
-		this.sessionFactory = sessionFactory;
+		super(sessionFactory);
 	}
 
-	private Transaction getOrBegin()
+	@Override
+	protected Transaction getOrBegin()
 	{
-		Transaction t = sessionFactory.getCurrentSession().getTransaction();
-		if (!t.isActive())
-		{
-			t.begin();
-		}
-		return t;
+		return super.getOrBegin();
 	}
 
 	@Override

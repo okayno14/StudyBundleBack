@@ -1,5 +1,6 @@
 package business;
 
-public interface IUserService
+public interface IUserService extends IRoleService
 {
+
 }

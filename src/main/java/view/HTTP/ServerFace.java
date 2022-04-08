@@ -56,7 +56,7 @@ public class ServerFace
 		bundleTypeController.delete();
 
 		BundleType obj = bundleTypeController.get(3L);
-		obj = bundleTypeController.get(156156156L);
+		//obj = bundleTypeController.get(156156156L);
 	}
 
 	public void endpoints()

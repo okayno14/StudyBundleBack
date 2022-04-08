@@ -1,15 +1,15 @@
 package dataAccess.cache;
 
-import dataAccess.entity.BundleType;
+import dataAccess.entity.Role;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BundleTypeCache implements IBundleTypeCache
+public class RoleCache implements IRoleCache
 {
-	private Map<Long, BundleType> cache = new HashMap<>();
+	private Map<Long, Role> cache = new HashMap<>();
 
 	@Override
 	public boolean contains(long id)
@@ -24,21 +24,21 @@ public class BundleTypeCache implements IBundleTypeCache
 	}
 
 	@Override
-	public BundleType get(long id)
+	public Role get(long id)
 	{
 		return cache.get(id);
 	}
 
 	@Override
-	public List<BundleType> get()
+	public List<Role> get()
 	{
-		return new ArrayList<BundleType>(cache.values());
+		return new ArrayList<Role>(cache.values());
 	}
 
 	@Override
-	public void put(BundleType bundleType)
+	public void put(Role role)
 	{
-		cache.put(bundleType.getId(),bundleType);
+		cache.put(role.getId(),role);
 	}
 
 	@Override

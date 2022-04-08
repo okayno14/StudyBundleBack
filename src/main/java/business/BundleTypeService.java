@@ -45,6 +45,10 @@ public class BundleTypeService implements IBundleTypeService
 	@Override
 	public BundleType get(long id)
 	{
+		if(cache.contains(id))
+		{
+			return cache.get(id);
+		}
 		BundleType res = repo.get(id);
 		cache.put(res);
 		return res;
