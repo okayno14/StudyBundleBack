@@ -54,7 +54,7 @@ public class BundleTypeRepoHiber extends RepoHiberBase implements IBundleTypeRep
 		Transaction t = getOrBegin();
 		try
 		{
-			if (bundleType.getId() != -1)
+			if (bundleType.getId() != -1L)
 			{
 				sessionFactory.getCurrentSession().merge(bundleType);
 			}
@@ -66,7 +66,8 @@ public class BundleTypeRepoHiber extends RepoHiberBase implements IBundleTypeRep
 			if (ee.getCause() instanceof ConstraintViolationException)
 			{
 				t.rollback();
-				NotUniqueException toThrow = new NotUniqueException(ee.getCause());
+				NotUniqueException toThrow = new NotUniqueException(
+						"Данный тип работы присутствует в базе", ee.getCause());
 				throw toThrow;
 			}
 		}

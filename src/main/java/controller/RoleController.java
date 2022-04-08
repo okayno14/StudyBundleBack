@@ -1,6 +1,9 @@
 package controller;
 
 import business.IRoleService;
+import dataAccess.entity.Role;
+
+import java.util.List;
 
 public class RoleController implements IRoleController
 {
@@ -11,5 +14,11 @@ public class RoleController implements IRoleController
 	{
 		this.controller  = controller;
 		this.roleService = roleService;
+	}
+
+	@Override
+	public List<Role> get()
+	{
+		return null;
 	}
 }

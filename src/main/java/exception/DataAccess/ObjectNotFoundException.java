@@ -9,14 +9,14 @@ public class ObjectNotFoundException extends RuntimeException
 		super(message, cause);
 	}
 
-	public ObjectNotFoundException(Throwable cause)
-	{
-		super(cause);
-	}
-
 	public ObjectNotFoundException()
 	{
 		super();
+	}
+
+	public ObjectNotFoundException(Throwable cause)
+	{
+		super(cause);
 	}
 
 	@Override

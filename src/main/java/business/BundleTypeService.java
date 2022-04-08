@@ -17,6 +17,13 @@ public class BundleTypeService implements IBundleTypeService
 	{
 		this.repo  = iBundleTypeRepo;
 		this.cache = iBundleTypeCache;
+
+		List<BundleType> res= repo.get();
+		Iterator<BundleType> iterator = res.iterator();
+		while (iterator.hasNext())
+		{
+			cache.put(iterator.next());
+		}
 	}
 
 	@Override
