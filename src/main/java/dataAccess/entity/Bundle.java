@@ -2,7 +2,7 @@ package dataAccess.entity;
 
 import business.bundle.Similarity;
 import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType;
-import exception.NoRightException;
+import exception.Business.NoRightException;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 

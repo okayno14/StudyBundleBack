@@ -1,36 +1,62 @@
 package controller;
 
-import business.*;
-import business.bundle.IBundleService;
+import business.IUserService;
 import configuration.DateAccessConf;
 import model.Core;
 
-public class Controller implements IBundleService, ICourseService, IGroupService, IRoleService, IUserService, IBundleTypeService
+
+public class Controller
 {
-	private IBundleService iBundleService;
-	private IBundleTypeService iBundleTypeService;
-	private ICourseService iCourseService;
-	private IGroupService  iGroupService;
-	private IRoleService   iRoleService;
-	private IUserService   iUserService;
+	IBundleController     bundleController;
+	IBundleTypeController bundleTypeController;
+	ICourseController courseController;
+	IGroupController groupController;
+	IRoleController roleController;
+	IUserController userController;
 
-	private ControllerListener listener;
-
-
-	public Controller(DateAccessConf dateAccessConf, ControllerListener listener)
+	public Controller(DateAccessConf dateAccessConf)
 	{
 		//делает дела для настройки контроллера
-		this.listener = listener;
 
 		//Инициализация ядра
 		Core core = new Core(dateAccessConf);
 
-		//После сборки ядра можем получить реализации сервисов
-		iBundleService = core.getiBundleService();
-		iBundleTypeService = core.getiBundleTypeService();
-		iCourseService = core.getiCourseService();
-		iGroupService  = core.getiGroupService();
-		iRoleService   = core.getiRoleService();
-		iUserService   = core.getiUserService();
+		//После сборки ядра собираем микроконтроллеры
+		bundleController = new BundleController(this,core.getiBundleService());
+		bundleTypeController = new BundleTypeController(this, core.getiBundleTypeService());
+		courseController = new CourseController(this,core.getiCourseService());
+		groupController = new GroupController(this,core.getiGroupService());
+		roleController = new RoleController(this,core.getiRoleService());
+		userController = new UserController(this,core.getiUserService());
+	}
+
+	public IBundleTypeController getBundleTypeController()
+	{
+		return bundleTypeController;
+	}
+
+	public IBundleController getBundleController()
+	{
+		return bundleController;
+	}
+
+	public ICourseController getCourseController()
+	{
+		return courseController;
+	}
+
+	public IGroupController getGroupController()
+	{
+		return groupController;
+	}
+
+	public IRoleController getRoleController()
+	{
+		return roleController;
+	}
+
+	public IUserController getUserController()
+	{
+		return userController;
 	}
 }

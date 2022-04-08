@@ -1,46 +1,74 @@
 package view.HTTP;
 
-import business.*;
-import business.bundle.IBundleService;
 import com.google.gson.Gson;
 import configuration.DateAccessConf;
 import configuration.HTTP_Conf;
-import controller.Controller;
-import controller.ControllerListener;
+import controller.*;
+import dataAccess.entity.BundleType;
+import org.hibernate.exception.ConstraintViolationException;
+import spark.Spark;
 
-public class ServerFace implements ControllerListener
+import javax.persistence.PersistenceException;
+import java.util.Iterator;
+import java.util.List;
+
+public class ServerFace
 {
 	private HTTP_Conf http_conf;
-	private Gson gson;
+	private Gson      gson;
 
-	private IBundleService iBundleService;
-	private IBundleTypeService iBundleTypeService;
-	private ICourseService iCourseService;
-	private IGroupService  iGroupService;
-	private IRoleService   iRoleService;
-	private IUserService   iUserService;
+	private IBundleController     bundleController;
+	private IBundleTypeController bundleTypeController;
+	private ICourseController     courseController;
+	private IGroupController      groupController;
+	private IRoleController       roleController;
+	private IUserController       userController;
 
 	public ServerFace(HTTP_Conf http_conf, DateAccessConf dateAccessConf, Gson gson)
 	{
 		this.http_conf = http_conf;
-		this.gson=gson;
+		this.gson      = gson;
 		//применяем параметры конфигурации для сервера
+		Spark.port(http_conf.getPort());
 
 		//строим контроллер
-		Controller controller = new Controller(dateAccessConf, this);
-		iBundleService = controller;
-		iBundleTypeService = controller;
-		iCourseService = controller;
-		iGroupService  = controller;
-		iRoleService   = controller;
-		iUserService   = controller;
+		Controller controller = new Controller(dateAccessConf);
 
+		bundleController = controller.getBundleController();
+		bundleTypeController =controller.getBundleTypeController();
+		courseController = controller.getCourseController();
+		groupController = controller.getGroupController();
+		roleController = controller.getRoleController();
+		userController = controller.getUserController();
+
+
+		testServices();
 		//стартуем сервер
-		endpoints();
+		//endpoints();
 	}
 
-	public static void endpoints()
+	private void testServices()
 	{
-		System.out.println("Стартовал сервер");
+		List<BundleType> res = bundleTypeController.get();
+		List<BundleType> res1 = bundleTypeController.get();
+
+
+
+
+
+		bundleTypeController.setClient(new BundleType("ПРГРГ"));
+		bundleTypeController.add();
+
+		bundleTypeController.delete();
+
+
+	}
+
+	public void endpoints()
+	{
+		Spark.get("/", (req, resp) ->
+		{
+			return "Hello";
+		});
 	}
 }

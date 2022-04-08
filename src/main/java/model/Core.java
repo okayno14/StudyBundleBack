@@ -4,7 +4,9 @@ import business.*;
 import business.bundle.IBundleService;
 import business.bundle.WordParser;
 import configuration.DateAccessConf;
+import dataAccess.cache.*;
 import dataAccess.entity.*;
+import dataAccess.repository.BundleTypeRepoHiber;
 import org.hibernate.query.Query;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
@@ -17,12 +19,19 @@ public class Core
 	private SessionFactory sessionFactory;
 	private DateAccessConf dateAccessConf;
 
-	private IBundleService iBundleService;
+	private IBundleService     iBundleService;
 	private IBundleTypeService iBundleTypeService;
-	private ICourseService iCourseService;
-	private IGroupService  iGroupService;
-	private IRoleService   iRoleService;
-	private IUserService   iUserService;
+	private ICourseService     iCourseService;
+	private IGroupService      iGroupService;
+	private IRoleService       iRoleService;
+	private IUserService       iUserService;
+
+	IBundleCache bundleCache;
+	IBundleTypeCache bundleTypeCache;
+	ICourseCache courseCache;
+	IGroupCache groupCache;
+	IRoleCache roleCache;
+	IUserCache userCache;
 
 	private void initHiber(String path)
 	{
@@ -50,7 +59,10 @@ public class Core
 		initHiber(dateAccessConf.getHibernateConf());
 
 		//сборка сервисов
+		iBundleTypeService = new BundleTypeService(new BundleTypeRepoHiber(sessionFactory),
+												   new BundleTypeCache());
 
+		//ТЕСТЫ
 		//testCourse(sessionFactory);
 	}
 
@@ -59,8 +71,8 @@ public class Core
 		Map<Long, BundleType> bundleTypeCache = new HashMap<Long, BundleType>();
 		Map<Long, Role>       roleCache       = new HashMap<Long, Role>();
 		Map<Long, User>       userCache       = new HashMap<Long, User>();
-		Map<Long,Group>       groupCache      = new HashMap<Long,Group>();
-		Map<Long,Course>      courseCache     = new HashMap<Long,Course>();
+		Map<Long, Group>      groupCache      = new HashMap<Long, Group>();
+		Map<Long, Course>     courseCache     = new HashMap<Long, Course>();
 		Map<Long, Bundle>     bundleCache     = new HashMap<Long, Bundle>();
 		sessionFactory.getCurrentSession().beginTransaction();
 		for (long i = 9; i <= 11; i++)
@@ -81,66 +93,66 @@ public class Core
 		sessionFactory.getCurrentSession().getTransaction().commit();
 
 		sessionFactory.getCurrentSession().beginTransaction();
-		User user = new User("Алексеев","Александр","Константинович",
+		User user = new User("Алексеев", "Александр", "Константинович",
 							 "a.alekseev.2018@stud.nstu.ru", roleCache.get(11L));
 		sessionFactory.getCurrentSession().persist(user);
-		userCache.put(user.getId(),user);
+		userCache.put(user.getId(), user);
 		long me = user.getId();
-		user = new User("Иванов","Иван","Иванович",
-						"i.ivanov.2018@stud.nstu.ru", roleCache.get(11L));
+		user = new User("Иванов", "Иван", "Иванович", "i.ivanov.2018@stud.nstu.ru",
+						roleCache.get(11L));
 		sessionFactory.getCurrentSession().persist(user);
-		userCache.put(user.getId(),user);
+		userCache.put(user.getId(), user);
 		long ivan = user.getId();
 
 		Group group = new Group("АВТ-815");
 		group.addStudent(userCache.get(me));
 		group.addStudent(userCache.get(ivan));
 		sessionFactory.getCurrentSession().persist(group);
-		long avt815=group.getId();
-		groupCache.put(avt815,group);
+		long avt815 = group.getId();
+		groupCache.put(avt815, group);
 		sessionFactory.getCurrentSession().getTransaction().commit();
 
 		sessionFactory.getCurrentSession().beginTransaction();
 		user = new User("Малявко", "Александр", "Антонович", "a.malyavko@corp.nstu.ru",
 						roleCache.get(10L));
 		sessionFactory.getCurrentSession().persist(user);
-		userCache.put(user.getId(),user);
-		long teacher=user.getId();
-		userCache.put(teacher,user);
+		userCache.put(user.getId(), user);
+		long teacher = user.getId();
+		userCache.put(teacher, user);
 		sessionFactory.getCurrentSession().getTransaction().commit();
 
 		sessionFactory.getCurrentSession().beginTransaction();
 		Course course = new Course("Параллельное Программирование");
 		course.addGroup(groupCache.get(avt815));
 		sessionFactory.getCurrentSession().persist(course);
-		courseCache.put(course.getId(),course);
-		long pp=course.getId();
-		course.addAuthor(userCache.get(teacher),Author.AUTHOR);
+		courseCache.put(course.getId(), course);
+		long pp = course.getId();
+		course.addAuthor(userCache.get(teacher), Author.AUTHOR);
 		sessionFactory.getCurrentSession().merge(course);
 		sessionFactory.getCurrentSession().getTransaction().commit();
 
 		sessionFactory.getCurrentSession().beginTransaction();
 		course = courseCache.get(pp);
-		course.addRequirement(new Requirement(4,bundleTypeCache.get(201L)));
+		course.addRequirement(new Requirement(4, bundleTypeCache.get(201L)));
 
-		long lr1=0;
+		long lr1 = 0;
 		//Добавил пустые бандлы предмета для всех студентов в группе
-		for(int i=1;i<=4;i++)
+		for (int i = 1; i <= 4; i++)
 		{
 			Iterator<User> userIterator = groupCache.get(avt815).getStudents().iterator();
-			while(userIterator.hasNext())
+			while (userIterator.hasNext())
 			{
 				user = userIterator.next();
 
-				Bundle bundle = new Bundle(i,course,bundleTypeCache.get(201L));
+				Bundle bundle = new Bundle(i, course, bundleTypeCache.get(201L));
 				sessionFactory.getCurrentSession().persist(bundle);
-				bundleCache.put(bundle.getId(),bundle);
-				if(i==1)
+				bundleCache.put(bundle.getId(), bundle);
+				if (i == 1)
 				{
-					lr1=bundle.getId();
+					lr1 = bundle.getId();
 				}
 
-				bundle.addAuthor(user,Author.AUTHOR);
+				bundle.addAuthor(user, Author.AUTHOR);
 				sessionFactory.getCurrentSession().merge(bundle);
 			}
 		}
@@ -164,9 +176,9 @@ public class Core
 			e.printStackTrace();
 		}
 
-		bundleCache.get(lr1).getReport().setFileName("doc.docx",text);
+		bundleCache.get(lr1).getReport().setFileName("doc.docx", text);
 		bundleCache.get(lr1).accept();
-		bundleCache.get(lr1).addAuthor(userCache.get(me),Author.COAUTHOR);
+		bundleCache.get(lr1).addAuthor(userCache.get(me), Author.COAUTHOR);
 		sessionFactory.getCurrentSession().merge(bundleCache.get(lr1));
 		sessionFactory.getCurrentSession().getTransaction().commit();
 
@@ -176,22 +188,22 @@ public class Core
 		//удаление связки курса с удаляемой группой
 		//удаление бандлов студентов, состоящих в группе
 		sessionFactory.getCurrentSession().beginTransaction();
-		HQL="select c from Course as c inner join fetch c.groupes as g where g.id = :id";
-		q=sessionFactory.getCurrentSession().createQuery(HQL);
+		HQL = "select c from Course as c inner join fetch c.groupes as g where g.id = :id";
+		q   = sessionFactory.getCurrentSession().createQuery(HQL);
 		q.setParameter("id", avt815);
-		List<Course> groupList= q.getResultList();
+		List<Course>     groupList     = q.getResultList();
 		Iterator<Course> groupIterator = groupList.iterator();
 		while (groupIterator.hasNext())
 		{
 			course = groupIterator.next();
-			courseCache.put(course.getId(),course);
+			courseCache.put(course.getId(), course);
 
-			Set<Group>      gset      =course.getGroupes();
+			Set<Group>      gset      = course.getGroupes();
 			Iterator<Group> iterator1 = gset.iterator();
-			while(iterator1.hasNext())
+			while (iterator1.hasNext())
 			{
-				group=iterator1.next();
-				groupCache.put(group.getId(),group);
+				group = iterator1.next();
+				groupCache.put(group.getId(), group);
 			}
 			course.removeGroup(groupCache.get(avt815));
 		}
@@ -202,12 +214,13 @@ public class Core
 		ids.add(userCache.get(ivan).getId());
 
 		//выборка всех бандлов, в которых авторами являются студенты из удаляемой группы
-		HQL="select b from Bundle as b inner join b.bundleACLSet as acl where acl.id.userID in :id and acl.rights = 'AUTHOR'";
-		q=sessionFactory.getCurrentSession().createQuery(HQL);
-		q.setParameterList("id",ids);
+		HQL
+				= "select b from Bundle as b inner join b.bundleACLSet as acl where acl.id.userID in :id and acl.rights = 'AUTHOR'";
+		q       = sessionFactory.getCurrentSession().createQuery(HQL);
+		q.setParameterList("id", ids);
 		List<Bundle> res = q.getResultList();
 
-		Iterator<Bundle> bundleIterator=res.iterator();
+		Iterator<Bundle> bundleIterator = res.iterator();
 		while (bundleIterator.hasNext())
 		{
 			Bundle bundle = bundleIterator.next();
@@ -220,27 +233,27 @@ public class Core
 		userCache.remove(me);
 		userCache.remove(ivan);
 
-		avt815=0L;
-		me=0L;
-		ivan=0L;
+		avt815 = 0L;
+		me     = 0L;
+		ivan   = 0L;
 		sessionFactory.getCurrentSession().getTransaction().commit();
 
 		sessionFactory.getCurrentSession().beginTransaction();
 		sessionFactory.getCurrentSession().remove(courseCache.get(pp));
-		Set<Requirement> requirements = course.getRequirementSet();
-		Iterator<Requirement> iterator1 = requirements.iterator();
+		Set<Requirement>      requirements = course.getRequirementSet();
+		Iterator<Requirement> iterator1    = requirements.iterator();
 		while (iterator1.hasNext())
 		{
 			sessionFactory.getCurrentSession().delete(iterator1.next());
 		}
 		courseCache.remove(pp);
-		pp=0L;
+		pp = 0L;
 		sessionFactory.getCurrentSession().getTransaction().commit();
 
 		sessionFactory.getCurrentSession().beginTransaction();
 		sessionFactory.getCurrentSession().remove(userCache.get(teacher));
 		userCache.remove(teacher);
-		teacher=0;
+		teacher = 0;
 		sessionFactory.getCurrentSession().getTransaction().commit();
 	}
 

@@ -1,4 +1,4 @@
-package exception;
+package exception.Business;
 
 public class NoRightException extends Exception
 {

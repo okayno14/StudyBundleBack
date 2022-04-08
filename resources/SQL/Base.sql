@@ -70,7 +70,7 @@ CREATE TABLE course_acl(
 
 CREATE TABLE bundle_type(
     id BIGINT PRIMARY KEY DEFAULT nextval('hibernate_sequence'),
-    "name" VARCHAR(255) NOT NULL
+    "name" VARCHAR(255) CONSTRAINT bundle_type_unique NOT NULL UNIQUE
 );
 
 CREATE TABLE requirement(
@@ -90,6 +90,15 @@ CREATE TABLE requirement_course(
 
 CREATE TYPE bundle_state AS ENUM ('EMPTY', 'CANCELED', 'ACCEPTED');
 
+CREATE TABLE report(
+    id BIGINT PRIMARY KEY DEFAULT nextval('hibernate_sequence'),
+    file_name VARCHAR(255),
+    sym_count BIGINT,
+    unique_words BIGINT,
+    word_count BIGINT,
+    sym_count_no_space BIGINT
+);
+
 CREATE TABLE bundle(
     id BIGINT PRIMARY KEY DEFAULT nextval('hibernate_sequence'),
     folder VARCHAR(255),
@@ -103,20 +112,11 @@ CREATE TABLE bundle(
     FOREIGN KEY (id_report) REFERENCES report(id)
 );
 
-CREATE TABLE report(
-    id BIGINT PRIMARY KEY DEFAULT nextval('hibernate_sequence'),
-    file_name VARCHAR(255),
-    sym_count BIGINT,
-    unique_words BIGINT,
-    word_count BIGINT,
-    sym_count_no_space BIGINT
-);
-
 CREATE TABLE bundle_acl(
     user_id BIGINT NOT NULL,
     bundle_id BIGINT NOT NULL,
     rights author NOT NULL,
-    FOREIGN KEY (id_user) REFERENCES "user"(id),
-    FOREIGN KEY (id_bundle) REFERENCES bundle(id),
-    PRIMARY KEY (id_user,id_bundle)
+    FOREIGN KEY (user_id) REFERENCES "user"(id),
+    FOREIGN KEY (bundle_id) REFERENCES bundle(id),
+    PRIMARY KEY (user_id,bundle_id)
 );

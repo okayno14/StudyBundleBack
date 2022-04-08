@@ -1,6 +1,6 @@
 package dataAccess.entity;
 
-import exception.NoRightException;
+import exception.Business.NoRightException;
 
 import javax.persistence.*;
 import java.util.*;
