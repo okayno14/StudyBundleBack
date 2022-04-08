@@ -4,9 +4,9 @@ public class NotUniqueException extends RuntimeException
 {
 	private String message = "Отправленные данные есть в системе";
 
-	public NotUniqueException()
+	public NotUniqueException(Throwable cause)
 	{
-		super();
+		super(cause);
 	}
 
 	@Override

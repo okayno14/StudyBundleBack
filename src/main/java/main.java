@@ -21,14 +21,14 @@ public class main
 			confMain = gsonBuilder.create().fromJson(fileReader, confMain.getClass());
 			//тут блок регистрации парсеров сущностей бизнес-слоя
 
-			ServerFace serverFace = new ServerFace(confMain.getHttp_conf(),
-												   confMain.getDateAccessConf(),
+			ServerFace serverFace = new ServerFace(confMain.getHttp_conf(), confMain,
 												   gsonBuilder.create());
-	}
+		}
 		catch (Exception e)
 		{
 			e.printStackTrace();
-			System.out.println(e);
+			//System.out.println(e.getCause());
+			System.out.println(e.getMessage());
 			System.exit(1);
 		}
 	}

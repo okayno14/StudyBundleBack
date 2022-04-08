@@ -8,6 +8,7 @@ import java.util.List;
 public interface IBundleTypeRepo
 {
 	List<BundleType> get();
+	BundleType get(long id);
 	void save(BundleType bundleType) throws NotUniqueException;
 	void delete(BundleType bundleType);
 }

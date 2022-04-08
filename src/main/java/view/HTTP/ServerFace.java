@@ -1,15 +1,13 @@
 package view.HTTP;
 
 import com.google.gson.Gson;
+import configuration.ConfMain;
 import configuration.DateAccessConf;
 import configuration.HTTP_Conf;
 import controller.*;
 import dataAccess.entity.BundleType;
-import org.hibernate.exception.ConstraintViolationException;
 import spark.Spark;
 
-import javax.persistence.PersistenceException;
-import java.util.Iterator;
 import java.util.List;
 
 public class ServerFace
@@ -24,7 +22,7 @@ public class ServerFace
 	private IRoleController       roleController;
 	private IUserController       userController;
 
-	public ServerFace(HTTP_Conf http_conf, DateAccessConf dateAccessConf, Gson gson)
+	public ServerFace(HTTP_Conf http_conf, ConfMain confMain, Gson gson)
 	{
 		this.http_conf = http_conf;
 		this.gson      = gson;
@@ -32,7 +30,7 @@ public class ServerFace
 		Spark.port(http_conf.getPort());
 
 		//строим контроллер
-		Controller controller = new Controller(dateAccessConf);
+		Controller controller = new Controller(confMain);
 
 		bundleController = controller.getBundleController();
 		bundleTypeController =controller.getBundleTypeController();
@@ -42,26 +40,23 @@ public class ServerFace
 		userController = controller.getUserController();
 
 
-		testServices();
+		testBundleTypeService();
+
 		//стартуем сервер
 		//endpoints();
 	}
 
-	private void testServices()
+	private void testBundleTypeService()
 	{
 		List<BundleType> res = bundleTypeController.get();
 		List<BundleType> res1 = bundleTypeController.get();
 
-
-
-
-
 		bundleTypeController.setClient(new BundleType("ПРГРГ"));
 		bundleTypeController.add();
-
 		bundleTypeController.delete();
 
-
+		BundleType obj = bundleTypeController.get(3L);
+		obj = bundleTypeController.get(156156156L);
 	}
 
 	public void endpoints()

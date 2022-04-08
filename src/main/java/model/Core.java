@@ -3,6 +3,8 @@ package model;
 import business.*;
 import business.bundle.IBundleService;
 import business.bundle.WordParser;
+import configuration.BusinessConfiguration;
+import configuration.ConfMain;
 import configuration.DateAccessConf;
 import dataAccess.cache.*;
 import dataAccess.entity.*;
@@ -18,6 +20,7 @@ public class Core
 {
 	private SessionFactory sessionFactory;
 	private DateAccessConf dateAccessConf;
+	private BusinessConfiguration businessConfiguration;
 
 	private IBundleService     iBundleService;
 	private IBundleTypeService iBundleTypeService;
@@ -53,9 +56,9 @@ public class Core
 		sessionFactory = configuration.buildSessionFactory();
 	}
 
-	public Core(DateAccessConf dateAccessConf)
+	public Core(ConfMain confMain)
 	{
-		this.dateAccessConf = dateAccessConf;
+		this.dateAccessConf = confMain.getDateAccessConf();
 		initHiber(dateAccessConf.getHibernateConf());
 
 		//сборка сервисов

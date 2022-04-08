@@ -5,7 +5,7 @@
             org.postgresql.Driver
         </property>
         <property name="hibernate.connection.url">
-            jdbc:postgresql://localhost:5433/study_bundle
+            jdbc:postgresql://localhost:5433/study_bundle2
         </property>
         <property name="hibernate.connection.username">
             postgres

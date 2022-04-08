@@ -6,9 +6,10 @@ import java.lang.reflect.Type;
 
 public class ConfMain implements JsonSerializer<ConfMain>, JsonDeserializer<ConfMain>
 {
-	HTTP_Conf      http_conf      = null;
-	DateAccessConf dateAccessConf = null;
-	Gson           gson;
+	private HTTP_Conf      http_conf      = null;
+	private DateAccessConf dateAccessConf = null;
+	private BusinessConfiguration businessConfiguration = new BusinessConfiguration();
+	private Gson           gson;
 
 	public ConfMain(Gson gson)
 	{
@@ -52,5 +53,10 @@ public class ConfMain implements JsonSerializer<ConfMain>, JsonDeserializer<Conf
 	public DateAccessConf getDateAccessConf()
 	{
 		return dateAccessConf;
+	}
+
+	public BusinessConfiguration getBusinessConfiguration()
+	{
+		return businessConfiguration;
 	}
 }

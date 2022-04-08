@@ -2,6 +2,7 @@ package dataAccess.repository;
 
 import dataAccess.entity.BundleType;
 import exception.DataAccess.NotUniqueException;
+import exception.DataAccess.ObjectNotFoundException;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.exception.ConstraintViolationException;
@@ -24,7 +25,7 @@ public class BundleTypeRepoHiber implements IBundleTypeRepo
 	private Transaction getOrBegin()
 	{
 		Transaction t = sessionFactory.getCurrentSession().getTransaction();
-		if(!t.isActive())
+		if (!t.isActive())
 		{
 			t.begin();
 		}
@@ -37,10 +38,24 @@ public class BundleTypeRepoHiber implements IBundleTypeRepo
 		Transaction t = getOrBegin();
 		HQL = "from BundleType";
 		q   = sessionFactory.getCurrentSession().createQuery(HQL);
-		List<BundleType>     list     = q.getResultList();
+		List<BundleType> list = q.getResultList();
 		t.commit();
 		return list;
 	}
+
+	@Override
+	public BundleType get(long id)
+	{
+		Transaction t   = getOrBegin();
+		BundleType  res = sessionFactory.getCurrentSession().get(BundleType.class, id);
+		t.commit();
+		if (res != null)
+		{
+			return res;
+		}
+		throw new ObjectNotFoundException(new NullPointerException());
+	}
+
 
 	@Override
 	public void save(BundleType bundleType) throws NotUniqueException
@@ -48,7 +63,7 @@ public class BundleTypeRepoHiber implements IBundleTypeRepo
 		Transaction t = getOrBegin();
 		try
 		{
-			if(bundleType.getId() != -1)
+			if (bundleType.getId() != -1)
 			{
 				sessionFactory.getCurrentSession().merge(bundleType);
 			}
@@ -57,11 +72,10 @@ public class BundleTypeRepoHiber implements IBundleTypeRepo
 		}
 		catch (PersistenceException ee)
 		{
-			if(ee.getCause() instanceof ConstraintViolationException)
+			if (ee.getCause() instanceof ConstraintViolationException)
 			{
 				t.rollback();
-				NotUniqueException toThrow = new NotUniqueException();
-				toThrow.initCause(ee.getCause());
+				NotUniqueException toThrow = new NotUniqueException(ee.getCause());
 				throw toThrow;
 			}
 		}
@@ -69,14 +83,14 @@ public class BundleTypeRepoHiber implements IBundleTypeRepo
 
 	private long countReferences(BundleType bundleType)
 	{
-		HQL="select count (b.bundleType) from Bundle as b where b.bundleType.id = :id";
-		q = sessionFactory.getCurrentSession().createQuery(HQL);
-		q.setParameter("id",bundleType.getId());
+		HQL = "select count (b.bundleType) from Bundle as b where b.bundleType.id = :id";
+		q   = sessionFactory.getCurrentSession().createQuery(HQL);
+		q.setParameter("id", bundleType.getId());
 		long res = (long) q.uniqueResult();
-		HQL="select count (r.bundleType) from Requirement as r where r.bundleType.id=:id";
-		q = sessionFactory.getCurrentSession().createQuery(HQL);
-		q.setParameter("id",bundleType.getId());
-		res+=(long) q.uniqueResult();
+		HQL = "select count (r.bundleType) from Requirement as r where r.bundleType.id=:id";
+		q   = sessionFactory.getCurrentSession().createQuery(HQL);
+		q.setParameter("id", bundleType.getId());
+		res += (long) q.uniqueResult();
 		return res;
 	}
 
@@ -84,8 +98,8 @@ public class BundleTypeRepoHiber implements IBundleTypeRepo
 	public void delete(BundleType bundleType)
 	{
 		Transaction t = getOrBegin();
-			countReferences(bundleType);
-			sessionFactory.getCurrentSession().delete(bundleType);
+		countReferences(bundleType);
+		sessionFactory.getCurrentSession().delete(bundleType);
 		t.commit();
 	}
 }

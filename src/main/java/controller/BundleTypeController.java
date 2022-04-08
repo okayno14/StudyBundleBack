@@ -29,6 +29,12 @@ public class BundleTypeController implements IBundleTypeController
 	}
 
 	@Override
+	public BundleType get(long id)
+	{
+		return service.get(id);
+	}
+
+	@Override
 	public void delete()
 	{
 		service.delete();

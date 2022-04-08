@@ -43,6 +43,14 @@ public class BundleTypeService implements IBundleTypeService
 	}
 
 	@Override
+	public BundleType get(long id)
+	{
+		BundleType res = repo.get(id);
+		cache.put(res);
+		return res;
+	}
+
+	@Override
 	public void update(String name)
 	{
 		client.setName(name);

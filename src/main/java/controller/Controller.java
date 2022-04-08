@@ -1,6 +1,7 @@
 package controller;
 
 import business.IUserService;
+import configuration.ConfMain;
 import configuration.DateAccessConf;
 import model.Core;
 
@@ -14,12 +15,12 @@ public class Controller
 	IRoleController roleController;
 	IUserController userController;
 
-	public Controller(DateAccessConf dateAccessConf)
+	public Controller(ConfMain confMain)
 	{
 		//делает дела для настройки контроллера
 
 		//Инициализация ядра
-		Core core = new Core(dateAccessConf);
+		Core core = new Core(confMain);
 
 		//После сборки ядра собираем микроконтроллеры
 		bundleController = new BundleController(this,core.getiBundleService());
