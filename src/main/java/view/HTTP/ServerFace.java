@@ -19,7 +19,6 @@ public class ServerFace
 	private IBundleTypeController bundleTypeController;
 	private ICourseController     courseController;
 	private IGroupController      groupController;
-	private IRoleController       roleController;
 	private IUserController       userController;
 
 	public ServerFace(HTTP_Conf http_conf, ConfMain confMain, Gson gson)
@@ -36,11 +35,10 @@ public class ServerFace
 		bundleTypeController =controller.getBundleTypeController();
 		courseController = controller.getCourseController();
 		groupController = controller.getGroupController();
-		roleController = controller.getRoleController();
 		userController = controller.getUserController();
 
 
-		testBundleTypeService();
+		//testBundleTypeService();
 
 		//стартуем сервер
 		//endpoints();
