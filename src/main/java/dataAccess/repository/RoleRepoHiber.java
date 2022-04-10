@@ -24,7 +24,7 @@ public class RoleRepoHiber extends RepoHiberBase implements IRoleRepo
 	public List<Role> get()
 	{
 		Transaction t = getOrBegin();
-		HQL = "from Role";
+		HQL = "select r from Role as r inner join fetch r.routeList";
 		q   = sessionFactory.getCurrentSession().createQuery(HQL);
 		List<Role> res = q.getResultList();
 		t.commit();

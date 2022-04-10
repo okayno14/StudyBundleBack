@@ -1,6 +1,6 @@
 package exception.Business;
 
-public class NoRightException extends Exception
+public class NoRightException extends RuntimeException
 {
 	public NoRightException()
 	{

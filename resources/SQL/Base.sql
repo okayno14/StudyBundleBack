@@ -27,7 +27,7 @@ CREATE TABLE role_route(
 
 CREATE TABLE "group"(
     id BIGINT PRIMARY KEY DEFAULT nextval('hibernate_sequence'),
-    "name" VARCHAR(255) NOT NULL
+    "name" VARCHAR(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE "user"(

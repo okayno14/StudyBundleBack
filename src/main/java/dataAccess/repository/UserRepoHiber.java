@@ -1,6 +1,7 @@
 package dataAccess.repository;
 
 import dataAccess.entity.User;
+import exception.DataAccess.DataAccessException;
 import exception.DataAccess.NotUniqueException;
 import exception.DataAccess.ObjectNotFoundException;
 import org.hibernate.SessionFactory;
@@ -36,17 +37,19 @@ public class UserRepoHiber extends RepoHiberBase implements IUserRepo
 			{
 				sessionFactory.getCurrentSession().merge(user);
 			}
-			sessionFactory.getCurrentSession().save(user);
+			else
+			{
+				sessionFactory.getCurrentSession().save(user);
+			}
 			t.commit();
 		}
 		catch (PersistenceException ee)
 		{
+			t.rollback();
 			if (ee.getCause() instanceof ConstraintViolationException)
 			{
-				t.rollback();
-				NotUniqueException toThrow = new NotUniqueException("Почта уже есть в базе",
-																	ee.getCause());
-				throw toThrow;
+				throw new DataAccessException(
+						new NotUniqueException("Почта уже есть в базе", ee.getCause()));
 			}
 		}
 	}
@@ -61,7 +64,7 @@ public class UserRepoHiber extends RepoHiberBase implements IUserRepo
 		{
 			return res;
 		}
-		throw new ObjectNotFoundException(new NullPointerException());
+		throw new DataAccessException(new ObjectNotFoundException());
 	}
 
 	@Override
@@ -77,7 +80,7 @@ public class UserRepoHiber extends RepoHiberBase implements IUserRepo
 		{
 			return res;
 		}
-		throw new ObjectNotFoundException(new NullPointerException());
+		throw new DataAccessException(new ObjectNotFoundException());
 	}
 
 	@Override
@@ -94,7 +97,7 @@ public class UserRepoHiber extends RepoHiberBase implements IUserRepo
 		{
 			return res;
 		}
-		throw new ObjectNotFoundException(new NullPointerException());
+		throw new DataAccessException(new ObjectNotFoundException());
 	}
 
 	@Override
@@ -115,7 +118,7 @@ public class UserRepoHiber extends RepoHiberBase implements IUserRepo
 		{
 			return res;
 		}
-		throw new ObjectNotFoundException(new NullPointerException());
+		throw new DataAccessException(new ObjectNotFoundException());
 	}
 
 	@Override
@@ -136,30 +139,30 @@ public class UserRepoHiber extends RepoHiberBase implements IUserRepo
 		{
 			return res;
 		}
-		throw new ObjectNotFoundException(new NullPointerException());
+		throw new DataAccessException(new ObjectNotFoundException());
 	}
 
 	@Override
 	public List<User> getByCourse(User fio, String courseName)
 	{
 		Transaction t = getOrBegin();
-		HQL = "select u from User as u " +
-				"inner join CourseACL as ca on ca.id.userID = u.id " +
+		HQL = "select u from User as u " + "inner join CourseACL as ca on ca.id.userID = u.id " +
 				"inner join Course as c on c.id = ca.id.courseID " +
 				"where u.lastName=:lastName and u.firstName=:firstName and u.fatherName=:fatherName and " +
 				"c.name=:courseName";
-		q=sessionFactory.getCurrentSession().createQuery(HQL);
+		q   = sessionFactory.getCurrentSession().createQuery(HQL);
 		q.setParameter("lastName", fio.getLastName());
 		q.setParameter("firstName", fio.getFirstName());
 		q.setParameter("fatherName", fio.getFatherName());
-		q.setParameter("courseName",courseName);
+		q.setParameter("courseName", courseName);
 		List<User> res = q.getResultList();
 		t.commit();
-		if(res.size()!=0)
+		if (res.size() != 0)
 		{
 			return res;
 		}
-		throw new ObjectNotFoundException();
+
+		throw new DataAccessException(new ObjectNotFoundException());
 	}
 
 	@Override

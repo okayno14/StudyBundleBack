@@ -1,6 +1,7 @@
 package dataAccess.repository;
 
 import dataAccess.entity.BundleType;
+import exception.DataAccess.DataAccessException;
 import exception.DataAccess.NotUniqueException;
 import exception.DataAccess.ObjectNotFoundException;
 import org.hibernate.SessionFactory;
@@ -44,7 +45,7 @@ public class BundleTypeRepoHiber extends RepoHiberBase implements IBundleTypeRep
 		{
 			return res;
 		}
-		throw new ObjectNotFoundException(new NullPointerException());
+		throw new DataAccessException(new ObjectNotFoundException());
 	}
 
 
@@ -58,17 +59,20 @@ public class BundleTypeRepoHiber extends RepoHiberBase implements IBundleTypeRep
 			{
 				sessionFactory.getCurrentSession().merge(bundleType);
 			}
-			sessionFactory.getCurrentSession().save(bundleType);
+			else
+			{
+				sessionFactory.getCurrentSession().save(bundleType);
+			}
 			t.commit();
 		}
 		catch (PersistenceException ee)
 		{
+			t.rollback();
 			if (ee.getCause() instanceof ConstraintViolationException)
 			{
-				t.rollback();
-				NotUniqueException toThrow = new NotUniqueException(
-						"Данный тип работы присутствует в базе", ee.getCause());
-				throw toThrow;
+				throw new DataAccessException(
+						new NotUniqueException("Данный тип работы присутствует в базе",
+											   ee.getCause()));
 			}
 		}
 	}

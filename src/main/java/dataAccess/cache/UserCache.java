@@ -8,13 +8,13 @@ import java.util.Map;
 
 public class UserCache implements IUserCache
 {
-	private Core              core;
+	private CacheController cacheController;
 	private Map<Long, User>   allUsers           = new HashMap<>();
 	private Map<String, User> authenticatedUsers = new HashMap<>();
 
-	public UserCache(Core core)
+	public UserCache(CacheController cacheController)
 	{
-		this.core = core;
+		this.cacheController=cacheController;
 	}
 
 	@Override
@@ -51,6 +51,7 @@ public class UserCache implements IUserCache
 	public void put(User user)
 	{
 		allUsers.put(user.getId(),user);
+		cacheController.added(user);
 	}
 
 	@Override

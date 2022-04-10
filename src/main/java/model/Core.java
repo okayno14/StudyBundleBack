@@ -8,10 +8,7 @@ import configuration.ConfMain;
 import configuration.DateAccessConf;
 import dataAccess.cache.*;
 import dataAccess.entity.*;
-import dataAccess.repository.BundleTypeRepoHiber;
-import dataAccess.repository.IUserRepo;
-import dataAccess.repository.RoleRepoHiber;
-import dataAccess.repository.UserRepoHiber;
+import dataAccess.repository.*;
 import org.hibernate.query.Query;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
@@ -31,13 +28,6 @@ public class Core
 	private IGroupService      iGroupService;
 	private IRoleService       iRoleService;
 	private IUserService       iUserService;
-
-	IBundleCache     bundleCache;
-	IBundleTypeCache bundleTypeCache;
-	ICourseCache     courseCache;
-	IGroupCache      groupCache;
-	IRoleCache       roleCache;
-	IUserCache       userCache;
 
 	private void initHiber(String path)
 	{
@@ -65,24 +55,51 @@ public class Core
 		initHiber(dateAccessConf.getHibernateConf());
 
 		//сборка кэшей
+		CacheController cacheController = new CacheController();
+
+		IBundleCache     bundleCache;
+		IBundleTypeCache bundleTypeCache;
+		ICourseCache     courseCache;
+		IGroupCache      groupCache;
+		IRoleCache       roleCache;
+		IUserCache       userCache;
+
 		bundleTypeCache = new BundleTypeCache();
+		groupCache      = new GroupCache(cacheController);
 		roleCache       = new RoleCache();
-		userCache       = new UserCache(this);
+		userCache       = new UserCache(cacheController);
+
+		cacheController.setBundleTypeCache(bundleTypeCache);
+		cacheController.setGroupCache(groupCache);
+		cacheController.setRoleCache(roleCache);
+		cacheController.setUserCache(userCache);
 
 		//сборка сервисов
 		iBundleTypeService = new BundleTypeService(new BundleTypeRepoHiber(sessionFactory),
 												   bundleTypeCache);
+		iGroupService      = new GroupService(new GroupRepoHiber(sessionFactory), groupCache);
 		iUserService       = new UserService(new UserRepoHiber(sessionFactory),
 											 new RoleRepoHiber(sessionFactory), userCache,
 											 roleCache);
 
 		//ТЕСТЫ
+
+		GroupRepoHiber groupRepoHiber = new GroupRepoHiber(sessionFactory);
+		List<Group>    res            = groupRepoHiber.get("АВТ-815");
+		groupRepoHiber.fetchStudents(res.get(0));
+		cacheController.added(res.get(0));
+
 		//testCourse(sessionFactory);
-		//		IUserRepo userRepo = new UserRepoHiber(sessionFactory);
+		//IUserRepo userRepo = new UserRepoHiber(sessionFactory);
 		//		userRepo.getByCourse(
 		//				new User("Васильев", "Василий", "Васильевич", "some.mail@stud.nstu.ru", new Role()),
 		//				"Информатика");
 		//		userRepo.get("some.mail@stud.nstu.ru");
+
+
+		//		User user = res.get(0).getStudents().iterator().next();
+		//		user.setFirstName("ТЕСТ");
+		//		userRepo.save(user);
 	}
 
 	private void testCourse(SessionFactory sessionFactory)

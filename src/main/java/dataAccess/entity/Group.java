@@ -91,7 +91,8 @@ public class Group implements Serializable
 
 	public Set<User> getStudents()
 	{
-		return new HashSet<User>(students);
+		//return new HashSet<User>(students);
+		return students;
 	}
 
 	public void setStudents(Set<User> students)

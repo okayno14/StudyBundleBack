@@ -3,6 +3,7 @@ package business;
 import dataAccess.cache.IRoleCache;
 import dataAccess.cache.IUserCache;
 import dataAccess.entity.Role;
+import dataAccess.entity.User;
 import dataAccess.repository.IRoleRepo;
 import dataAccess.repository.IUserRepo;
 
@@ -33,5 +34,11 @@ public class UserService implements IUserService
 		}
 	}
 
-
+	@Override
+	public User get(long id)
+	{
+		User res = userRepo.get(id);
+		userCache.put(res);
+		return res;
+	}
 }

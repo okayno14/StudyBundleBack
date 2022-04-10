@@ -12,8 +12,7 @@ public class Role implements Serializable
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
 	private long        id = -1;
 	private String      name;
-	@ManyToMany(fetch = FetchType.EAGER,
-				cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
 	@JoinTable(name = "role_route",
 			   joinColumns = {@JoinColumn(name = "id_role")},
 			   inverseJoinColumns = {@JoinColumn(name = "id_route")})

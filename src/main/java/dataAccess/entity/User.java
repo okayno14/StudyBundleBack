@@ -15,7 +15,7 @@ public class User implements Serializable
 	private long    id         = -1;
 	@Transient
 	private String  token;
-	@ManyToOne
+	@ManyToOne()
 	@JoinColumn(name = "id_role", referencedColumnName = "id")
 	private Role    role;
 	@Column(name = "email_state")

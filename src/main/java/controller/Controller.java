@@ -25,6 +25,8 @@ public class Controller
 		courseController = new CourseController(this,core.getiCourseService());
 		groupController = new GroupController(this,core.getiGroupService());
 		userController = new UserController(this,core.getiUserService());
+
+		//ТЕСТЫ
 	}
 
 	public IBundleTypeController getBundleTypeController()
