@@ -10,6 +10,11 @@ public class CourseCache implements ICourseCache
 	private Map<Long, Course> cache = new HashMap<>();
 	private CacheController cacheController;
 
+	public CourseCache(CacheController cacheController)
+	{
+		this.cacheController = cacheController;
+	}
+
 	@Override
 	public boolean contains(long id)
 	{
