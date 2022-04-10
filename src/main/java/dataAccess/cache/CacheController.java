@@ -26,63 +26,91 @@ public class CacheController
 	{
 		//вытащить роль из кеша и присвоить новому объекту
 		Role role = user.getRole();
-		if(roleCache.contains(role.getId()))
+		if (roleCache.contains(role.getId()))
 		{
-			role=roleCache.get(role.getId());
+			role = roleCache.get(role.getId());
 			user.setRole(role);
 		}
 
 		//обновить кеш групп
 		Group group = user.getGroup();
-		if(!groupCache.contains(group.getId()))
+		if (!groupCache.contains(group.getId()))
 		{
 			groupCache.put(group);
 		}
+		else
+		{
+			user.setGroup(groupCache.get(group.getId()));
+		}
 	}
+
 	//обновить кеш пользователей,
 	//но если была загружена группа со студентами
 	//может быть lazyException
 	public void fetched(Group group)
 	{
-		Set<User> users = group.getStudents();
+		Set<User>      users    = group.getStudents();
 		Iterator<User> iterator = users.iterator();
-		while(iterator.hasNext())
+		while (iterator.hasNext())
 		{
-			User user=iterator.next();
-			if(!userCache.contains(user.getId()))
+			User user = iterator.next();
+			if (!userCache.contains(user.getId()))
 			{
 				userCache.put(user);
 			}
+			else
+			{
+				iterator.remove();
+				users.add(userCache.get(user.getId()));
+			}
 		}
 	}
+
+	//обновить кеш типов работ
 	//обновить кеш пользователей (добавить владельцев)
 	//обновить кеш курсов (добавить курс)
-	//обновить кеш типов работ
-	void added(Bundle bundle){}
-	//обновить кеш типов работ
-	//обновить кеш групп
+	void added(Bundle bundle)
+	{
+
+	}
+
 	void added(Course course)
 	{
-		Set<Requirement> requirements = course.getRequirementSet();
-		Iterator<Requirement> iterator = requirements.iterator();
-		BundleType bt=null;
-		while(iterator.hasNext())
+		//обновить кеш типов работ
+		Set<Requirement>      requirements = course.getRequirementSet();
+		Iterator<Requirement> iterator     = requirements.iterator();
+		BundleType            bt           = null;
+		while (iterator.hasNext())
 		{
-			bt = iterator.next().getBundleType();
-			if(!bundleTypeCache.contains(bt.getId()))
+			Requirement req =iterator.next();
+			bt = req.getBundleType();
+			if (!bundleTypeCache.contains(bt.getId()))
 			{
 				bundleTypeCache.put(bt);
 			}
+			else
+			{
+				req.setBundleType(bundleTypeCache.get(bt.getId()));
+			}
 		}
-		Set<Group> groups = course.getGroupes();
+		//обновить кеш пользователей (добавить владельцев)
+		//Set<CourseACL> courseACLSet = course.getCourseACL_Set();
+
+		//обновить кеш групп
+		Set<Group>      groups    = course.getGroupes();
 		Iterator<Group> iterator1 = groups.iterator();
-		Group group = null;
+		Group           group     = null;
 		while (iterator1.hasNext())
 		{
-			group=iterator1.next();
-			if(!groupCache.contains(group.getId()))
+			group = iterator1.next();
+			if (!groupCache.contains(group.getId()))
 			{
 				groupCache.put(group);
+			}
+			else
+			{
+				iterator1.remove();
+				groups.add(groupCache.get(group.getId()));
 			}
 		}
 	}
@@ -90,16 +118,18 @@ public class CacheController
 	//Эти методы вызываются, если объект удаляется из системы через сервис
 	void deleted(Group group)
 	{
-		Set<User> students = group.getStudents();
+		Set<User>      students = group.getStudents();
 		Iterator<User> iterator = students.iterator();
-		while(iterator.hasNext())
+		while (iterator.hasNext())
 		{
 			userCache.delete(iterator.next().getId());
 		}
 	}
 
 	//Метод очищающий практически все кеши. Удаление происходит только из памяти приложения
-	private void clean(){}
+	private void clean()
+	{
+	}
 
 	public void setBundleCache(IBundleCache bundleCache)
 	{
