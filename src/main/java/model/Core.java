@@ -84,10 +84,21 @@ public class Core
 
 		//ТЕСТЫ
 
-		GroupRepoHiber groupRepoHiber = new GroupRepoHiber(sessionFactory);
-		List<Group>    res            = groupRepoHiber.get("АВТ-815");
-		groupRepoHiber.fetchStudents(res.get(0));
-		cacheController.added(res.get(0));
+//		GroupRepoHiber groupRepoHiber = new GroupRepoHiber(sessionFactory);
+//		List<Group>    res            = groupRepoHiber.get("АВТ-815");
+//		groupRepoHiber.fetchStudents(res.get(0));
+//		cacheController.fetched(res.get(0));
+
+//		ICourseRepo courseRepo = new CourseRepoHiber(sessionFactory);
+//		User teacher = new User("Малявко", "Александр", "Антонович", "a.malyavko@corp.nstu.ru",
+//						roleCache.get(10L));
+//		teacher.setId(87L);
+//		List<Course> courseList = courseRepo.get(teacher,"Параллельное программирование");
+
+//		ICourseRepo courseRepo = new CourseRepoHiber(sessionFactory);
+//		User user = new User();
+//		user.setId(81L);
+//		courseRepo.getByStudent(user);
 
 		//testCourse(sessionFactory);
 		//IUserRepo userRepo = new UserRepoHiber(sessionFactory);

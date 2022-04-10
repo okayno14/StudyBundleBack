@@ -195,7 +195,7 @@ public class Course
 
 	public Set<Requirement> getRequirementSet()
 	{
-		return new HashSet<Requirement>(requirementSet);
+		return requirementSet;
 	}
 
 	public void setRequirementSet(Set<Requirement> requirementSet)

@@ -57,7 +57,7 @@ CREATE TABLE group_course(
     PRIMARY KEY (id_group, id_course)
 );
 
-CREATE TYPE author as ENUM ('author', 'coauthor');
+CREATE TYPE author as ENUM ('AUTHOR', 'COAUTHOR');
 
 CREATE TABLE course_acl(
     user_id BIGINT NOT NULL,

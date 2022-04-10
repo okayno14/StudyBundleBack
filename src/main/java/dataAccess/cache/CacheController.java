@@ -42,7 +42,7 @@ public class CacheController
 	//обновить кеш пользователей,
 	//но если была загружена группа со студентами
 	//может быть lazyException
-	public void added(Group group)
+	public void fetched(Group group)
 	{
 		Set<User> users = group.getStudents();
 		Iterator<User> iterator = users.iterator();
@@ -61,7 +61,44 @@ public class CacheController
 	void added(Bundle bundle){}
 	//обновить кеш типов работ
 	//обновить кеш групп
-	void added(Course course){}
+	void added(Course course)
+	{
+		Set<Requirement> requirements = course.getRequirementSet();
+		Iterator<Requirement> iterator = requirements.iterator();
+		BundleType bt=null;
+		while(iterator.hasNext())
+		{
+			bt = iterator.next().getBundleType();
+			if(!bundleTypeCache.contains(bt.getId()))
+			{
+				bundleTypeCache.put(bt);
+			}
+		}
+		Set<Group> groups = course.getGroupes();
+		Iterator<Group> iterator1 = groups.iterator();
+		Group group = null;
+		while (iterator1.hasNext())
+		{
+			group=iterator1.next();
+			if(!groupCache.contains(group.getId()))
+			{
+				groupCache.put(group);
+			}
+		}
+	}
+
+	//Эти методы вызываются, если объект удаляется из системы через сервис
+	void deleted(Group group)
+	{
+		Set<User> students = group.getStudents();
+		Iterator<User> iterator = students.iterator();
+		while(iterator.hasNext())
+		{
+			userCache.delete(iterator.next().getId());
+		}
+	}
+
+	//Метод очищающий практически все кеши. Удаление происходит только из памяти приложения
 	private void clean(){}
 
 	public void setBundleCache(IBundleCache bundleCache)
