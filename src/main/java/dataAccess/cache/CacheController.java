@@ -34,13 +34,16 @@ public class CacheController
 
 		//обновить кеш групп
 		Group group = user.getGroup();
-		if (!groupCache.contains(group.getId()))
+		if(group!=null)
 		{
-			groupCache.put(group);
-		}
-		else
-		{
-			user.setGroup(groupCache.get(group.getId()));
+			if (!groupCache.contains(group.getId()))
+			{
+				groupCache.put(group);
+			}
+			else
+			{
+				user.setGroup(groupCache.get(group.getId()));
+			}
 		}
 	}
 
@@ -66,12 +69,45 @@ public class CacheController
 		}
 	}
 
-	//обновить кеш типов работ
-	//обновить кеш пользователей (добавить владельцев)
-	//обновить кеш курсов (добавить курс)
 	void added(Bundle bundle)
 	{
-
+		//обновить кеш типов работ
+		BundleType bt = bundle.getBundleType();
+		if (!bundleTypeCache.contains(bt.getId()))
+		{
+			bundleTypeCache.put(bt);
+		}
+		else
+		{
+			bundle.setBundleType(bundleTypeCache.get(bt.getId()));
+		}
+		//обновить кеш пользователей (добавить владельцев)
+		Set<BundleACL>      bundleACLSet      = bundle.getBundleACLSet();
+		Iterator<BundleACL> bundleACLIterator = bundleACLSet.iterator();
+		BundleACL           bundleACL         = null;
+		while (bundleACLIterator.hasNext())
+		{
+			bundleACL = bundleACLIterator.next();
+			User user = bundleACL.getUser();
+			if (!userCache.contains(user.getId()))
+			{
+				userCache.put(user);
+			}
+			else
+			{
+				bundleACL.setUser(userCache.get(user.getId()));
+			}
+		}
+		//обновить кеш курсов (добавить курс)
+		Course course = bundle.getCourse();
+		if (!courseCache.contains(course.getId()))
+		{
+			courseCache.put(course);
+		}
+		else
+		{
+			bundle.setCourse(courseCache.get(course.getId()));
+		}
 	}
 
 	void added(Course course)
@@ -82,7 +118,7 @@ public class CacheController
 		BundleType            bt           = null;
 		while (iterator.hasNext())
 		{
-			Requirement req =iterator.next();
+			Requirement req = iterator.next();
 			bt = req.getBundleType();
 			if (!bundleTypeCache.contains(bt.getId()))
 			{
@@ -94,8 +130,22 @@ public class CacheController
 			}
 		}
 		//обновить кеш пользователей (добавить владельцев)
-		//Set<CourseACL> courseACLSet = course.getCourseACL_Set();
-
+		Set<CourseACL>      courseACLSet      = course.getCourseACL_Set();
+		Iterator<CourseACL> courseACLIterator = courseACLSet.iterator();
+		CourseACL           courseACL         = null;
+		while (courseACLIterator.hasNext())
+		{
+			courseACL = courseACLIterator.next();
+			User user = courseACL.getUser();
+			if (!userCache.contains(user.getId()))
+			{
+				userCache.put(user);
+			}
+			else
+			{
+				courseACL.setUser(userCache.get(user.getId()));
+			}
+		}
 		//обновить кеш групп
 		Set<Group>      groups    = course.getGroupes();
 		Iterator<Group> iterator1 = groups.iterator();
@@ -159,5 +209,37 @@ public class CacheController
 	public void setUserCache(IUserCache userCache)
 	{
 		this.userCache = userCache;
+	}
+
+	//---------------------------------------------------
+
+	public IBundleCache getBundleCache()
+	{
+		return bundleCache;
+	}
+
+	public IBundleTypeCache getBundleTypeCache()
+	{
+		return bundleTypeCache;
+	}
+
+	public ICourseCache getCourseCache()
+	{
+		return courseCache;
+	}
+
+	public IGroupCache getGroupCache()
+	{
+		return groupCache;
+	}
+
+	public IRoleCache getRoleCache()
+	{
+		return roleCache;
+	}
+
+	public IUserCache getUserCache()
+	{
+		return userCache;
 	}
 }

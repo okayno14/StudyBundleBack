@@ -1,5 +1,6 @@
 package dataAccess.entity;
 
+import exception.Business.BusinessException;
 import exception.Business.NoRightException;
 
 import javax.persistence.*;
@@ -95,7 +96,7 @@ public class Course
 		CourseACL obj = new CourseACL(this, user, Author.AUTHOR);
 		if (!isContainAuthor(user))
 		{
-			throw new NoRightException();
+			throw new BusinessException(new NoRightException());
 		}
 		Iterator<CourseACL> iterator = courseACL_Set.iterator();
 		while (iterator.hasNext())
@@ -106,7 +107,7 @@ public class Course
 				return obj.getRights();
 			}
 		}
-		throw new NoRightException();
+		throw new  BusinessException(new NoRightException());
 	}
 
 	public CourseACL getCourseACL(User user) throws NoRightException
@@ -120,7 +121,7 @@ public class Course
 				return courseACL_obj;
 			}
 		}
-		throw new NoRightException();
+		throw new BusinessException(new NoRightException());
 	}
 
 	public void addRequirement(Requirement requirement)

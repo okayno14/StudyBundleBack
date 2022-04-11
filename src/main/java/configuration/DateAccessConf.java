@@ -4,6 +4,10 @@ public class DateAccessConf
 {
 	String hibernateConf;
 	String storagePath;
+	private String supportedFormats[] = {"doc", "docx"};
+	//По умолчанию 100 МБ
+
+	private int    zipFileSizeLimit   = 100 * (int) Math.pow(2, 20);
 
 	public DateAccessConf(String hibernateConf, String storagePath)
 	{
@@ -19,6 +23,16 @@ public class DateAccessConf
 	public String getStoragePath()
 	{
 		return storagePath;
+	}
+
+	public String[] getSupportedFormats()
+	{
+		return supportedFormats;
+	}
+
+	public int getZipFileSizeLimit()
+	{
+		return zipFileSizeLimit;
 	}
 }
 

@@ -2,7 +2,7 @@ package model;
 
 import business.*;
 import business.bundle.IBundleService;
-import business.bundle.WordParser;
+import dataAccess.repository.WordParser;
 import configuration.BusinessConfiguration;
 import configuration.ConfMain;
 import configuration.DateAccessConf;
@@ -13,7 +13,7 @@ import org.hibernate.query.Query;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
-import java.io.File;
+import java.io.*;
 import java.util.*;
 
 public class Core
@@ -64,12 +64,14 @@ public class Core
 		IRoleCache       roleCache;
 		IUserCache       userCache;
 
+		bundleCache     = new BundleCache(cacheController);
 		bundleTypeCache = new BundleTypeCache();
 		courseCache     = new CourseCache(cacheController);
 		groupCache      = new GroupCache(cacheController);
 		roleCache       = new RoleCache();
 		userCache       = new UserCache(cacheController);
 
+		cacheController.setBundleCache(bundleCache);
 		cacheController.setBundleTypeCache(bundleTypeCache);
 		cacheController.setCourseCache(courseCache);
 		cacheController.setGroupCache(groupCache);
@@ -85,8 +87,9 @@ public class Core
 											 new RoleRepoHiber(sessionFactory), userCache,
 											 roleCache);
 
-		//ТЕСТЫ
 
+		//ТЕСТЫ
+		testBundleRepoFile(cacheController);
 		//		GroupRepoHiber groupRepoHiber = new GroupRepoHiber(sessionFactory);
 		//		List<Group>    res            = groupRepoHiber.get("АВТ-815");
 		//		groupRepoHiber.fetchStudents(res.get(0));
@@ -114,6 +117,107 @@ public class Core
 		//		User user = res.get(0).getStudents().iterator().next();
 		//		user.setFirstName("ТЕСТ");
 		//		userRepo.save(user);
+	}
+
+	private void testBundleRepoFile(CacheController cacheController)
+	{
+		WordParser wordParser = new WordParser();
+		IBundleRepoFile bundleRepoFile = new BundleRepoFile(dateAccessConf.getStoragePath(),
+															dateAccessConf.getSupportedFormats(),
+															dateAccessConf.getZipFileSizeLimit());
+
+		IRoleCache       roleCache       = cacheController.getRoleCache();
+		IUserCache       userCache       = cacheController.getUserCache();
+		IGroupCache      groupCache      = cacheController.getGroupCache();
+		IBundleTypeCache bundleTypeCache = cacheController.getBundleTypeCache();
+		ICourseCache     courseCache     = cacheController.getCourseCache();
+		IBundleCache     bundleCache     = cacheController.getBundleCache();
+
+		long sequence = 0L;
+
+		User user = new User("Алексеев", "Александр", "Константинович",
+							 "a.alekseev.2018@stud.nstu.ru", roleCache.get(11L));
+		user.setId(++sequence);
+		userCache.put(user);
+		user = new User("Иванов", "Иван", "Иванович", "i.ivanov.2018@stud.nstu.ru",
+						roleCache.get(11L));
+		user.setId(++sequence);
+		userCache.put(user);
+		Group group = new Group("АВТ-815");
+		group.setId(++sequence);
+		long avt815 = group.getId();
+		group.addStudent(userCache.get(sequence - 1));
+		group.addStudent(userCache.get(sequence - 2));
+		groupCache.put(group);
+		user = new User("Малявко", "Александр", "Антонович", "a.malyavko@corp.nstu.ru",
+						roleCache.get(10L));
+		long teacher = sequence++;
+		user.setId(teacher);
+		userCache.put(user);
+
+		Course course = new Course("Параллельное Программирование");
+		course.setId(++sequence);
+		long pp = sequence;
+		course.addGroup(groupCache.get(avt815));
+		course.addAuthor(userCache.get(teacher), Author.AUTHOR);
+		course.addRequirement(new Requirement(4, bundleTypeCache.get(1L)));
+		courseCache.put(course);
+
+		course = courseCache.get(pp);
+		Set<Requirement>      requirementSet      = course.getRequirementSet();
+		Iterator<Requirement> requirementIterator = requirementSet.iterator();
+		Requirement           req                 = null;
+		long                  lab                 = sequence + 1;
+		while (requirementIterator.hasNext())
+		{
+			req = requirementIterator.next();
+			Iterator<Group> groupIterator = course.getGroupes().iterator();
+			group = null;
+			while (groupIterator.hasNext())
+			{
+				group = groupIterator.next();
+				Iterator<User> userIterator = group.getStudents().iterator();
+				user = null;
+				while (userIterator.hasNext())
+				{
+					user = userIterator.next();
+					for (int i = 1; i <= req.getQuantity(); i++)
+					{
+						Bundle bundle = new Bundle(i, course, req.getBundleType());
+						bundle.addAuthor(user, Author.AUTHOR);
+						bundle.setId(++sequence);
+
+						bundleCache.put(bundle);
+					}
+				}
+			}
+		}
+
+
+		try (FileInputStream fIN = new FileInputStream("src/test/doc.zip");
+			 FileOutputStream fOUT = new FileOutputStream("src/test/docCopy.zip"))
+		{
+			ByteArrayOutputStream byteOut = new ByteArrayOutputStream(fIN.available());
+			int                   c       = 0;
+			while ((c = fIN.read()) != -1)
+			{
+				byteOut.write(c);
+			}
+			bundleRepoFile.save(bundleCache.get(lab), byteOut.toByteArray());
+
+			byte[] arr =  bundleRepoFile.get(bundleCache.get(lab));
+			fOUT.write(arr);
+		}
+		catch (java.io.FileNotFoundException fe)
+		{
+			fe.printStackTrace();
+		}
+		catch (IOException e)
+		{
+
+		}
+
+
 	}
 
 	private void testCourse(SessionFactory sessionFactory)

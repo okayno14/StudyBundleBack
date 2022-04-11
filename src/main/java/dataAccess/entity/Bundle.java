@@ -2,6 +2,8 @@ package dataAccess.entity;
 
 import business.bundle.Similarity;
 import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType;
+import configuration.BusinessConfiguration;
+import exception.Business.BusinessException;
 import exception.Business.NoRightException;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
@@ -62,7 +64,7 @@ public class Bundle implements Serializable, Similarity
 
 	private boolean isContainAuthor(User user)
 	{
-		BundleACL obj = new BundleACL(this, user, Author.AUTHOR);
+		BundleACL obj = new BundleACL(this, user, null);
 		if (bundleACLSet.contains(obj))
 		{
 			return true;
@@ -77,14 +79,18 @@ public class Bundle implements Serializable, Similarity
 			return;
 		}
 		bundleACLSet.add(new BundleACL(this, user, rights));
-		folder = user.getGroup().getName() + "/" + user.getLastName() + " " +
-				user.getFirstName().charAt(0) + user.getFatherName().charAt(0) + "/" +
-				course.getName() + "/" + bundleType.getName() + " " + num;
+
+		if(rights==Author.AUTHOR)
+		{
+			folder = user.getGroup().getName() + "/" + user.getLastName() + " " +
+					user.getFirstName().charAt(0) + user.getFatherName().charAt(0) + "/" +
+					course.getName() + "/" + bundleType.getName() + " " + num;
+		}
 	}
 
 	public void removeAuthor(User user)
 	{
-		BundleACL obj = new BundleACL(this, user, Author.AUTHOR);
+		BundleACL obj = new BundleACL(this, user, null);
 		if (isContainAuthor(user))
 		{
 			bundleACLSet.remove(obj);
@@ -93,10 +99,10 @@ public class Bundle implements Serializable, Similarity
 
 	public Author checkRights(User user) throws NoRightException
 	{
-		BundleACL obj = new BundleACL(this, user, Author.AUTHOR);
+		BundleACL obj = null;
 		if (!isContainAuthor(user))
 		{
-			throw new NoRightException();
+			throw new BusinessException(new NoRightException());
 		}
 		Iterator<BundleACL> iterator = bundleACLSet.iterator();
 		while (iterator.hasNext())
@@ -107,7 +113,7 @@ public class Bundle implements Serializable, Similarity
 				return obj.getRights();
 			}
 		}
-		throw new NoRightException();
+		throw new BusinessException(new NoRightException());
 	}
 
 	public BundleACL getBundleACL(User user) throws NoRightException
@@ -121,7 +127,17 @@ public class Bundle implements Serializable, Similarity
 				return bundleACL_obj;
 			}
 		}
-		throw new NoRightException();
+		throw new BusinessException(new NoRightException());
+	}
+
+	public Set<BundleACL> getBundleACLSet()
+	{
+		return bundleACLSet;
+	}
+
+	public void setBundleACLSet(Set<BundleACL> bundleACLSet)
+	{
+		this.bundleACLSet = bundleACLSet;
 	}
 
 	@Override
@@ -205,5 +221,20 @@ public class Bundle implements Serializable, Similarity
 	public void setReport(Report report)
 	{
 		this.report = report;
+	}
+
+	public void setBundleType(BundleType bundleType)
+	{
+		this.bundleType = bundleType;
+	}
+
+	public void setCourse(Course course)
+	{
+		this.course = course;
+	}
+
+	public void setId(long id)
+	{
+		this.id = id;
 	}
 }

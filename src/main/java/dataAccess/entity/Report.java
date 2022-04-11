@@ -173,4 +173,6 @@ public class Report implements Serializable, Similarity
 	{
 		return symCountNoSpace;
 	}
+
+
 }
