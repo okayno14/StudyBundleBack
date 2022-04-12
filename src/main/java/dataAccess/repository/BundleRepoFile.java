@@ -11,6 +11,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Iterator;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -73,7 +74,7 @@ public class BundleRepoFile implements IBundleRepoFile
 		byte buf[] = new byte[(int) zipEntry.getSize()];
 		//делаю побитовое чтение, так как
 		//при порционном чтении APACHE POI ругается на повреждённый документ
-		//		while (zIN.read(buf) != -1)
+		//		while (zIN.read(buf,0,2048) != -1)
 		//		{
 		//			continue;
 		//		}
@@ -173,7 +174,8 @@ public class BundleRepoFile implements IBundleRepoFile
 		}
 	}
 
-	void zipFolderFromStorage(String root, File zipDir, ZipOutputStream out) throws IOException
+	private void zipFolderFromStorage(String root, File zipDir, ZipOutputStream out)
+			throws IOException
 	{
 		//Заход в глубь дерева
 		File content[] = zipDir.listFiles();
@@ -181,24 +183,24 @@ public class BundleRepoFile implements IBundleRepoFile
 		{
 			for (int i = 0; i < content.length; i++)
 			{
-				zipFolderFromStorage(root,content[i], out);
+				zipFolderFromStorage(root, content[i], out);
 			}
 		}
 		//зашли в узел
-		String absName= zipDir.getAbsolutePath();
-		absName=absName.replace("\\","/");
-		String relName = absName.replace(root,"");
+		String absName = zipDir.getAbsolutePath();
+		absName = absName.replace("\\", "/");
+		String relName = absName.replace(root, "");
 		//если вершина дерева
-		if(root.equals(absName+"/"))
+		if (root.equals(absName + "/"))
 		{
 			out.closeEntry();
 			out.close();
 			return;
 		}
 		//если вершина поддерева
-		if(zipDir.isDirectory())
+		if (zipDir.isDirectory())
 		{
-			out.putNextEntry(new ZipEntry(relName+"/"));
+			out.putNextEntry(new ZipEntry(relName + "/"));
 			out.closeEntry();
 			return;
 		}
@@ -228,7 +230,7 @@ public class BundleRepoFile implements IBundleRepoFile
 		try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 			 ZipOutputStream out = new ZipOutputStream(byteArrayOutputStream))
 		{
-			zipFolderFromStorage(storage + "/" + bundle.getFolder()+"/",
+			zipFolderFromStorage(storage + "/" + bundle.getFolder() + "/",
 								 new File(storage + "/" + bundle.getFolder()), out);
 			return byteArrayOutputStream.toByteArray();
 		}
@@ -241,18 +243,41 @@ public class BundleRepoFile implements IBundleRepoFile
 	@Override
 	public void fillReport(Bundle bundle)
 	{
-
+		String name = bundle.getReport().getFileName();
+		if (name == null)
+		{
+			throw new DataAccessException(new FileNotFoundException(bundle));
+		}
+		bundle.getReport().setFileName(name, wordParser.parseDoc(name));
 	}
 
 	@Override
 	public void fillReport(List<Bundle> bundleList)
 	{
-
+		Iterator<Bundle> iterator = bundleList.iterator();
+		while (iterator.hasNext())
+		{
+			fillReport(iterator.next());
+		}
 	}
 
 	@Override
 	public void delete(Bundle bundle)
 	{
-
+		File toDel = new File(storage + "/" + bundle.getFolder());
+		if (!cleanDir(toDel))
+		{
+			throw new DataAccessException(new FileNotFoundException(bundle));
+		}
+		boolean flag=false;
+		for (File node = toDel.getParentFile();flag==false && !node.getPath().replace("\\", "/").equals(storage);
+			 node = node.getParentFile())
+		{
+			if (node.listFiles().length == 0 && node.exists())
+			{
+				node.delete();
+				flag=true;
+			}
+		}
 	}
 }

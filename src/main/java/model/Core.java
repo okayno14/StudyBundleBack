@@ -203,10 +203,12 @@ public class Core
 			{
 				byteOut.write(c);
 			}
+			//сохраняю бандл в файловую систему
 			bundleRepoFile.save(bundleCache.get(lab), byteOut.toByteArray());
-
+			//достаю бандл из файловой системы в виде архива
 			byte[] arr =  bundleRepoFile.get(bundleCache.get(lab));
 			fOUT.write(arr);
+			bundleRepoFile.delete(bundleCache.get(lab));
 		}
 		catch (java.io.FileNotFoundException fe)
 		{

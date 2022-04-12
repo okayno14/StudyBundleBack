@@ -60,7 +60,7 @@ public class WordParser
 		return text;
 	}
 
-	public String parseDoc(String fileName) throws Exception
+	public String parseDoc(String fileName)
 	{
 		try
 		{
