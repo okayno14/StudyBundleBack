@@ -1,6 +1,7 @@
 package model;
 
 import business.*;
+import business.bundle.BundleService;
 import business.bundle.IBundleService;
 import dataAccess.repository.WordParser;
 import configuration.BusinessConfiguration;
@@ -57,17 +58,19 @@ public class Core
 		//сборка кэшей
 		CacheController cacheController = new CacheController();
 
-		IBundleCache     bundleCache;
-		IBundleTypeCache bundleTypeCache;
-		ICourseCache     courseCache;
-		IGroupCache      groupCache;
-		IRoleCache       roleCache;
-		IUserCache       userCache;
+		IBundleCache      bundleCache;
+		IBundleTypeCache  bundleTypeCache;
+		ICourseCache      courseCache;
+		IGroupCache       groupCache;
+		IRequirementCache reqCache;
+		IRoleCache        roleCache;
+		IUserCache        userCache;
 
 		bundleCache     = new BundleCache(cacheController);
 		bundleTypeCache = new BundleTypeCache();
 		courseCache     = new CourseCache(cacheController);
 		groupCache      = new GroupCache(cacheController);
+		reqCache        = new RequirementCache();
 		roleCache       = new RoleCache();
 		userCache       = new UserCache(cacheController);
 
@@ -75,21 +78,30 @@ public class Core
 		cacheController.setBundleTypeCache(bundleTypeCache);
 		cacheController.setCourseCache(courseCache);
 		cacheController.setGroupCache(groupCache);
+		cacheController.setRequirementCache(reqCache);
 		cacheController.setRoleCache(roleCache);
 		cacheController.setUserCache(userCache);
 
 		//сборка сервисов
+		IBundleRepoFile bundleRepoFile = new BundleRepoFile(dateAccessConf.getStoragePath(),
+															dateAccessConf.getSupportedFormats(),
+															dateAccessConf.getZipFileSizeLimit());
+		iBundleService     = new BundleService(bundleRepoFile, new BundleRepoHiber(sessionFactory),
+											   bundleCache);
 		iBundleTypeService = new BundleTypeService(new BundleTypeRepoHiber(sessionFactory),
 												   bundleTypeCache);
-		iCourseService     = new CourseService(new CourseRepoHiber(sessionFactory), courseCache);
+		iCourseService     = new CourseService(new CourseRepoHiber(sessionFactory), courseCache,
+											   new RequirementRepoHiber(sessionFactory), reqCache);
 		iGroupService      = new GroupService(new GroupRepoHiber(sessionFactory), groupCache);
+		iRoleService       = new RoleService(new RoleRepoHiber(sessionFactory), roleCache);
 		iUserService       = new UserService(new UserRepoHiber(sessionFactory),
 											 new RoleRepoHiber(sessionFactory), userCache,
 											 roleCache);
 
-
 		//ТЕСТЫ
-		testBundleRepoFile(cacheController);
+		//testBundleRepoFile(cacheController, bundleRepoFile);
+
+
 		//		GroupRepoHiber groupRepoHiber = new GroupRepoHiber(sessionFactory);
 		//		List<Group>    res            = groupRepoHiber.get("АВТ-815");
 		//		groupRepoHiber.fetchStudents(res.get(0));
@@ -119,12 +131,10 @@ public class Core
 		//		userRepo.save(user);
 	}
 
-	private void testBundleRepoFile(CacheController cacheController)
+	private void testBundleRepoFile(CacheController cacheController, IBundleRepoFile bundleRepoFile)
 	{
 		WordParser wordParser = new WordParser();
-		IBundleRepoFile bundleRepoFile = new BundleRepoFile(dateAccessConf.getStoragePath(),
-															dateAccessConf.getSupportedFormats(),
-															dateAccessConf.getZipFileSizeLimit());
+
 
 		IRoleCache       roleCache       = cacheController.getRoleCache();
 		IUserCache       userCache       = cacheController.getUserCache();
@@ -206,7 +216,7 @@ public class Core
 			//сохраняю бандл в файловую систему
 			bundleRepoFile.save(bundleCache.get(lab), byteOut.toByteArray());
 			//достаю бандл из файловой системы в виде архива
-			byte[] arr =  bundleRepoFile.get(bundleCache.get(lab));
+			byte[] arr = bundleRepoFile.get(bundleCache.get(lab));
 			fOUT.write(arr);
 			bundleRepoFile.delete(bundleCache.get(lab));
 		}

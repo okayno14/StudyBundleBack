@@ -7,12 +7,13 @@ import java.util.Set;
 
 public class CacheController
 {
-	private IBundleCache     bundleCache;
-	private IBundleTypeCache bundleTypeCache;
-	private ICourseCache     courseCache;
-	private IGroupCache      groupCache;
-	private IRoleCache       roleCache;
-	private IUserCache       userCache;
+	private IBundleCache      bundleCache;
+	private IBundleTypeCache  bundleTypeCache;
+	private ICourseCache      courseCache;
+	private IGroupCache       groupCache;
+	private IRoleCache        roleCache;
+	private IUserCache        userCache;
+	private IRequirementCache requirementCache;
 
 	public CacheController()
 	{
@@ -34,7 +35,7 @@ public class CacheController
 
 		//обновить кеш групп
 		Group group = user.getGroup();
-		if(group!=null)
+		if (group != null)
 		{
 			if (!groupCache.contains(group.getId()))
 			{
@@ -112,13 +113,27 @@ public class CacheController
 
 	void added(Course course)
 	{
-		//обновить кеш типов работ
+
+
 		Set<Requirement>      requirements = course.getRequirementSet();
 		Iterator<Requirement> iterator     = requirements.iterator();
 		BundleType            bt           = null;
 		while (iterator.hasNext())
 		{
+			//Обновить кеш требований
 			Requirement req = iterator.next();
+			if (!requirementCache.contains(req.getId()))
+			{
+				requirementCache.put(req);
+			}
+			else
+			{
+				req = requirementCache.get(req.getId());
+				course.removeRequirement(req);
+				course.addRequirement(req);
+			}
+
+			//обновить кеш типов работ
 			bt = req.getBundleType();
 			if (!bundleTypeCache.contains(bt.getId()))
 			{
@@ -165,6 +180,12 @@ public class CacheController
 		}
 	}
 
+	//
+	void added(Requirement req)
+	{
+
+	}
+
 	//Эти методы вызываются, если объект удаляется из системы через сервис
 	void deleted(Group group)
 	{
@@ -199,6 +220,11 @@ public class CacheController
 	public void setGroupCache(IGroupCache groupCache)
 	{
 		this.groupCache = groupCache;
+	}
+
+	public void setRequirementCache(IRequirementCache requirementCache)
+	{
+		this.requirementCache = requirementCache;
 	}
 
 	public void setRoleCache(IRoleCache roleCache)

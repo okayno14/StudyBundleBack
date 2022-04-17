@@ -77,7 +77,8 @@ public class BundleTypeRepoHiber extends RepoHiberBase implements IBundleTypeRep
 		}
 	}
 
-	private long countReferences(BundleType bundleType)
+	@Override
+	public long countReferences(BundleType bundleType)
 	{
 		HQL = "select count (b.bundleType) from Bundle as b where b.bundleType.id = :id";
 		q   = sessionFactory.getCurrentSession().createQuery(HQL);
@@ -94,7 +95,6 @@ public class BundleTypeRepoHiber extends RepoHiberBase implements IBundleTypeRep
 	public void delete(BundleType bundleType)
 	{
 		Transaction t = getOrBegin();
-		countReferences(bundleType);
 		sessionFactory.getCurrentSession().delete(bundleType);
 		t.commit();
 	}
