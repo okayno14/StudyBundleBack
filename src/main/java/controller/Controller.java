@@ -10,6 +10,7 @@ public class Controller
 	IBundleTypeController bundleTypeController;
 	ICourseController courseController;
 	IGroupController groupController;
+	IRoleController roleController;
 	IUserController userController;
 
 	public Controller(ConfMain confMain)
@@ -24,6 +25,7 @@ public class Controller
 		bundleTypeController = new BundleTypeController(this, core.getiBundleTypeService());
 		courseController = new CourseController(this,core.getiCourseService());
 		groupController = new GroupController(this,core.getiGroupService());
+		roleController = new RoleController(this,core.getiRoleService());
 		userController = new UserController(this,core.getiUserService());
 
 		//ТЕСТЫ

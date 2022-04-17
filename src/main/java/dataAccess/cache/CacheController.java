@@ -5,7 +5,7 @@ import dataAccess.entity.*;
 import java.util.Iterator;
 import java.util.Set;
 
-public class CacheController
+public class CacheController implements Runnable
 {
 	private IBundleCache      bundleCache;
 	private IBundleTypeCache  bundleTypeCache;
@@ -15,8 +15,31 @@ public class CacheController
 	private IUserCache        userCache;
 	private IRequirementCache requirementCache;
 
+	private Thread t;
+
 	public CacheController()
 	{
+		t = new Thread(this);
+		t.setDaemon(true);
+		t.start();
+	}
+
+	@Override
+	public void run()
+	{
+		while (true)
+		{
+			try
+			{
+				//20 минут
+				//20L * 60L * 1000L
+				Thread.sleep(20L * 60L * 1000L);
+				clean();
+			}
+			catch (InterruptedException e)
+			{
+			}
+		}
 	}
 
 	//Поведение всех методов одинаково:
@@ -113,8 +136,6 @@ public class CacheController
 
 	void added(Course course)
 	{
-
-
 		Set<Requirement>      requirements = course.getRequirementSet();
 		Iterator<Requirement> iterator     = requirements.iterator();
 		BundleType            bt           = null;
@@ -180,12 +201,6 @@ public class CacheController
 		}
 	}
 
-	//
-	void added(Requirement req)
-	{
-
-	}
-
 	//Эти методы вызываются, если объект удаляется из системы через сервис
 	void deleted(Group group)
 	{
@@ -200,6 +215,15 @@ public class CacheController
 	//Метод очищающий практически все кеши. Удаление происходит только из памяти приложения
 	private void clean()
 	{
+		bundleCache.clean();
+		courseCache.clean();
+		groupCache.clean();
+		userCache.cleanNonAuth();
+
+		//этих не трогаем
+		//		bundleTypeCache;
+		//		roleCache;
+		//		requirementCache;
 	}
 
 	public void setBundleCache(IBundleCache bundleCache)

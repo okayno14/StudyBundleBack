@@ -9,4 +9,5 @@ public interface IGroupCache
 	Group get(long id);
 	void put(Group group);
 	void delete(long id);
+	void clean();
 }

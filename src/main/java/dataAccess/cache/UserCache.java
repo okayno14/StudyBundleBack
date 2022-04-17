@@ -4,17 +4,18 @@ import dataAccess.entity.User;
 import model.Core;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 public class UserCache implements IUserCache
 {
-	private CacheController cacheController;
+	private CacheController   cacheController;
 	private Map<Long, User>   allUsers           = new HashMap<>();
 	private Map<String, User> authenticatedUsers = new HashMap<>();
 
 	public UserCache(CacheController cacheController)
 	{
-		this.cacheController=cacheController;
+		this.cacheController = cacheController;
 	}
 
 	@Override
@@ -50,22 +51,22 @@ public class UserCache implements IUserCache
 	@Override
 	public void put(User user)
 	{
-		allUsers.put(user.getId(),user);
+		allUsers.put(user.getId(), user);
 		cacheController.added(user);
 	}
 
 	@Override
 	public void authenticate(long id)
 	{
-		User user=allUsers.get(id);
-		authenticatedUsers.put(user.getToken(),user);
+		User user = allUsers.get(id);
+		authenticatedUsers.put(user.getToken(), user);
 	}
 
 	@Override
 	public void delete(long id)
 	{
 		String token = allUsers.get(id).getToken();
-		if(contains(token))
+		if (contains(token))
 		{
 			authenticatedUsers.remove(token);
 		}
@@ -76,5 +77,29 @@ public class UserCache implements IUserCache
 	public void delete(String token)
 	{
 		authenticatedUsers.remove(token);
+	}
+
+	@Override
+	public void cleanNonAuth()
+	{
+		allUsers.clear();
+		allUsers = new HashMap<>();
+		Iterator<User> i = authenticatedUsers.values().iterator();
+		while (i.hasNext())
+		{
+			User u = i.next();
+			allUsers.put(u.getId(), u);
+		}
+	}
+
+	@Override
+	public void cleanAuth()
+	{
+		Iterator<User> i = authenticatedUsers.values().iterator();
+		while (i.hasNext())
+		{
+			allUsers.remove(i.next().getId());
+		}
+		authenticatedUsers.clear();
 	}
 }

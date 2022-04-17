@@ -45,4 +45,10 @@ public class BundleCache implements IBundleCache
 	{
 		cache.remove(id);
 	}
+
+	@Override
+	public void clean()
+	{
+		cache.clear();
+	}
 }

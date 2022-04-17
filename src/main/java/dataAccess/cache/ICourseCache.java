@@ -9,4 +9,5 @@ public interface ICourseCache
 	Course get(long id);
 	void put(Course course);
 	void delete(long id);
+	void clean();
 }

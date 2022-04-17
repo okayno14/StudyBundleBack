@@ -9,4 +9,5 @@ public interface IBundleCache
 	Bundle get(long id);
 	void put(Bundle bundle);
 	void delete(long id);
+	void clean();
 }

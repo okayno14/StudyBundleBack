@@ -17,4 +17,6 @@ public interface IUserCache
 	void delete(long id);
 	//Удаляем только аутент. пользователей
 	void delete(String token);
+	void cleanNonAuth();
+	void cleanAuth();
 }

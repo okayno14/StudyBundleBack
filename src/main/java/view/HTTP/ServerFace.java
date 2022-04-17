@@ -41,7 +41,7 @@ public class ServerFace
 		//testBundleTypeService();
 
 		//стартуем сервер
-		//endpoints();
+		endpoints();
 	}
 
 	private void testBundleTypeService()

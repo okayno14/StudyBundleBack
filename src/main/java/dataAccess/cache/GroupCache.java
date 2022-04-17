@@ -44,4 +44,10 @@ public class GroupCache implements IGroupCache
 	{
 		cache.remove(id);
 	}
+
+	@Override
+	public void clean()
+	{
+		cache.clear();
+	}
 }

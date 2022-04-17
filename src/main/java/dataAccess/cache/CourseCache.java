@@ -45,4 +45,10 @@ public class CourseCache implements ICourseCache
 	{
 		cache.remove(id);
 	}
+
+	@Override
+	public void clean()
+	{
+		cache.clear();
+	}
 }
