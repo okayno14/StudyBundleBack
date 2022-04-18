@@ -10,6 +10,12 @@ public class NotUniqueException extends RuntimeException
 		this.message=message;
 	}
 
+	public NotUniqueException(String message)
+	{
+		super();
+		this.message=message;
+	}
+
 	@Override
 	public String getMessage()
 	{

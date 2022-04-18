@@ -1,6 +1,8 @@
 package dataAccess.cache;
 
 import dataAccess.entity.User;
+import exception.DataAccess.DataAccessException;
+import exception.DataAccess.ObjectNotFoundException;
 import model.Core;
 
 import java.util.HashMap;
@@ -46,6 +48,22 @@ public class UserCache implements IUserCache
 	public User get(String token)
 	{
 		return authenticatedUsers.get(token);
+	}
+
+	@Override
+	public User getByEmail(String email)
+	{
+		Iterator<User> iterator = allUsers.values().iterator();
+		User user=null;
+		while(iterator.hasNext())
+		{
+			user=iterator.next();
+			if(user.getEmail().equals(email))
+			{
+				return user;
+			}
+		}
+		throw new DataAccessException(new ObjectNotFoundException());
 	}
 
 	@Override

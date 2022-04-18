@@ -7,4 +7,9 @@ public class BusinessConfiguration
 	public BusinessConfiguration()
 	{
 	}
+
+	public long[] getReservedRoleId()
+	{
+		return reservedRoleId;
+	}
 }

@@ -21,4 +21,10 @@ public class RoleController implements  IRoleController
 	{
 		return roleService.get();
 	}
+
+	@Override
+	public Role getGuest()
+	{
+		return roleService.getGuest();
+	}
 }

@@ -9,6 +9,7 @@ public interface IUserCache
 	boolean isEmpty();
 	User get(long id);
 	User get(String token);
+	User getByEmail(String email);
 	//добавить в общую коллекцию
 	void put(User user);
 	//скопировать пользователя из общей коллекции в список аутентифицированных

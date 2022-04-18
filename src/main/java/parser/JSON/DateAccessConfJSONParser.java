@@ -1,6 +1,7 @@
-package configuration;
+package parser.JSON;
 
 import com.google.gson.*;
+import configuration.DateAccessConf;
 
 import java.lang.reflect.Type;
 
@@ -11,8 +12,8 @@ public class DateAccessConfJSONParser implements JsonSerializer<DateAccessConf>,
 								 JsonSerializationContext jsonSerializationContext)
 	{
 		JsonObject json = new JsonObject();
-		json.addProperty("HibernateConf",dateAccess.hibernateConf);
-		json.addProperty("StoragePath",dateAccess.storagePath);
+		json.addProperty("HibernateConf",dateAccess.getHibernateConf());
+		json.addProperty("StoragePath",dateAccess.getStoragePath());
 		return json;
 	}
 

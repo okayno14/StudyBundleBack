@@ -1,6 +1,7 @@
-package configuration;
+package parser.JSON;
 
 import com.google.gson.*;
+import configuration.HTTP_Conf;
 
 import java.lang.reflect.Type;
 
@@ -12,7 +13,7 @@ public class HTTP_ConfJSONParser implements JsonSerializer<HTTP_Conf>, JsonDeser
 	{
 		JsonObject json = new JsonObject();
 
-		json.addProperty("Port", http_conf.port);
+		json.addProperty("Port", http_conf.getPort());
 		return json;
 	}
 

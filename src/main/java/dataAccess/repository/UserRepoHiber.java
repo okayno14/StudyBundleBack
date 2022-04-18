@@ -49,7 +49,8 @@ public class UserRepoHiber extends RepoHiberBase implements IUserRepo
 			if (ee.getCause() instanceof ConstraintViolationException)
 			{
 				throw new DataAccessException(
-						new NotUniqueException("Почта уже есть в базе", ee.getCause()));
+						new NotUniqueException("Почта " + user.getEmail() + " уже есть в базе",
+											   ee.getCause()));
 			}
 		}
 	}

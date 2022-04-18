@@ -19,6 +19,10 @@ INSERT INTO "role" ("name") VALUES ('Студент');
 --id=12
 INSERT INTO "role" ("name") VALUES ('Гость');
 
+--Первый админ
+INSERT INTO "user" ("email","email_state","pass","lastname","firstname","fathername","id_role") 
+VALUES ('admin@host.ru',0,'password','Администратор','Администратор','Администратор',9);
+
 --Пути
 INSERT INTO "route" (method,urn) VALUES ('ANY', 'ANY');
 INSERT INTO role_route VALUES (9,(select max(id) from "route"));
@@ -49,24 +53,28 @@ INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('PUT', '/user/login');
+INSERT INTO role_route VALUES (12,(select max(id) from "route"));
+
+INSERT INTO "route" (method,urn) VALUES ('PUT', '/user/logout');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 INSERT INTO role_route VALUES (12,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('PUT', '/user/forgotPass/:email');
-INSERT INTO role_route VALUES (10,(select max(id) from "route"));
-INSERT INTO role_route VALUES (11,(select max(id) from "route"));
+INSERT INTO role_route VALUES (12,(select max(id) from "route"));
+
+INSERT INTO "route" (method,urn) VALUES ('PUT', '/user/resetPass/:passHash/:id');
 INSERT INTO role_route VALUES (12,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('PUT', '/user/confirm/:email');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
-INSERT INTO role_route VALUES (12,(select max(id) from "route"));
+
 
 INSERT INTO "route" (method,urn) VALUES ('PUT', '/user/activate/:id');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
-INSERT INTO role_route VALUES (12,(select max(id) from "route"));
+
 
 INSERT INTO "route" (method,urn) VALUES ('PUT', '/user/fio/:id');
 

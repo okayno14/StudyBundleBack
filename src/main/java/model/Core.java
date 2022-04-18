@@ -93,10 +93,10 @@ public class Core
 		iCourseService     = new CourseService(new CourseRepoHiber(sessionFactory), courseCache,
 											   new RequirementRepoHiber(sessionFactory), reqCache);
 		iGroupService      = new GroupService(new GroupRepoHiber(sessionFactory), groupCache);
-		iRoleService       = new RoleService(new RoleRepoHiber(sessionFactory), roleCache);
-		iUserService       = new UserService(new UserRepoHiber(sessionFactory),
-											 new RoleRepoHiber(sessionFactory), userCache,
-											 roleCache);
+		iRoleService       = new RoleService(new RoleRepoHiber(sessionFactory), roleCache,
+											 confMain.getBusinessConfiguration()
+													 .getReservedRoleId());
+		iUserService       = new UserService(new UserRepoHiber(sessionFactory), userCache);
 
 		//ТЕСТЫ
 		//testBundleRepoFile(cacheController, bundleRepoFile);
