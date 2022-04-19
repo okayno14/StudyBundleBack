@@ -21,7 +21,7 @@ public class ResponseParser implements JsonSerializer<Response>
 		JsonObject jsonObject = new JsonObject();
 		if (response.getData() != null)
 		{
-			jsonObject.addProperty("Data", response.getData().getAsString());
+			jsonObject.add("Data", response.getData());
 		}
 		if (response.getMessage() != null)
 		{

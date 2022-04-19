@@ -78,6 +78,7 @@ public class UserController implements IUserController
 		User user = new User();
 		user.setRole(guest);
 		user.setToken(authoriser.genToken());
+		guestMap.put(user.getToken(),user);
 		return user;
 	}
 
@@ -189,6 +190,7 @@ public class UserController implements IUserController
 	@Override
 	public void logout(String token)
 	{
+		authoriser.removeToken(token);
 		if(guestMap.containsKey(token))
 		{
 			guestMap.remove(token);
