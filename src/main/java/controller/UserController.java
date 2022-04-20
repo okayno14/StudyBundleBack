@@ -39,7 +39,7 @@ public class UserController implements IUserController
 	}
 
 	@Override
-	public void add()
+	public void add(User client)
 	{
 
 	}
@@ -53,8 +53,7 @@ public class UserController implements IUserController
 		{
 			try
 			{
-				setClient(i.next());
-				service.add();
+				service.add(i.next());
 			}
 			catch (BusinessException e)
 			{
@@ -152,12 +151,6 @@ public class UserController implements IUserController
 	public void delete()
 	{
 
-	}
-
-	@Override
-	public void setClient(User user)
-	{
-		service.setClient(user);
 	}
 
 	@Override

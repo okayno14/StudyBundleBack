@@ -12,7 +12,6 @@ public class CourseService implements ICourseService
 	private ICourseCache cache;
 	private IRequirementRepo reqRepo;
 	private IRequirementCache reqCache;
-	private Course client;
 
 	public CourseService(ICourseRepo repo, ICourseCache cache, IRequirementRepo reqRepo,
 						 IRequirementCache reqCache)
@@ -21,15 +20,5 @@ public class CourseService implements ICourseService
 		this.cache    = cache;
 		this.reqRepo  = reqRepo;
 		this.reqCache = reqCache;
-	}
-
-	public Course getClient()
-	{
-		return client;
-	}
-
-	public void setClient(Course client)
-	{
-		this.client = client;
 	}
 }

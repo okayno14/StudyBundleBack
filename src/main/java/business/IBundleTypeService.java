@@ -6,12 +6,9 @@ import java.util.List;
 
 public interface IBundleTypeService
 {
-	void add();
+	void add(BundleType client);
 	BundleType get(long id);
 	List<BundleType> get();
-	void update(String name);
-	void delete();
-
-	BundleType getClient();
-	void setClient(BundleType client);
+	void update(BundleType client, String name);
+	void delete(BundleType client);
 }

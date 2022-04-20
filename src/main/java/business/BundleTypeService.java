@@ -11,7 +11,6 @@ public class BundleTypeService implements IBundleTypeService
 {
 	private IBundleTypeRepo  repo;
 	private IBundleTypeCache cache;
-	private BundleType       client;
 
 	public BundleTypeService(IBundleTypeRepo iBundleTypeRepo, IBundleTypeCache iBundleTypeCache)
 	{
@@ -27,7 +26,7 @@ public class BundleTypeService implements IBundleTypeService
 	}
 
 	@Override
-	public void add()
+	public void add(BundleType client)
 	{
 		repo.save(client);
 		cache.put(client);
@@ -62,28 +61,16 @@ public class BundleTypeService implements IBundleTypeService
 	}
 
 	@Override
-	public void update(String name)
+	public void update(BundleType client, String name)
 	{
 		client.setName(name);
 		repo.save(client);
 	}
 
 	@Override
-	public void delete()
+	public void delete(BundleType client)
 	{
 		repo.delete(client);
 		cache.delete(client.getId());
-	}
-
-	@Override
-	public BundleType getClient()
-	{
-		return client;
-	}
-
-	@Override
-	public void setClient(BundleType client)
-	{
-		this.client = client;
 	}
 }

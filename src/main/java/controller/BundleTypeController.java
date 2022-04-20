@@ -17,9 +17,9 @@ public class BundleTypeController implements IBundleTypeController
 	}
 
 	@Override
-	public void add()
+	public void add(BundleType client)
 	{
-		service.add();
+		service.add(client);
 	}
 
 	@Override
@@ -35,26 +35,14 @@ public class BundleTypeController implements IBundleTypeController
 	}
 
 	@Override
-	public void delete()
+	public void delete(BundleType client)
 	{
-		service.delete();
+		service.delete(client);
 	}
 
 	@Override
-	public void update(String name)
+	public void update(BundleType client, String name)
 	{
-		service.update(name);
-	}
-
-	@Override
-	public BundleType getClient()
-	{
-		return service.getClient();
-	}
-
-	@Override
-	public void setClient(BundleType client)
-	{
-		service.setClient(client);
+		service.update(client, name);
 	}
 }

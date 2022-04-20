@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface IUserService
 {
-	void add();
+	void add(User client);
 	boolean login(String token, String email, String pass);
 	void logout(String token);
 	User get(long id);
@@ -24,5 +24,4 @@ public interface IUserService
 	void confirm(String email);
 	void activate(long id);
 	void delete();
-	void setClient(User user);
 }

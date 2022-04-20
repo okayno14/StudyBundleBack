@@ -16,7 +16,6 @@ public class UserService implements IUserService
 	private IUserRepo  userRepo;
 	private IUserCache userCache;
 
-	private User client;
 
 	public UserService(IUserRepo userRepo, IUserCache userCache)
 	{
@@ -33,7 +32,7 @@ public class UserService implements IUserService
 	}
 
 	@Override
-	public void add()
+	public void add(User client)
 	{
 		try
 		{
@@ -184,11 +183,5 @@ public class UserService implements IUserService
 	public void delete()
 	{
 
-	}
-
-	@Override
-	public void setClient(User user)
-	{
-		client = user;
 	}
 }

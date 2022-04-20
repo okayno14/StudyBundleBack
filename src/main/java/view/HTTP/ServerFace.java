@@ -77,9 +77,9 @@ public class ServerFace
 		List<BundleType> res  = bundleTypeController.get();
 		List<BundleType> res1 = bundleTypeController.get();
 
-		bundleTypeController.setClient(new BundleType("ПРГРГ"));
-		bundleTypeController.add();
-		bundleTypeController.delete();
+		BundleType bt = new BundleType("ПРГРГ");
+		bundleTypeController.add(bt);
+		bundleTypeController.delete(bt);
 
 		BundleType obj = bundleTypeController.get(3L);
 		//obj = bundleTypeController.get(156156156L);
