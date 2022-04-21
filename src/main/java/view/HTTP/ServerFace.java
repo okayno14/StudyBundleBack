@@ -1,24 +1,30 @@
 package view.HTTP;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
+import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
 import configuration.ConfMain;
 import configuration.HTTP_Conf;
 import controller.*;
-import dataAccess.entity.BundleType;
-import dataAccess.entity.Role;
-import dataAccess.entity.Route;
-import dataAccess.entity.User;
+import dataAccess.entity.*;
 import exception.Controller.ControllerException;
 import exception.Controller.TokenNotFound;
-import parser.JSON.entity.RoleParser;
-import parser.JSON.entity.UserParser;
+import exception.DataAccess.DataAccessException;
+import parser.JSON.CreateObjReqParser;
+import parser.JSON.LoginReqParser;
+import parser.JSON.ResponseParser;
+import parser.JSON.entity.*;
 import spark.Request;
 import spark.Spark;
+import view.HTTP.request.CreateObjReq;
 import view.HTTP.request.LoginReq;
 
-import java.util.*;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.Type;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -61,28 +67,25 @@ public class ServerFace
 		userController       = controller.getUserController();
 		roleController       = controller.getRoleController();
 
-		//регистрация парсеров JSON
-		gsonBuilder.registerTypeAdapter(Role.class, new RoleParser());
-		userParser = new UserParser(gsonBuilder.create());
-		gsonBuilder.registerTypeAdapter(User.class, userParser);
 
-		//testBundleTypeService();
+		//регистрация парсеров JSON для серверных записей
+		gsonBuilder.registerTypeAdapter(Response.class, new ResponseParser(gsonBuilder.create()));
+		gsonBuilder.registerTypeAdapter(LoginReq.class, new LoginReqParser());
+		gsonBuilder.registerTypeAdapter(CreateObjReqParser.class, new CreateObjReqParser());
+
+		//регистрация парсеров JSON для сущностей
+		gsonBuilder.registerTypeAdapter(Role.class, new RoleParser());
+		userParser = new UserParser(gson);
+		gsonBuilder.registerTypeAdapter(User.class, userParser);
+		GroupParser groupParser = new GroupParser(groupController.getRepo(), gson);
+		gsonBuilder.registerTypeAdapter(Group.class, groupParser);
+		gsonBuilder.registerTypeAdapter(BundleType.class, new BundleTypeParser());
+		gsonBuilder.registerTypeAdapter(Requirement.class, new RequirementParser(gson));
+		gsonBuilder.registerTypeAdapter(CourseACL.class, new CourseACL_Parser(gson));
+		gsonBuilder.registerTypeAdapter(Course.class, new CourseParser(gson));
 
 		//стартуем сервер
 		endpoints();
-	}
-
-	private void testBundleTypeService()
-	{
-		List<BundleType> res  = bundleTypeController.get();
-		List<BundleType> res1 = bundleTypeController.get();
-
-		BundleType bt = new BundleType("ПРГРГ");
-		bundleTypeController.add(bt);
-		bundleTypeController.delete(bt);
-
-		BundleType obj = bundleTypeController.get(3L);
-		//obj = bundleTypeController.get(156156156L);
 	}
 
 	private User initClient(Request req, spark.Response resp)
@@ -210,32 +213,128 @@ public class ServerFace
 			return "OK";
 		});
 
-		get("/", (req, resp) ->
+		post("/user", ((req, resp) ->
 		{
-			return "Hello";
+			User       client = initClient(req, resp);
+			Type       t      = new TypeToken<List<User>>(){}.getType();
+			List<User> data   = gson.fromJson(req.body(), t);
+			userController.add(data);
+			JsonArray      jsonArray = new JsonArray();
+			Iterator<User> iterator  = data.iterator();
+			while (iterator.hasNext())
+			{
+				JsonObject jsonObject = gson.toJsonTree(iterator.next(), User.class)
+											.getAsJsonObject();
+				userParser.defendData(jsonObject);
+				jsonArray.add(jsonObject);
+			}
+			resp.status(200);
+			return gson.toJson(new Response(jsonArray));
+		}));
+
+		path("/user", () ->
+		{
+			put("/login", (req, resp) ->
+			{
+				User     client   = initClient(req, resp);
+				String   token    = req.session().attribute("token");
+				LoginReq loginReq = gson.fromJson(req.body(), LoginReq.class);
+				if (userController.login(token, loginReq.getEmail(), loginReq.getPass()))
+				{
+					resp.status(200);
+					JsonElement data = gson.toJsonTree(userController.getByToken(token));
+					return gson.toJson(new Response(data, "Успешно"));
+				}
+				resp.status(401);
+				return gson.toJson(new Response(
+						"У пользователя уже есть токен. Или данные не введены корректно"));
+			});
+
+			put("/logout", (req, resp) ->
+			{
+				User client = initClient(req, resp);
+				userController.logout(client.getToken());
+				req.session().removeAttribute("token");
+				return gson.toJson(new Response("Успешно"));
+			});
+
+			path("/group", () ->
+			{
+				post("/:name", ((req, resp) ->
+				{
+					User   client = initClient(req, resp);
+					String name   = req.params("name");
+					Group  group  = new Group(name);
+					try
+					{
+						groupController.add(group);
+						resp.status(200);
+						return gson.toJson(new Response(gson.toJsonTree(group), "Успех"));
+					}
+					catch (DataAccessException e)
+					{
+						resp.status(422);
+						return gson.toJson(new Response(e.getCause().getMessage()));
+					}
+
+				}));
+
+				delete("/:id", (req, resp) ->
+				{
+					try
+					{
+						User  client = initClient(req, resp);
+						long  id     = Long.parseLong(req.params("id"));
+						Group toDel  = new Group();
+						toDel.setId(id);
+						groupController.delete(toDel);
+						resp.status(200);
+						return gson.toJson(new Response("Успех"));
+					}
+					catch (DataAccessException e)
+					{
+						resp.status(404);
+						return gson.toJson(new Response(
+								"Объект не найден\n " + e.getCause().getMessage()));
+					}
+				});
+			});
 		});
 
-		put("/user/login", (req, resp) ->
+		delete("/user", (req, resp) ->
 		{
-			User     client   = initClient(req, resp);
-			String   token    = req.session().attribute("token");
-			LoginReq loginReq = gson.fromJson(req.body(), LoginReq.class);
-			if (userController.login(token, loginReq.getEmail(), loginReq.getPass()))
-			{
-				resp.status(200);
-				JsonElement data = gson.toJsonTree(userController.getByToken(token));
-				return gson.toJson(new Response(data, "Успешно"));
-			}
-			resp.status(401);
-			return gson.toJson(new Response(
-					"У пользователя уже есть токен. Или данные не введены корректно"));
+			User       client = initClient(req, resp);
+
+			return "Empty";
 		});
-		put("/user/logout", (req, resp) ->
+
+		post("/course", (req, resp) ->
 		{
 			User client = initClient(req, resp);
-			userController.logout(client.getToken());
-			req.session().removeAttribute("token");
-			return gson.toJson(new Response("Успешно"));
+			try
+			{
+				CreateObjReq createObjReq = gson.fromJson(req.body(), CreateObjReq.class);
+				Course c = new Course(createObjReq.getName(),
+									  userController.get(createObjReq.getId()));
+				courseController.add(c);
+				resp.status(200);
+				return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
+			}
+			catch (DataAccessException e)
+			{
+				resp.status(404);
+				return "По указанному id пользователь не найден";
+			}
+		});
+
+		//Если ничего не получилось найти, то швыряем стак трэйс в клиентский код
+		exception(Exception.class, (e, req, resp) ->
+		{
+			resp.status(500);
+			StringWriter sw = new StringWriter();
+			PrintWriter  pw = new PrintWriter(sw);
+			e.printStackTrace(pw);
+			resp.body(gson.toJson(new Response(sw.toString())));
 		});
 	}
 }

@@ -1,5 +1,6 @@
 package dataAccess.entity;
 
+import com.google.gson.annotations.Expose;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
@@ -12,29 +13,38 @@ public class User implements Serializable
 {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	@Expose
 	private long    id         = -1;
 	@Transient
 	private String  token;
 	@ManyToOne()
 	@JoinColumn(name = "id_role", referencedColumnName = "id")
+	@Expose
 	private Role    role;
 	@Column(name = "email_state")
 	@Type(type = "org.hibernate.type.NumericBooleanType")
+	@Expose
 	private boolean emailState = false;
+	@Expose
 	private String  email;
+	@Expose
 	private String  pass;
+	@Expose
 	private String  lastName;
+	@Expose
 	private String  firstName;
+	@Expose
 	private String  fatherName;
 	@ManyToOne
 	@JoinColumn(name = "id_group", referencedColumnName = "id")
+	@Expose
 	private Group   group;
 
 	public User()
 	{
 	}
 
-	private String genPass()
+	public void genPass()
 	{
 		StringBuffer stringBuffer = new StringBuffer(20);
 		//33-127
@@ -43,7 +53,7 @@ public class User implements Serializable
 			int code = (int) (Math.random() * (127 - 33) + 33);
 			stringBuffer.append((char) code);
 		}
-		return stringBuffer.toString();
+		this.pass=stringBuffer.toString();
 	}
 
 	public User(String lastName, String firstName, String fatherName, String email, Role role)
@@ -53,7 +63,7 @@ public class User implements Serializable
 		this.fatherName = fatherName;
 		this.email      = email;
 		this.role       = role;
-		pass            = genPass();
+		genPass();
 	}
 
 	@Override

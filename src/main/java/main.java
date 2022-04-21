@@ -27,24 +27,21 @@ public class main
 			gsonBuilder.setPrettyPrinting();
 			gsonBuilder.registerTypeAdapter(DateAccessConf.class, new DateAccessConfJSONParser());
 			gsonBuilder.registerTypeAdapter(HTTP_Conf.class, new HTTP_ConfJSONParser());
-
+			gsonBuilder.excludeFieldsWithoutExposeAnnotation();
 
 			ConfMain confMain = new ConfMain(gsonBuilder.create());
 			gsonBuilder.registerTypeAdapter(ConfMain.class, confMain);
 			confMain = gsonBuilder.create().fromJson(fileReader, confMain.getClass());
-			//тут блок регистрации парсеров сущностей бизнес-слоя
-			gsonBuilder
-					.registerTypeAdapter(Response.class, new ResponseParser(gsonBuilder.create()));
-			gsonBuilder.registerTypeAdapter(LoginReq.class, new LoginReqParser());
-			gsonBuilder.registerTypeAdapter(Role.class, new RoleParser());
-			gsonBuilder.registerTypeAdapter(User.class, new UserParser(gsonBuilder.create()));
+
+
+
 			ServerFace serverFace = new ServerFace(confMain.getHttp_conf(), confMain,
 												   gsonBuilder.create(), gsonBuilder);
 		}
 		catch (Exception e)
 		{
+			System.out.println("ВСЁ ПЛОХО");
 			e.printStackTrace();
-			//System.out.println(e.getCause());
 			System.out.println(e.getMessage());
 			System.exit(1);
 		}

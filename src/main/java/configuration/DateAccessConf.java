@@ -1,8 +1,12 @@
 package configuration;
 
+import com.google.gson.annotations.Expose;
+
 public class DateAccessConf
 {
+	@Expose
 	String hibernateConf;
+	@Expose
 	String storagePath;
 	private String supportedFormats[] = {"doc", "docx"};
 	//По умолчанию 100 МБ

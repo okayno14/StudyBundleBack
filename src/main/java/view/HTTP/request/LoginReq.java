@@ -1,8 +1,12 @@
 package view.HTTP.request;
 
+import com.google.gson.annotations.Expose;
+
 public class LoginReq
 {
+	@Expose
 	String email;
+	@Expose
 	String pass;
 
 	public LoginReq()

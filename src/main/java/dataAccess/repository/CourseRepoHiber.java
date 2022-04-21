@@ -3,11 +3,14 @@ package dataAccess.repository;
 import dataAccess.entity.Course;
 import dataAccess.entity.User;
 import exception.DataAccess.DataAccessException;
+import exception.DataAccess.NotUniqueException;
 import exception.DataAccess.ObjectNotFoundException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+import org.hibernate.exception.ConstraintViolationException;
 
+import javax.persistence.PersistenceException;
 import java.util.List;
 
 public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
@@ -26,17 +29,28 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	@Override
 	public void save(Course course)
 	{
-		Transaction t       = getOrBegin();
-		Session     session = sessionFactory.getCurrentSession();
-		if (course.getId() != -1)
+		try
 		{
-			session.merge(course);
+			Transaction t       = getOrBegin();
+			Session     session = sessionFactory.getCurrentSession();
+			if (course.getId() != -1)
+			{
+				session.merge(course);
+			}
+			else
+			{
+				session.save(course);
+			}
+			t.commit();
 		}
-		else
+		catch (PersistenceException e)
 		{
-			session.save(course);
+			if (e.getCause() instanceof ConstraintViolationException)
+			{
+				throw new DataAccessException(
+						new NotUniqueException("Курс присутствует в системе", e.getCause()));
+			}
 		}
-		t.commit();
 	}
 
 	@Override

@@ -1,5 +1,6 @@
 package dataAccess.entity;
 
+import com.google.gson.annotations.Expose;
 import exception.Business.BusinessException;
 import exception.Business.NoRightException;
 
@@ -11,23 +12,28 @@ public class Course
 {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	@Expose
 	private long           id            = -1;
+	@Expose
 	private String         name;
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "group_course",
 			   joinColumns = {@JoinColumn(name = "id_course")},
 			   inverseJoinColumns = {@JoinColumn(name = "id_group")})
+	@Expose
 	private Set<Group>     groupes       = new HashSet<Group>();
 	//поменял CascadeType.ALL на MERGE
 	@OneToMany(fetch = FetchType.EAGER,
 			   mappedBy = "course",
 			   cascade = {CascadeType.MERGE, CascadeType.REMOVE})
+	@Expose
 	private Set<CourseACL> courseACL_Set = new HashSet<CourseACL>();
 	@ManyToMany(fetch = FetchType.EAGER,
 				cascade = {CascadeType.PERSIST, CascadeType.MERGE})
 	@JoinTable(name = "requirement_course",
 			   joinColumns = {@JoinColumn(name = "id_course")},
 			   inverseJoinColumns = {@JoinColumn(name = "id_requirement")})
+	@Expose
 	Set<Requirement> requirementSet = new HashSet<Requirement>();
 
 	public Course()
@@ -124,6 +130,11 @@ public class Course
 		throw new BusinessException(new NoRightException());
 	}
 
+	public void setCourseACL_Set(Set<CourseACL> courseACL_Set)
+	{
+		this.courseACL_Set = courseACL_Set;
+	}
+
 	public void addRequirement(Requirement requirement)
 	{
 		if (requirementSet.contains(requirement))
@@ -186,7 +197,7 @@ public class Course
 
 	public Set<Group> getGroupes()
 	{
-		return new HashSet<Group>(groupes);
+		return groupes;
 	}
 
 	public void setGroupes(Set<Group> groupes)

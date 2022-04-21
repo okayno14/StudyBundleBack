@@ -29,6 +29,7 @@ public class Core
 	private IGroupService      iGroupService;
 	private IRoleService       iRoleService;
 	private IUserService       iUserService;
+	private UserValidationService userValidationService = new UserValidationService();
 
 	private void initHiber(String path)
 	{
@@ -99,6 +100,7 @@ public class Core
 		iUserService       = new UserService(new UserRepoHiber(sessionFactory), userCache);
 
 		//ТЕСТЫ
+
 		//testBundleRepoFile(cacheController, bundleRepoFile);
 
 
@@ -451,5 +453,10 @@ public class Core
 	public IUserService getiUserService()
 	{
 		return iUserService;
+	}
+
+	public UserValidationService getUserValidationService()
+	{
+		return userValidationService;
 	}
 }

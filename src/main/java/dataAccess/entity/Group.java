@@ -1,5 +1,7 @@
 package dataAccess.entity;
 
+import com.google.gson.annotations.Expose;
+
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
@@ -12,7 +14,9 @@ public class Group implements Serializable
 {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	@Expose
 	private long      id = -1;
+	@Expose
 	private String    name;
 	@OneToMany(mappedBy = "group",
 			   cascade = CascadeType.REMOVE)

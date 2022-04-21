@@ -14,14 +14,13 @@ public interface IUserService
 	User get(String email);
 	User getByToken(String token);
 	User get(User fio, Role role);
-	User getByGroup(User fio, String groupName);
 	List<User> getByCourse(User fio, String courseName);
-	void updateFIO(User fio);
-	void updatePass(String pass);
-	void updateMail(String email);
-	void forgotPass(String email);
+	void updateFIO(User client, User fio);
+	void updatePass(User client, String pass);
+	void updateMail(User client, String email);
+	void forgotPass(User client, String email);
 	void resetPass(String passHash, long id);
 	void confirm(String email);
 	void activate(long id);
-	void delete();
+	void delete(User client);
 }

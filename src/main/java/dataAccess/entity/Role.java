@@ -1,5 +1,7 @@
 package dataAccess.entity;
 
+import com.google.gson.annotations.Expose;
+
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -10,7 +12,9 @@ public class Role implements Serializable
 {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	@Expose
 	private long        id = -1;
+	@Expose
 	private String      name;
 	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
 	@JoinTable(name = "role_route",

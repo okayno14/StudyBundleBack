@@ -26,6 +26,10 @@ public class UserService implements IUserService
 	@Override
 	public User get(long id)
 	{
+		if(userCache.contains(id))
+		{
+			return userCache.get(id);
+		}
 		User res = userRepo.get(id);
 		userCache.put(res);
 		return res;
@@ -37,6 +41,7 @@ public class UserService implements IUserService
 		try
 		{
 			userRepo.save(client);
+			userCache.put(client);
 		}
 		catch (DataAccessException e)
 		{
@@ -125,11 +130,6 @@ public class UserService implements IUserService
 		return null;
 	}
 
-	@Override
-	public User getByGroup(User fio, String groupName)
-	{
-		return null;
-	}
 
 	@Override
 	public List<User> getByCourse(User fio, String courseName)
@@ -138,25 +138,25 @@ public class UserService implements IUserService
 	}
 
 	@Override
-	public void updateFIO(User fio)
+	public void updateFIO(User client, User fio)
 	{
 
 	}
 
 	@Override
-	public void updatePass(String pass)
+	public void updatePass(User client, String pass)
 	{
 
 	}
 
 	@Override
-	public void updateMail(String email)
+	public void updateMail(User client,String email)
 	{
 
 	}
 
 	@Override
-	public void forgotPass(String email)
+	public void forgotPass(User client, String email)
 	{
 
 	}
@@ -180,7 +180,7 @@ public class UserService implements IUserService
 	}
 
 	@Override
-	public void delete()
+	public void delete(User client)
 	{
 
 	}

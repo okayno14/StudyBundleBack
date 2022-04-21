@@ -8,8 +8,10 @@ import exception.DataAccess.ObjectNotFoundException;
 import org.hibernate.Hibernate;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+import org.hibernate.engine.query.spi.HQLQueryPlan;
 import org.hibernate.exception.ConstraintViolationException;
 
+import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
 import java.util.HashSet;
 import java.util.List;
@@ -80,7 +82,7 @@ public class GroupRepoHiber extends RepoHiberBase implements IGroupRepo
 	}
 
 	@Override
-	public boolean isStudentsLazy(Group group)
+	public boolean isStudentsFetched(Group group)
 	{
 		return Hibernate.isInitialized(group.getStudents());
 	}
@@ -100,8 +102,15 @@ public class GroupRepoHiber extends RepoHiberBase implements IGroupRepo
 	@Override
 	public void delete(Group group)
 	{
-		Transaction t = getOrBegin();
-		sessionFactory.getCurrentSession().delete(group);
-		t.commit();
+		try
+		{
+			Transaction t = getOrBegin();
+			sessionFactory.getCurrentSession().delete(group);
+			t.commit();
+		}
+		catch (OptimisticLockException e)
+		{
+			throw new DataAccessException(e);
+		}
 	}
 }

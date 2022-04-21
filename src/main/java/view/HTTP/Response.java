@@ -1,10 +1,13 @@
 package view.HTTP;
 
 import com.google.gson.JsonElement;
+import com.google.gson.annotations.Expose;
 
 public class Response
 {
+	@Expose
 	private JsonElement data=null;
+	@Expose
 	private String message=null;
 
 	public Response(JsonElement data, String message)

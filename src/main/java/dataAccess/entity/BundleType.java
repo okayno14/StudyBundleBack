@@ -1,5 +1,7 @@
 package dataAccess.entity;
 
+import com.google.gson.annotations.Expose;
+
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
@@ -10,7 +12,9 @@ public class BundleType implements Serializable
 {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	@Expose
 	private long   id = -1;
+	@Expose
 	private String name;
 
 	public BundleType()
