@@ -116,7 +116,7 @@ INSERT INTO "route" (method,urn) VALUES ('GET', '/user/role');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('POST', '/course');
+INSERT INTO "route" (method,urn) VALUES ('POST', '/course/');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('GET', '/course/:id');

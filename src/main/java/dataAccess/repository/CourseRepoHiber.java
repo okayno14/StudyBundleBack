@@ -40,6 +40,7 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 			else
 			{
 				session.save(course);
+				session.save(course.getCourseACL_Set().iterator().next());
 			}
 			t.commit();
 		}

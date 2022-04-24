@@ -28,7 +28,7 @@
 
 "GET", "/user/role"
 
-"POST", "/course"
+"POST", "/course/"
 "GET", "/course/:id"
 "GET", "/course/:ownerID/:name"
 "GET", "/course/:ownerID"

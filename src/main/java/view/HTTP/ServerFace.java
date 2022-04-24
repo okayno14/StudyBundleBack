@@ -341,24 +341,49 @@ public class ServerFace
 			});
 		});
 
-		post("/course", (req, resp) ->
+		path("/course",()->
 		{
-			User client = authentAuthorize(req, resp);
-			try
+			post("/", (req, resp) ->
 			{
-				CreateObjReq createObjReq = gson.fromJson(req.body(), CreateObjReq.class);
-				Course c = new Course(createObjReq.getName(),
-									  userController.get(createObjReq.getId()));
-				courseController.add(c);
-				resp.status(200);
-				return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
-			}
-			catch (DataAccessException e)
+				User client = authentAuthorize(req, resp);
+				try
+				{
+					CreateObjReq createObjReq = gson.fromJson(req.body(), CreateObjReq.class);
+					Course c = new Course(createObjReq.getName(),
+										  userController.get(createObjReq.getId()));
+					courseController.add(c);
+					resp.status(200);
+					return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
+				}
+				catch (DataAccessException e)
+				{
+					resp.status(404);
+					return "По указанному id пользователь не найден";
+				}
+			});
+
+			path("/requirement",()->
 			{
-				resp.status(404);
-				return "По указанному id пользователь не найден";
-			}
+				post("/:courseID/:bundleTypeID",(req,resp)->
+				{
+
+					return "F";
+				});
+
+				put("/:courseID/:bundleTypeID",(req,resp)->
+				{
+
+					return "F";
+				});
+
+				delete("/:courseID/:bundleTypeID",(req,resp)->
+				{
+
+					return "F";
+				});
+			});
 		});
+
 
 
 		exception(NumberFormatException.class, (e, req, resp) ->

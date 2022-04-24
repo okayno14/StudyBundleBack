@@ -31,6 +31,7 @@ public class CourseService implements ICourseService
 	public void add(Course client)
 	{
 		repo.save(client);
+
 		cache.put(client);
 	}
 
