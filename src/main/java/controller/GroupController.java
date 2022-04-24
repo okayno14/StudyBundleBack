@@ -48,8 +48,7 @@ public class GroupController implements IGroupController
 		return null;
 	}
 
-	@Override
-	public void addUsers(Group client, List<User> users)
+	private List<User> filterUserIDList(List<User> users)
 	{
 		IUserController  userController = controller.getUserController();
 		Iterator<User>   userIterator   = users.iterator();
@@ -66,7 +65,6 @@ public class GroupController implements IGroupController
 				if (e.getCause().getClass() == ObjectNotFoundException.class)
 				{
 					//сделать логирование
-
 				}
 			}
 		}
@@ -74,7 +72,13 @@ public class GroupController implements IGroupController
 		{
 			throw new DataAccessException(new ObjectNotFoundException());
 		}
-		service.addUsers(client, toAdd);
+		return toAdd;
+	}
+
+	@Override
+	public void addUsers(Group client, List<User> users)
+	{
+		service.addUsers(client, filterUserIDList(users));
 	}
 
 	@Override
@@ -86,7 +90,7 @@ public class GroupController implements IGroupController
 	@Override
 	public void deleteUsers(List<User> users)
 	{
-
+		service.deleteUsers(filterUserIDList(users));
 	}
 
 	@Override

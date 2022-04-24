@@ -53,20 +53,30 @@ public class GroupService implements IGroupService
 		return null;
 	}
 
-	@Override
-	public void addUsers(Group client, List<User> users)
+	private void setGroupToUsers(List<User> users, Group newGroup)
 	{
 		Iterator<User> userIterator = users.iterator();
 		while (userIterator.hasNext())
 		{
 			User user = userIterator.next();
-			user.setGroup(client);
-			if(repo.isStudentsFetched(client))
+			Group curGroup = user.getGroup();
+			if(curGroup!=null &&repo.isStudentsFetched(curGroup))
 			{
-				client.addStudent(user);
+				curGroup.removeStudent(user);
+			}
+			user.setGroup(newGroup);
+			if(newGroup!=null && repo.isStudentsFetched(newGroup))
+			{
+				newGroup.addStudent(user);
 			}
 		}
 		repo.save(users);
+	}
+
+	@Override
+	public void addUsers(Group client, List<User> users)
+	{
+		setGroupToUsers(users, client);
 	}
 
 	@Override
@@ -78,7 +88,7 @@ public class GroupService implements IGroupService
 	@Override
 	public void deleteUsers(List<User> users)
 	{
-
+		setGroupToUsers(users, null);
 	}
 
 	@Override

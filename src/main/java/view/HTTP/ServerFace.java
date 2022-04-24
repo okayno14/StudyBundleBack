@@ -161,6 +161,21 @@ public class ServerFace
 		return null;
 	}
 
+	private String setGroupToUser(Request req, spark.Response resp, Group group)
+	{
+		IDReq idReq = gson.fromJson(req.body(), IDReq.class);
+		if (group != null)
+		{
+			groupController.addUsers(group, idReq.getArr());
+		}
+		else
+		{
+			groupController.deleteUsers(idReq.getArr());
+		}
+		resp.status(200);
+		return gson.toJson(new Response("Успех"));
+	}
+
 	public void endpoints()
 	{
 		//Настрока CORS
@@ -257,8 +272,11 @@ public class ServerFace
 				User   client       = authentAuthorize(req, resp);
 				String token        = client.getToken();
 				long   tokenExpires = client.getTokenExpires();
+				long   id           = Long.parseLong(req.params("id"));
+				User   toDel        = userController.get(id);
+				userController.delete(toDel);
 
-
+				//можем не найти по id toDel
 				return "Empty";
 			});
 
@@ -288,27 +306,17 @@ public class ServerFace
 					User   client       = authentAuthorize(req, resp);
 					String token        = client.getToken();
 					long   tokenExpires = client.getTokenExpires();
-					try
-					{
-						IDReq idReq = gson.fromJson(req.body(), IDReq.class);
-						Group group = groupController.get(Long.parseLong(req.params("id")));
-						groupController.addUsers(group, idReq.getArr());
+					Group  group        = groupController.get(Long.parseLong(req.params("id")));
+					return setGroupToUser(req, resp, group);
+				}));
 
-						resp.status(200);
-						return gson.toJson(new Response("Успех"));
-					}
-					catch (DataAccessException e)
-					{
-						if (e.getCause().getClass() == ObjectNotFoundException.class)
-						{
-							resp.status(404);
-							return gson.toJson(new Response("Объект с запрошенным id не найден"));
-						}
-						else
-						{
-							throw e;
-						}
-					}
+				put("/delStudents", ((req, resp) ->
+				{
+					User   client       = authentAuthorize(req, resp);
+					String token        = client.getToken();
+					long   tokenExpires = client.getTokenExpires();
+					Group  group        = null;
+					return setGroupToUser(req, resp, group);
 				}));
 
 				delete("/:id", (req, resp) ->
@@ -353,10 +361,19 @@ public class ServerFace
 		});
 
 
-		exception(NumberFormatException.class, (e,req,resp)->
+		exception(NumberFormatException.class, (e, req, resp) ->
 		{
 			resp.status(415);
 			resp.body(gson.toJson(new Response("Неправильный формат ID")));
+		});
+
+		exception(DataAccessException.class, (e, req, resp) ->
+		{
+			if (e.getCause().getClass() == ObjectNotFoundException.class)
+			{
+				resp.status(404);
+				resp.body(gson.toJson(new Response("Объект с запрошенным id не найден")));
+			}
 		});
 
 		//Если ничего не получилось найти, то швыряем стак трэйс в клиентский код

@@ -192,7 +192,9 @@ public class UserController implements IUserController
 	@Override
 	public void delete(User client)
 	{
-
+		//удалить из группы
+		//удалить все бандлы
+		//удалить все курсы
 	}
 
 	@Override

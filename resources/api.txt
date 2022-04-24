@@ -23,7 +23,7 @@
 "GET", "/user/group/:studentID"
 "GET", "/user/group/students/:id"
 "PUT", "/user/group/addStudents/:id"
-"PUT", "/user/group/delStudents/:id"
+"PUT", "/user/group/delStudents"
 "DELETE", "/user/group/:id"
 
 "GET", "/user/role"
