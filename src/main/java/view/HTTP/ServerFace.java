@@ -88,7 +88,8 @@ public class ServerFace
 		endpoints();
 	}
 
-	private User initClient(Request req, spark.Response resp)
+	//Аутентификация и авторизация клиента
+	private User authentAuthorize(Request req, spark.Response resp)
 	{
 		try
 		{
@@ -160,6 +161,8 @@ public class ServerFace
 
 	public void endpoints()
 	{
+		//Настрока CORS
+		//Если сессии не было или токен удалён, то сгенерировать гостя
 		before("/*", (req, resp) ->
 		{
 			//CORS
@@ -169,31 +172,13 @@ public class ServerFace
 						"Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin,");
 			resp.header("Access-Control-Allow-Credentials", "true");
 
-			//Получение токена сессии и проверка прав токена на метод API
-			try
+			//Если сессия новая, то создаём её и уинициируем значение токена
+			User client = null;
+			if (req.session().isNew() || !req.session().attributes().contains("token"))
 			{
-				//Поиск по токену пользователя в сессии
-				User client;
-
-				if (req.session().isNew() || !req.session().attributes().contains("token"))
-				{
-					req.session(true);
-					client = userController.getGuestUser();
-					req.session().attribute("token", client.getToken());
-				}
-				else
-				{
-
-				}
-				//Проверка роли пользователя из сессии из запрошенного им метода
-			}
-			catch (ControllerException e)
-			{
-				if (e.getCause() instanceof TokenNotFound)
-				{
-					//добавить обработку
-					System.out.println("токена нет");
-				}
+				req.session(true);
+				client = userController.getGuestUser();
+				req.session().attribute("token", client.getToken());
 			}
 		});
 
@@ -215,9 +200,11 @@ public class ServerFace
 
 		post("/user", ((req, resp) ->
 		{
-			User       client = initClient(req, resp);
-			Type       t      = new TypeToken<List<User>>(){}.getType();
-			List<User> data   = gson.fromJson(req.body(), t);
+			User client = authentAuthorize(req, resp);
+			Type t = new TypeToken<List<User>>()
+			{
+			}.getType();
+			List<User> data = gson.fromJson(req.body(), t);
 			userController.add(data);
 			JsonArray      jsonArray = new JsonArray();
 			Iterator<User> iterator  = data.iterator();
@@ -236,10 +223,13 @@ public class ServerFace
 		{
 			put("/login", (req, resp) ->
 			{
-				User     client   = initClient(req, resp);
-				String   token    = req.session().attribute("token");
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
 				LoginReq loginReq = gson.fromJson(req.body(), LoginReq.class);
-				if (userController.login(token, loginReq.getEmail(), loginReq.getPass()))
+				if (userController
+						.login(token, tokenExpires, loginReq.getEmail(), loginReq.getPass()))
 				{
 					resp.status(200);
 					JsonElement data = gson.toJsonTree(userController.getByToken(token));
@@ -252,8 +242,9 @@ public class ServerFace
 
 			put("/logout", (req, resp) ->
 			{
-				User client = initClient(req, resp);
-				userController.logout(client.getToken());
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				userController.logout(token);
 				req.session().removeAttribute("token");
 				return gson.toJson(new Response("Успешно"));
 			});
@@ -262,7 +253,7 @@ public class ServerFace
 			{
 				post("/:name", ((req, resp) ->
 				{
-					User   client = initClient(req, resp);
+					User   client = authentAuthorize(req, resp);
 					String name   = req.params("name");
 					Group  group  = new Group(name);
 					try
@@ -283,7 +274,7 @@ public class ServerFace
 				{
 					try
 					{
-						User  client = initClient(req, resp);
+						User  client = authentAuthorize(req, resp);
 						long  id     = Long.parseLong(req.params("id"));
 						Group toDel  = new Group();
 						toDel.setId(id);
@@ -303,14 +294,14 @@ public class ServerFace
 
 		delete("/user", (req, resp) ->
 		{
-			User       client = initClient(req, resp);
+			User client = authentAuthorize(req, resp);
 
 			return "Empty";
 		});
 
 		post("/course", (req, resp) ->
 		{
-			User client = initClient(req, resp);
+			User client = authentAuthorize(req, resp);
 			try
 			{
 				CreateObjReq createObjReq = gson.fromJson(req.body(), CreateObjReq.class);

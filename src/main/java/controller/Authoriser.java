@@ -47,11 +47,12 @@ public class Authoriser
 
 	public long timeLeft(String tokenText)
 	{
-		if(existsToken(tokenText))
+		Long res = tokens.get(tokenText);
+		if(res==null)
 		{
-			return tokens.get(tokenText) - System.currentTimeMillis();
+			return 0L;
 		}
-		return 0;
+		return res.longValue();
 	}
 
 	public void removeToken(String tokenText)

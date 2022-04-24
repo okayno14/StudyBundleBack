@@ -44,15 +44,15 @@ public class UserController implements IUserController
 	@Override
 	public void add(List<User> userList)
 	{
-		Iterator<User> i   = userList.iterator();
-		int count=0;
+		Iterator<User> i     = userList.iterator();
+		int            count = 0;
 		while (i.hasNext())
 		{
 			try
 			{
 				count++;
 				User client = i.next();
-				if(!userValidationService.check(client))
+				if (!userValidationService.check(client))
 				{
 					continue;
 				}
@@ -66,10 +66,13 @@ public class UserController implements IUserController
 	}
 
 	@Override
-	public boolean login(String token, String email, String pass)
+	public boolean login(String token, long tokenExpires, String email, String pass)
 	{
-
-		if (service.login(token, email, pass))
+		//Если токен, полученный на вход валидный и не сгорел,
+		//то попробуем поискать пользователя по полученным входным данным
+		if (authoriser.existsToken(token) &&
+				authoriser.timeLeft(token) > System.currentTimeMillis() &&
+				service.login(token, tokenExpires, email, pass))
 		{
 			guestMap.remove(token);
 			return true;
@@ -98,7 +101,9 @@ public class UserController implements IUserController
 		}
 		User user = new User();
 		user.setRole(guest);
-		user.setToken(authoriser.genToken());
+		String token = authoriser.genToken();
+		user.setToken(token);
+		user.setTokenExpires(authoriser.timeLeft(token));
 		guestMap.put(user.getToken(), user);
 		return user;
 	}

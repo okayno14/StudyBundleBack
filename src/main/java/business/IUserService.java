@@ -8,7 +8,7 @@ import java.util.List;
 public interface IUserService
 {
 	void add(User client);
-	boolean login(String token, String email, String pass);
+	boolean login(String token, long tokenExpires, String email, String pass);
 	void logout(String token);
 	User get(long id);
 	User get(String email);

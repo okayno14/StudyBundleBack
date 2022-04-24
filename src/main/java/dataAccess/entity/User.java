@@ -14,17 +14,22 @@ public class User implements Serializable
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
 	@Expose
-	private long    id         = -1;
+	private long    id           = -1;
+	@Expose
 	@Transient
 	private String  token;
+	@Expose
+	@Transient
+	private long    tokenExpires = 0L;
 	@ManyToOne()
-	@JoinColumn(name = "id_role", referencedColumnName = "id")
+	@JoinColumn(name = "id_role",
+				referencedColumnName = "id")
 	@Expose
 	private Role    role;
 	@Column(name = "email_state")
 	@Type(type = "org.hibernate.type.NumericBooleanType")
 	@Expose
-	private boolean emailState = false;
+	private boolean emailState   = false;
 	@Expose
 	private String  email;
 	@Expose
@@ -36,7 +41,8 @@ public class User implements Serializable
 	@Expose
 	private String  fatherName;
 	@ManyToOne
-	@JoinColumn(name = "id_group", referencedColumnName = "id")
+	@JoinColumn(name = "id_group",
+				referencedColumnName = "id")
 	@Expose
 	private Group   group;
 
@@ -53,7 +59,7 @@ public class User implements Serializable
 			int code = (int) (Math.random() * (127 - 33) + 33);
 			stringBuffer.append((char) code);
 		}
-		this.pass=stringBuffer.toString();
+		this.pass = stringBuffer.toString();
 	}
 
 	public User(String lastName, String firstName, String fatherName, String email, Role role)
@@ -185,5 +191,15 @@ public class User implements Serializable
 	public void setGroup(Group group)
 	{
 		this.group = group;
+	}
+
+	public long getTokenExpires()
+	{
+		return tokenExpires;
+	}
+
+	public void setTokenExpires(long tokenExpires)
+	{
+		this.tokenExpires = tokenExpires;
 	}
 }

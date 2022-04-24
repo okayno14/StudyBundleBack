@@ -50,12 +50,16 @@ public class UserService implements IUserService
 	}
 
 	@Override
-	public boolean login(String token, String email, String pass)
+	public boolean login(String token, long tokenExpires, String email, String pass)
 	{
 		User user = null;
 		try
 		{
 			user = userCache.getByEmail(email);
+			if(!user.getPass().equals(pass))
+			{
+				user=null;
+			}
 		}
 		catch (DataAccessException e)
 		{
@@ -73,6 +77,7 @@ public class UserService implements IUserService
 			if (user != null && user.getToken() == null)
 			{
 				user.setToken(token);
+				user.setTokenExpires(tokenExpires);
 				userCache.authenticate(user.getId());
 				return true;
 			}
@@ -87,6 +92,7 @@ public class UserService implements IUserService
 		{
 			User user=userCache.get(token);
 			user.setToken(null);
+			user.setTokenExpires(0L);
 			userCache.delete(token);
 		}
 	}

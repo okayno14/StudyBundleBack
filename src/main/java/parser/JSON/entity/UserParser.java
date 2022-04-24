@@ -22,6 +22,7 @@ public class UserParser implements JsonSerializer<User>, JsonDeserializer<User>
 		JsonObject jsonObject = new JsonObject();
 		jsonObject.addProperty("id", user.getId());
 		jsonObject.addProperty("token", user.getToken());
+		jsonObject.addProperty("tokenExpires", user.getTokenExpires());
 		jsonObject.add("role", gson.toJsonTree(user.getRole()));
 		jsonObject.addProperty("email", user.getEmail());
 		jsonObject.addProperty("pass", user.getPass());
@@ -44,6 +45,10 @@ public class UserParser implements JsonSerializer<User>, JsonDeserializer<User>
 		{
 			user.setToken(jsonObject.get("token").getAsString());
 		}
+		if(jsonObject.has("tokenExpires"))
+		{
+			user.setTokenExpires(jsonObject.get("tokenExpires").getAsLong());
+		}
 		user.setRole(gson.fromJson(jsonObject.get("role"), Role.class));
 		user.setEmail(jsonObject.get("email").toString());
 		if (jsonObject.has("pass"))
@@ -59,6 +64,7 @@ public class UserParser implements JsonSerializer<User>, JsonDeserializer<User>
 	public void defendData(JsonObject jsonObject)
 	{
 		jsonObject.remove("token");
+		jsonObject.remove("tokenExpires");
 		jsonObject.remove("pass");
 	}
 }
