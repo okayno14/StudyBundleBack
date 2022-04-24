@@ -27,7 +27,7 @@ VALUES ('admin@host.ru',0,'password','Администратор','Админи�
 INSERT INTO "route" (method,urn) VALUES ('ANY', 'ANY');
 INSERT INTO role_route VALUES (9,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('POST', '/user');
+INSERT INTO "route" (method,urn) VALUES ('POST', '/user/');
 INSERT INTO role_route VALUES (9,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('POST', '/user/:groupID');

@@ -1,4 +1,4 @@
-"POST", "/user"
+"POST", "/user/"
 "POST", "/user/:groupID"
 "GET", "/user/:id"
 "GET", "/user/:email"

@@ -6,6 +6,7 @@ import dataAccess.entity.Group;
 import dataAccess.entity.User;
 import dataAccess.repository.IGroupRepo;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -30,7 +31,14 @@ public class GroupService implements IGroupService
 	@Override
 	public Group get(long id)
 	{
-		return null;
+		Group res= cache.get(id);
+		if(res!=null)
+		{
+			return res;
+		}
+		res = repo.get(id);
+		cache.put(res);
+		return res;
 	}
 
 	@Override
@@ -46,9 +54,19 @@ public class GroupService implements IGroupService
 	}
 
 	@Override
-	public void addUsers(List<User> users)
+	public void addUsers(Group client, List<User> users)
 	{
-
+		Iterator<User> userIterator = users.iterator();
+		while (userIterator.hasNext())
+		{
+			User user = userIterator.next();
+			user.setGroup(client);
+			if(repo.isStudentsFetched(client))
+			{
+				client.addStudent(user);
+			}
+		}
+		repo.save(users);
 	}
 
 	@Override

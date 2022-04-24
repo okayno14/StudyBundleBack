@@ -9,6 +9,7 @@ import dataAccess.entity.*;
 import exception.Controller.ControllerException;
 import exception.Controller.TokenNotFound;
 import exception.DataAccess.DataAccessException;
+import exception.DataAccess.ObjectNotFoundException;
 import parser.JSON.CreateObjReqParser;
 import parser.JSON.LoginReqParser;
 import parser.JSON.ResponseParser;
@@ -16,6 +17,7 @@ import parser.JSON.entity.*;
 import spark.Request;
 import spark.Spark;
 import view.HTTP.request.CreateObjReq;
+import view.HTTP.request.IDReq;
 import view.HTTP.request.LoginReq;
 
 import java.io.PrintWriter;
@@ -198,29 +200,29 @@ public class ServerFace
 			return "OK";
 		});
 
-		post("/user", ((req, resp) ->
-		{
-			User client = authentAuthorize(req, resp);
-			Type t = new TypeToken<List<User>>()
-			{
-			}.getType();
-			List<User> data = gson.fromJson(req.body(), t);
-			userController.add(data);
-			JsonArray      jsonArray = new JsonArray();
-			Iterator<User> iterator  = data.iterator();
-			while (iterator.hasNext())
-			{
-				JsonObject jsonObject = gson.toJsonTree(iterator.next(), User.class)
-											.getAsJsonObject();
-				userParser.defendData(jsonObject);
-				jsonArray.add(jsonObject);
-			}
-			resp.status(200);
-			return gson.toJson(new Response(jsonArray));
-		}));
-
 		path("/user", () ->
 		{
+			post("/", ((req, resp) ->
+			{
+				User client = authentAuthorize(req, resp);
+				Type t = new TypeToken<List<User>>()
+				{
+				}.getType();
+				List<User> data = gson.fromJson(req.body(), t);
+				userController.add(data);
+				JsonArray      jsonArray = new JsonArray();
+				Iterator<User> iterator  = data.iterator();
+				while (iterator.hasNext())
+				{
+					JsonObject jsonObject = gson.toJsonTree(iterator.next(), User.class)
+												.getAsJsonObject();
+					userParser.defendData(jsonObject);
+					jsonArray.add(jsonObject);
+				}
+				resp.status(200);
+				return gson.toJson(new Response(jsonArray));
+			}));
+
 			put("/login", (req, resp) ->
 			{
 				User   client       = authentAuthorize(req, resp);
@@ -242,11 +244,22 @@ public class ServerFace
 
 			put("/logout", (req, resp) ->
 			{
-				User   client       = authentAuthorize(req, resp);
-				String token        = client.getToken();
+				User   client = authentAuthorize(req, resp);
+				String token  = client.getToken();
 				userController.logout(token);
 				req.session().removeAttribute("token");
 				return gson.toJson(new Response("Успешно"));
+			});
+
+			//Добавить
+			delete("/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+
+				return "Empty";
 			});
 
 			path("/group", () ->
@@ -268,6 +281,34 @@ public class ServerFace
 						return gson.toJson(new Response(e.getCause().getMessage()));
 					}
 
+				}));
+
+				put("/addStudents/:id", ((req, resp) ->
+				{
+					User   client       = authentAuthorize(req, resp);
+					String token        = client.getToken();
+					long   tokenExpires = client.getTokenExpires();
+					try
+					{
+						IDReq idReq = gson.fromJson(req.body(), IDReq.class);
+						Group group = groupController.get(Long.parseLong(req.params("id")));
+						groupController.addUsers(group, idReq.getArr());
+
+						resp.status(200);
+						return gson.toJson(new Response("Успех"));
+					}
+					catch (DataAccessException e)
+					{
+						if (e.getCause().getClass() == ObjectNotFoundException.class)
+						{
+							resp.status(404);
+							return gson.toJson(new Response("Объект с запрошенным id не найден"));
+						}
+						else
+						{
+							throw e;
+						}
+					}
 				}));
 
 				delete("/:id", (req, resp) ->
@@ -292,13 +333,6 @@ public class ServerFace
 			});
 		});
 
-		delete("/user", (req, resp) ->
-		{
-			User client = authentAuthorize(req, resp);
-
-			return "Empty";
-		});
-
 		post("/course", (req, resp) ->
 		{
 			User client = authentAuthorize(req, resp);
@@ -316,6 +350,13 @@ public class ServerFace
 				resp.status(404);
 				return "По указанному id пользователь не найден";
 			}
+		});
+
+
+		exception(NumberFormatException.class, (e,req,resp)->
+		{
+			resp.status(415);
+			resp.body(gson.toJson(new Response("Неправильный формат ID")));
 		});
 
 		//Если ничего не получилось найти, то швыряем стак трэйс в клиентский код

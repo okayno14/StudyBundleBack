@@ -5,7 +5,11 @@ import dataAccess.entity.Course;
 import dataAccess.entity.Group;
 import dataAccess.entity.User;
 import dataAccess.repository.IGroupRepo;
+import exception.DataAccess.DataAccessException;
+import exception.DataAccess.ObjectNotFoundException;
 
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +33,7 @@ public class GroupController implements IGroupController
 	@Override
 	public Group get(long id)
 	{
-		return null;
+		return service.get(id);
 	}
 
 	@Override
@@ -45,9 +49,32 @@ public class GroupController implements IGroupController
 	}
 
 	@Override
-	public void addUsers(List<User> users)
+	public void addUsers(Group client, List<User> users)
 	{
+		IUserController  userController = controller.getUserController();
+		Iterator<User>   userIterator   = users.iterator();
+		LinkedList<User> toAdd          = new LinkedList<>();
+		while (userIterator.hasNext())
+		{
+			try
+			{
+				User user = userController.get(userIterator.next().getId());
+				toAdd.add(user);
+			}
+			catch (DataAccessException e)
+			{
+				if (e.getCause().getClass() == ObjectNotFoundException.class)
+				{
+					//сделать логирование
 
+				}
+			}
+		}
+		if (toAdd.size() == 0)
+		{
+			throw new DataAccessException(new ObjectNotFoundException());
+		}
+		service.addUsers(client, toAdd);
 	}
 
 	@Override

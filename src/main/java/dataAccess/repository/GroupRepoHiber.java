@@ -6,14 +6,15 @@ import exception.DataAccess.DataAccessException;
 import exception.DataAccess.NotUniqueException;
 import exception.DataAccess.ObjectNotFoundException;
 import org.hibernate.Hibernate;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-import org.hibernate.engine.query.spi.HQLQueryPlan;
 import org.hibernate.exception.ConstraintViolationException;
 
 import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 
 public class GroupRepoHiber extends RepoHiberBase implements IGroupRepo
@@ -62,7 +63,13 @@ public class GroupRepoHiber extends RepoHiberBase implements IGroupRepo
 	public Group get(long id)
 	{
 		Transaction t = getOrBegin();
-		return sessionFactory.getCurrentSession().get(Group.class, id);
+		Group res = sessionFactory.getCurrentSession().get(Group.class, id);
+		t.commit();
+		if(res != null)
+		{
+			return res;
+		}
+		throw new DataAccessException(new ObjectNotFoundException());
 	}
 
 	@Override
@@ -80,6 +87,20 @@ public class GroupRepoHiber extends RepoHiberBase implements IGroupRepo
 		}
 		throw new DataAccessException(new ObjectNotFoundException());
 	}
+
+	@Override
+	public void save(List<User> users)
+	{
+		Transaction t = getOrBegin();
+		Session session = sessionFactory.getCurrentSession();
+		Iterator<User> userIterator = users.iterator();
+		while (userIterator.hasNext())
+		{
+			session.update(userIterator.next());
+		}
+		t.commit();
+	}
+
 
 	@Override
 	public boolean isStudentsFetched(Group group)

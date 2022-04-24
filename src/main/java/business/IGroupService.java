@@ -14,7 +14,7 @@ public interface IGroupService
 	Group get(long id);
 	List<Group> get(String groupName);
 	Set<Group> get(Course course);
-	void addUsers(List<User> users);
+	void addUsers(Group client, List<User> users);
 	Set<User> getUsers(Group client);
 	void deleteUsers(List<User> users);
 	void delete(Group client);
