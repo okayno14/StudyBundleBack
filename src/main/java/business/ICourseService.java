@@ -14,9 +14,9 @@ public interface ICourseService
 	List<Course> get(User owner, String name);
 	List<Course> getByOwner(User owner);
 	List<Course> getByStudent(User student);
-	void addRequirement(BundleType bt, int q);
-	void updateRequirement(BundleType bt, int q);
-	void deleteRequirement(BundleType bt, int q);
+	void addRequirement(Course client, BundleType bt, int q);
+	void updateRequirement(Course client, BundleType bt, int q);
+	void deleteRequirement(Course client, BundleType bt, int q);
 	void subscribe(Group group);
 	void unsubscribe(Group group);
 	void updateName(Course client, String name);

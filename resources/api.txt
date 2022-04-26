@@ -40,9 +40,9 @@
 "PUT", "/course/:id"
 "DELETE", "/course/:id"
 
-"POST", "/course/requirement/:courseID/:bundleTypeID"
-"PUT", "/course/requirement/:courseID/:bundleTypeID"
-"DELETE", "/course/requirement/:courseID/:bundleTypeID"
+"POST", "/course/requirement/:courseID/:bundleTypeID/:q"
+"PUT", "/course/requirement/:courseID/:bundleTypeID/:q"
+"DELETE", "/course/requirement/:courseID/:bundleTypeID/:q"
 
 "GET", "/bundle/:id"
 "GET", "/bundle/:courseName/:ownerGroupName/:ownerLastName/:ownerFirstName/:ownerFatherName"

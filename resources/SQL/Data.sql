@@ -153,13 +153,13 @@ INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO "route" (method,urn) VALUES ('DELETE', '/course/:id');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('POST', '/course/requirement/:courseID/:bundleTypeID');
+INSERT INTO "route" (method,urn) VALUES ('POST', '/course/requirement/:courseID/:bundleTypeID/:q');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('PUT', '/course/requirement/:courseID/:bundleTypeID');
+INSERT INTO "route" (method,urn) VALUES ('PUT', '/course/requirement/:courseID/:bundleTypeID/:q');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('DELETE', '/course/requirement/:courseID/:bundleTypeID');
+INSERT INTO "route" (method,urn) VALUES ('DELETE', '/course/requirement/:courseID/:bundleTypeID/:q');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('GET', '/bundle/:id');

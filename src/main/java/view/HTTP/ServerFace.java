@@ -341,49 +341,52 @@ public class ServerFace
 			});
 		});
 
-		path("/course",()->
+		path("/course", () ->
 		{
 			post("/", (req, resp) ->
 			{
 				User client = authentAuthorize(req, resp);
-				try
-				{
-					CreateObjReq createObjReq = gson.fromJson(req.body(), CreateObjReq.class);
-					Course c = new Course(createObjReq.getName(),
-										  userController.get(createObjReq.getId()));
-					courseController.add(c);
-					resp.status(200);
-					return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
-				}
-				catch (DataAccessException e)
-				{
-					resp.status(404);
-					return "По указанному id пользователь не найден";
-				}
+
+				CreateObjReq createObjReq = gson.fromJson(req.body(), CreateObjReq.class);
+				Course c = new Course(createObjReq.getName(),
+									  userController.get(createObjReq.getId()));
+				courseController.add(c);
+				resp.status(200);
+				return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
 			});
 
-			path("/requirement",()->
+			path("/requirement", () ->
 			{
-				post("/:courseID/:bundleTypeID",(req,resp)->
+				post("/:courseID/:bundleTypeID/:q", (req, resp) ->
+				{
+					User   client       = authentAuthorize(req, resp);
+					String token        = client.getToken();
+					long   tokenExpires = client.getTokenExpires();
+
+					long courseID     = Long.parseLong(req.params("courseID"));
+					long bundleTypeID = Long.parseLong(req.params("bundleTypeID"));
+					int  q            = Integer.parseInt(req.params("q"));
+
+					BundleType bt = bundleTypeController.get(bundleTypeID);
+
+					//courseController.addRequirement(bt,q);
+
+					return "F";
+				});
+
+				put("/:courseID/:bundleTypeID/:q", (req, resp) ->
 				{
 
 					return "F";
 				});
 
-				put("/:courseID/:bundleTypeID",(req,resp)->
-				{
-
-					return "F";
-				});
-
-				delete("/:courseID/:bundleTypeID",(req,resp)->
+				delete("/:courseID/:bundleTypeID/:q", (req, resp) ->
 				{
 
 					return "F";
 				});
 			});
 		});
-
 
 
 		exception(NumberFormatException.class, (e, req, resp) ->

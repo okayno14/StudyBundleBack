@@ -153,6 +153,12 @@ public class Course
 		requirementSet.remove(requirement);
 	}
 
+	public boolean isContainRequirement(BundleType bt, int q)
+	{
+		Requirement req = new Requirement(q,bt);
+		return requirementSet.contains(req);
+	}
+
 	@Override
 	public boolean equals(Object o)
 	{

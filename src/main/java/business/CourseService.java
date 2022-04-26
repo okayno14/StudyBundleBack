@@ -2,13 +2,12 @@ package business;
 
 import dataAccess.cache.ICourseCache;
 import dataAccess.cache.IRequirementCache;
-import dataAccess.entity.BundleType;
-import dataAccess.entity.Course;
-import dataAccess.entity.Group;
-import dataAccess.entity.User;
+import dataAccess.entity.*;
 import dataAccess.repository.ICourseRepo;
 import dataAccess.repository.IRequirementRepo;
+import exception.Business.RequirementExistsException;
 
+import java.util.Iterator;
 import java.util.List;
 
 public class CourseService implements ICourseService
@@ -31,7 +30,6 @@ public class CourseService implements ICourseService
 	public void add(Course client)
 	{
 		repo.save(client);
-
 		cache.put(client);
 	}
 
@@ -60,21 +58,51 @@ public class CourseService implements ICourseService
 	}
 
 	@Override
-	public void addRequirement(BundleType bt, int q)
+	public void addRequirement(Course client, BundleType bt, int q)
 	{
+		//Проверить есть ли требование с этим bt в курсе. Если есть, то исключение
+		//Проверить есть ли такое требование в системе. Если есть, то добавим к курсу этот объект
+		//Если нет, то создадим новое
+
+		for(Requirement req: client.getRequirementSet())
+		{
+			if(req.getBundleType().equals(bt))
+			{
+				throw new RequirementExistsException(bt.getName());
+			}
+		}
+
+		Requirement req = new Requirement(q,bt);
+		if(reqCache.contains(req))
+		{
+			for(Requirement i: reqCache.get())
+			{
+				if(i.equals(req))
+				{
+					req=i;
+				}
+			}
+		}
+
+		client.addRequirement(req);
 
 	}
 
 	@Override
-	public void updateRequirement(BundleType bt, int q)
+	public void updateRequirement(Course client, BundleType bt, int q)
 	{
-
+		//найти старое требование
+		//посмотреть в базе количество ссылок на него
+		//если 1, то сохранить изменения старого требования в базе
+		//если больше, то отвязать от старого, создать новый объект и сохранить его в базу
 	}
 
 	@Override
-	public void deleteRequirement(BundleType bt, int q)
+	public void deleteRequirement(Course client, BundleType bt, int q)
 	{
-
+		//посмотреть в базе количество ссылок на него
+		//если 1, то удалить старый объект из базы
+		//если больше, то отвязать от старого
 	}
 
 	@Override
