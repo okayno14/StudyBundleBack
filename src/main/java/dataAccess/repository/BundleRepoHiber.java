@@ -30,6 +30,7 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 			if(bundle.getId()==-1L)
 			{
 				sessionFactory.getCurrentSession().save(bundle);
+				sessionFactory.getCurrentSession().save(bundle.getBundleACLSet().iterator().next());
 			}
 			else
 			{
@@ -42,7 +43,10 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 	public Bundle get(long id)
 	{
 		Transaction t =getOrBegin();
-			Bundle res = sessionFactory.getCurrentSession().get(Bundle.class,id);
+		HQL="from Bundle as b from inner join fetch b.bundleACLSet where b.id=:id";
+		q=sessionFactory.getCurrentSession().createQuery(HQL);
+		q.setParameter("id",id);
+		Bundle res = (Bundle) q.getSingleResult();
 		t.commit();
 		if(res!=null)
 		{

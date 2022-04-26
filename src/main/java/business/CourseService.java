@@ -5,6 +5,7 @@ import dataAccess.cache.IRequirementCache;
 import dataAccess.entity.*;
 import dataAccess.repository.ICourseRepo;
 import dataAccess.repository.IRequirementRepo;
+import exception.Business.BusinessException;
 import exception.Business.RequirementExistsException;
 
 import java.util.Iterator;
@@ -24,6 +25,12 @@ public class CourseService implements ICourseService
 		this.cache    = cache;
 		this.reqRepo  = reqRepo;
 		this.reqCache = reqCache;
+
+		List<Requirement> list = reqRepo.get();
+		for(Requirement req:list)
+		{
+			reqCache.put(req);
+		}
 	}
 
 	@Override
@@ -36,7 +43,14 @@ public class CourseService implements ICourseService
 	@Override
 	public Course get(long id)
 	{
-		return null;
+		Course res;
+		res=cache.get(id);
+		if(res==null)
+		{
+			res=repo.get(id);
+			cache.put(res);
+		}
+		return res;
 	}
 
 	@Override
@@ -68,7 +82,7 @@ public class CourseService implements ICourseService
 		{
 			if(req.getBundleType().equals(bt))
 			{
-				throw new RequirementExistsException(bt.getName());
+				throw new BusinessException(new RequirementExistsException(bt.getName()));
 			}
 		}
 
@@ -83,9 +97,13 @@ public class CourseService implements ICourseService
 				}
 			}
 		}
-
+		else
+		{
+			reqCache.put(req);
+		}
 		client.addRequirement(req);
-
+		reqRepo.save(req);
+		repo.save(client);
 	}
 
 	@Override

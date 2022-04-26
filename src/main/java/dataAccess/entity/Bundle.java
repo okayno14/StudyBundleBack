@@ -41,8 +41,7 @@ public class Bundle implements Serializable, Similarity
 	@JoinColumn(name = "id_report",
 				referencedColumnName = "id")
 	private Report         report;
-	@OneToMany(fetch = FetchType.EAGER,
-			   cascade = {CascadeType.MERGE, CascadeType.REMOVE},
+	@OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE},
 			   mappedBy = "bundle")
 	private Set<BundleACL> bundleACLSet = new HashSet<BundleACL>();
 

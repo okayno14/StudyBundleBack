@@ -6,6 +6,8 @@ import configuration.ConfMain;
 import configuration.HTTP_Conf;
 import controller.*;
 import dataAccess.entity.*;
+import exception.Business.BusinessException;
+import exception.Business.RequirementExistsException;
 import exception.Controller.ControllerException;
 import exception.Controller.TokenNotFound;
 import exception.DataAccess.DataAccessException;
@@ -99,7 +101,7 @@ public class ServerFace
 			//если пользователь персистентен и не подтвердил почту, то ему нельзя работать в системе
 			if (!client.isEmailState() && client.getId() != -1)
 			{
-				halt(401, "У пользователя нет права на это действие");
+				halt(403, "У пользователя нет права на это действие");
 			}
 			Route route = client.getRole().getRouteList().get(0);
 			if (route.getMethod().toString().equals(any) && route.getUrn().equals(any))
@@ -149,7 +151,7 @@ public class ServerFace
 					return client;
 				}
 			}
-			halt(401, "У пользователя нет права на это действие");
+			halt(403, "У пользователя нет права на это действие");
 		}
 		catch (ControllerException e)
 		{
@@ -368,10 +370,19 @@ public class ServerFace
 					int  q            = Integer.parseInt(req.params("q"));
 
 					BundleType bt = bundleTypeController.get(bundleTypeID);
+					Course course = courseController.get(courseID);
 
-					//courseController.addRequirement(bt,q);
-
-					return "F";
+					try
+					{
+						courseController.addRequirement(course,bt,q);
+						resp.status(200);
+						return gson.toJson(new Response(gson.toJsonTree(course), "Успех"));
+					}
+					catch (BusinessException e)
+					{
+						resp.status(409);
+						return gson.toJson(new Response(e.getCause().getMessage()));
+					}
 				});
 
 				put("/:courseID/:bundleTypeID/:q", (req, resp) ->

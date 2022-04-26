@@ -10,6 +10,7 @@ import configuration.DateAccessConf;
 import dataAccess.cache.*;
 import dataAccess.entity.*;
 import dataAccess.repository.*;
+import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
@@ -101,6 +102,7 @@ public class Core
 
 		//ТЕСТЫ
 
+		//new CourseRepoHiber(sessionFactory).get(112L);
 
 		//testBundleRepoFile(cacheController, bundleRepoFile);
 

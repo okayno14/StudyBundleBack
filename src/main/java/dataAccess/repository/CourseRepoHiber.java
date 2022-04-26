@@ -5,10 +5,12 @@ import dataAccess.entity.User;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.NotUniqueException;
 import exception.DataAccess.ObjectNotFoundException;
+import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.exception.ConstraintViolationException;
+import org.hibernate.query.Query;
 
 import javax.persistence.PersistenceException;
 import java.util.List;
@@ -35,7 +37,7 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 			Session     session = sessionFactory.getCurrentSession();
 			if (course.getId() != -1)
 			{
-				session.merge(course);
+				session.update(course);
 			}
 			else
 			{
@@ -59,8 +61,12 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	{
 		Transaction t       = getOrBegin();
 		Session     session = sessionFactory.getCurrentSession();
-		Course      res     = session.get(Course.class, id);
+		HQL = "from Course as c inner join fetch c.courseACL_Set where c.id=:id";
+		q   = session.createQuery(HQL);
+		q.setParameter("id", id);
+		Course res = (Course) q.getSingleResult();
 		t.commit();
+
 		if (res != null)
 		{
 			return res;

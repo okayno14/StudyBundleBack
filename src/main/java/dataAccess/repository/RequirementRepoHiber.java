@@ -23,14 +23,7 @@ public class RequirementRepoHiber extends RepoHiberBase implements IRequirementR
 	public void save(Requirement req)
 	{
 		Transaction t = getOrBegin();
-		if (req.getId() != -1L)
-		{
-			sessionFactory.getCurrentSession().merge(req);
-		}
-		else
-		{
-			sessionFactory.getCurrentSession().save(req);
-		}
+		sessionFactory.getCurrentSession().saveOrUpdate(req);
 		t.commit();
 	}
 

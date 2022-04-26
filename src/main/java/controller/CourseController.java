@@ -28,7 +28,7 @@ public class CourseController implements ICourseController
 	@Override
 	public Course get(long id)
 	{
-		return null;
+		return service.get(id);
 	}
 
 	@Override

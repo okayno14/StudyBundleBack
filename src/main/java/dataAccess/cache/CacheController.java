@@ -2,6 +2,7 @@ package dataAccess.cache;
 
 import dataAccess.entity.*;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -76,21 +77,16 @@ public class CacheController implements Runnable
 	//может быть lazyException
 	public void fetched(Group group)
 	{
-		Set<User>      users    = group.getStudents();
-		Iterator<User> iterator = users.iterator();
-		while (iterator.hasNext())
+		HashSet<User> summary = new HashSet<>();
+		for(User user: group.getStudents())
 		{
-			User user = iterator.next();
 			if (!userCache.contains(user.getId()))
 			{
 				userCache.put(user);
 			}
-			else
-			{
-				iterator.remove();
-				users.add(userCache.get(user.getId()));
-			}
+			summary.add(userCache.get(user.getId()));
 		}
+		group.setStudents(summary);
 	}
 
 	void added(Bundle bundle)
@@ -136,26 +132,18 @@ public class CacheController implements Runnable
 
 	void added(Course course)
 	{
-		Set<Requirement>      requirements = course.getRequirementSet();
-		Iterator<Requirement> iterator     = requirements.iterator();
-		BundleType            bt           = null;
-		while (iterator.hasNext())
+		HashSet<Requirement> summary = new HashSet<>();
+		for(Requirement req:course.getRequirementSet())
 		{
-			//Обновить кеш требований
-			Requirement req = iterator.next();
 			if (!requirementCache.contains(req.getId()))
 			{
 				requirementCache.put(req);
 			}
-			else
-			{
-				req = requirementCache.get(req.getId());
-				course.removeRequirement(req);
-				course.addRequirement(req);
-			}
+			req =requirementCache.get(req.getId());
+			summary.add(req);
 
 			//обновить кеш типов работ
-			bt = req.getBundleType();
+			BundleType bt = req.getBundleType();
 			if (!bundleTypeCache.contains(bt.getId()))
 			{
 				bundleTypeCache.put(bt);
@@ -165,6 +153,9 @@ public class CacheController implements Runnable
 				req.setBundleType(bundleTypeCache.get(bt.getId()));
 			}
 		}
+		course.setRequirementSet(summary);
+
+
 		//обновить кеш пользователей (добавить владельцев)
 		Set<CourseACL>      courseACLSet      = course.getCourseACL_Set();
 		Iterator<CourseACL> courseACLIterator = courseACLSet.iterator();
@@ -183,22 +174,16 @@ public class CacheController implements Runnable
 			}
 		}
 		//обновить кеш групп
-		Set<Group>      groups    = course.getGroupes();
-		Iterator<Group> iterator1 = groups.iterator();
-		Group           group     = null;
-		while (iterator1.hasNext())
+		HashSet<Group> summaryG = new HashSet<>();
+		for(Group g: course.getGroupes())
 		{
-			group = iterator1.next();
-			if (!groupCache.contains(group.getId()))
+			if (!groupCache.contains(g.getId()))
 			{
-				groupCache.put(group);
+				groupCache.put(g);
 			}
-			else
-			{
-				iterator1.remove();
-				groups.add(groupCache.get(group.getId()));
-			}
+			summaryG.add(groupCache.get(g.getId()));
 		}
+		course.setGroupes(summaryG);
 	}
 
 	//Эти методы вызываются, если объект удаляется из системы через сервис

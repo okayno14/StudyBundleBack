@@ -23,8 +23,7 @@ public class Course
 	@Expose
 	private Set<Group>     groupes       = new HashSet<Group>();
 	//поменял CascadeType.ALL на MERGE
-	@OneToMany(fetch = FetchType.EAGER,
-			   mappedBy = "course",
+	@OneToMany(mappedBy = "course",
 			   cascade = {CascadeType.MERGE, CascadeType.REMOVE})
 	@Expose
 	private Set<CourseACL> courseACL_Set = new HashSet<CourseACL>();
