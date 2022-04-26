@@ -39,6 +39,18 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 		t.commit();
 	}
 
+	//Ожидается, что поступят только пустые бандлы
+	@Override
+	public void save(List<Bundle> bundles)
+	{
+		Transaction t = getOrBegin();
+		for(Bundle b:bundles)
+		{
+			sessionFactory.getCurrentSession().save(b);
+		}
+		t.commit();
+	}
+
 	@Override
 	public Bundle get(long id)
 	{

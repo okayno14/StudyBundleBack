@@ -9,6 +9,7 @@ import java.util.List;
 public interface IBundleRepo
 {
 	void save(Bundle bundle);
+	void save(List<Bundle> bundles);
 	Bundle get(long id);
 	List<Bundle> get(String courseName, String groupName, User fio);
 	List<Bundle> get(Course course, User user);

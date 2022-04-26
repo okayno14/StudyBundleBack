@@ -72,7 +72,7 @@ public class CourseService implements ICourseService
 	}
 
 	@Override
-	public void addRequirement(Course client, BundleType bt, int q)
+	public Requirement addRequirement(Course client, BundleType bt, int q)
 	{
 		//Проверить есть ли требование с этим bt в курсе. Если есть, то исключение
 		//Проверить есть ли такое требование в системе. Если есть, то добавим к курсу этот объект
@@ -104,6 +104,7 @@ public class CourseService implements ICourseService
 		client.addRequirement(req);
 		reqRepo.save(req);
 		repo.save(client);
+		return req;
 	}
 
 	@Override

@@ -84,7 +84,7 @@ public class GroupController implements IGroupController
 	@Override
 	public Set<User> getUsers(Group client)
 	{
-		return null;
+		return service.getUsers(client);
 	}
 
 	@Override

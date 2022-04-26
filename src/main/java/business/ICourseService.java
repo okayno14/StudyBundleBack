@@ -1,9 +1,6 @@
 package business;
 
-import dataAccess.entity.BundleType;
-import dataAccess.entity.Course;
-import dataAccess.entity.Group;
-import dataAccess.entity.User;
+import dataAccess.entity.*;
 
 import java.util.List;
 
@@ -14,7 +11,7 @@ public interface ICourseService
 	List<Course> get(User owner, String name);
 	List<Course> getByOwner(User owner);
 	List<Course> getByStudent(User student);
-	void addRequirement(Course client, BundleType bt, int q);
+	Requirement addRequirement(Course client, BundleType bt, int q);
 	void updateRequirement(Course client, BundleType bt, int q);
 	void deleteRequirement(Course client, BundleType bt, int q);
 	void subscribe(Group group);

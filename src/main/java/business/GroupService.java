@@ -82,7 +82,12 @@ public class GroupService implements IGroupService
 	@Override
 	public Set<User> getUsers(Group client)
 	{
-		return null;
+		if(!repo.isStudentsFetched(client))
+		{
+			repo.fetchStudents(client);
+			cache.putWithUsers(client);
+		}
+		return client.getStudents();
 	}
 
 	@Override

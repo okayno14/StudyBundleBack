@@ -1,11 +1,9 @@
 package controller;
 
 import business.ICourseService;
-import dataAccess.entity.BundleType;
-import dataAccess.entity.Course;
-import dataAccess.entity.Group;
-import dataAccess.entity.User;
+import dataAccess.entity.*;
 
+import java.util.LinkedList;
 import java.util.List;
 
 public class CourseController implements ICourseController
@@ -50,9 +48,25 @@ public class CourseController implements ICourseController
 	}
 
 	@Override
-	public void addRequirement(Course client, BundleType bt, int q)
+	public Requirement addRequirement(Course client, BundleType bt, int q)
 	{
-		service.addRequirement(client, bt, q);
+		Requirement req= service.addRequirement(client, bt, q);
+		LinkedList<Bundle> list = new LinkedList<>();
+		for(Group g:client.getGroupes())
+		{
+			controller.groupController.getUsers(g);
+			for(User u: g.getStudents())
+			{
+				for(int i=0;i<q;i++)
+				{
+					Bundle b = new Bundle(i,client,req.getBundleType());
+					b.addAuthor(u,Author.AUTHOR);
+					list.add(b);
+				}
+			}
+		}
+		controller.bundleController.add(list);
+		return req;
 	}
 
 	@Override

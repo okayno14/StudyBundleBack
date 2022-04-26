@@ -1,6 +1,9 @@
 package controller;
 
 import business.bundle.IBundleService;
+import dataAccess.entity.Bundle;
+
+import java.util.List;
 
 public class BundleController implements IBundleController
 {
@@ -11,5 +14,11 @@ public class BundleController implements IBundleController
 	{
 		this.controller    = controller;
 		this.bundleService = bundleService;
+	}
+
+	@Override
+	public void add(List<Bundle> bundles)
+	{
+		bundleService.add(bundles);
 	}
 }
