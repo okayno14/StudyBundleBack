@@ -6,18 +6,17 @@ import dataAccess.entity.User;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.NotUniqueException;
 import exception.DataAccess.ObjectNotFoundException;
-import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.exception.ConstraintViolationException;
-import org.hibernate.query.Query;
 
 import javax.persistence.PersistenceException;
 import java.util.List;
 
 public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 {
+	private String fullGraph = "select c from Course as c inner join fetch c.courseACL_Set as cACL ";
 	public CourseRepoHiber(SessionFactory sessionFactory)
 	{
 		super(sessionFactory);
@@ -62,7 +61,7 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	{
 		Transaction t       = getOrBegin();
 		Session     session = sessionFactory.getCurrentSession();
-		HQL = "from Course as c inner join fetch c.courseACL_Set where c.id=:id";
+		HQL = fullGraph + "where c.id=:id";
 		q   = session.createQuery(HQL);
 		q.setParameter("id", id);
 		Course res = (Course) q.getSingleResult();
@@ -80,8 +79,7 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	{
 		Transaction t       = getOrBegin();
 		Session     session = sessionFactory.getCurrentSession();
-		HQL = "select c from Course as c inner join fetch c.courseACL_Set as o " +
-				"where o.id.userID=:id and c.name=:name";
+		HQL = fullGraph + "where cACL.id.userID=:id and c.name=:name";
 		q   = session.createQuery(HQL);
 		q.setParameter("id", owner.getId());
 		q.setParameter("name", name);
@@ -99,8 +97,7 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	{
 		Transaction t       = getOrBegin();
 		Session     session = sessionFactory.getCurrentSession();
-		HQL = "select c from Course as c inner join fetch c.courseACL_Set as o "+
-				"where o.id.userID=:id";
+		HQL = fullGraph + "where cACL.id.userID=:id";
 		q   = session.createQuery(HQL);
 		q.setParameter("id", owner.getId());
 		List<Course> res = q.getResultList();
@@ -117,9 +114,9 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	{
 		Transaction t       = getOrBegin();
 		Session     session = sessionFactory.getCurrentSession();
-		HQL = "select c from Course as c inner join c.groupes as g " +
+		HQL = fullGraph +
+				"inner join c.groupes as g " +
 				"inner join g.students as u " +
-				"inner join fetch c.courseACL_Set " +
 				"where u.id=:id";
 		q   = session.createQuery(HQL);
 		q.setParameter("id", student.getId());
@@ -136,9 +133,7 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	public List<Course> getByGroup(Group g)
 	{
 		Transaction t = getOrBegin();
-		HQL="select c from Course as c inner join c.groupes as g " +
-				"inner join fetch c.courseACL_Set " +
-				"where g.id = :id";
+		HQL=fullGraph + "inner join c.groupes as g where g.id = :id";
 		q = sessionFactory.getCurrentSession().createQuery(HQL);
 		q.setParameter("id", g.getId());
 		List<Course> res =q.getResultList();

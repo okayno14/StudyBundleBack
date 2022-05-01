@@ -300,6 +300,7 @@ public class BundleRepoFile implements IBundleRepoFile
 		try
 		{
 			moveBundleRec(oldBundle,bundleNew);
+			client.setFolder(destinationFolder);
 		}
 		catch (IOException e)
 		{

@@ -198,7 +198,7 @@ public class Core
 					for (int i = 1; i <= req.getQuantity(); i++)
 					{
 						Bundle bundle = new Bundle(i, course, req.getBundleType());
-						bundle.addAuthor(user, Author.AUTHOR);
+						bundle.addACE(user, Author.AUTHOR);
 						bundle.setId(++sequence);
 
 						bundleCache.put(bundle);
@@ -322,7 +322,7 @@ public class Core
 					lr1 = bundle.getId();
 				}
 
-				bundle.addAuthor(user, Author.AUTHOR);
+				bundle.addACE(user, Author.AUTHOR);
 				sessionFactory.getCurrentSession().merge(bundle);
 			}
 		}
@@ -348,7 +348,7 @@ public class Core
 
 		bundleCache.get(lr1).getReport().setFileNameAndMeta("doc.docx", text);
 		bundleCache.get(lr1).accept();
-		bundleCache.get(lr1).addAuthor(userCache.get(me), Author.COAUTHOR);
+		bundleCache.get(lr1).addACE(userCache.get(me), Author.COAUTHOR);
 		sessionFactory.getCurrentSession().merge(bundleCache.get(lr1));
 		sessionFactory.getCurrentSession().getTransaction().commit();
 

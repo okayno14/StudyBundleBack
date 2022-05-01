@@ -61,7 +61,7 @@ public class CourseController implements ICourseController
 		for (int i = 1; i <= req.getQuantity(); i++)
 		{
 			Bundle b = new Bundle(i, client, req.getBundleType());
-			b.addAuthor(u, Author.AUTHOR);
+			b.addACE(u, Author.AUTHOR);
 			list.add(b);
 		}
 	}
@@ -133,10 +133,11 @@ public class CourseController implements ICourseController
 			HashSet<Course> oldGroupCourses = new HashSet<>();
 			try
 			{
-				List<Bundle> bundleList = controller.bundleController
-						.getAll(u);
+				List<Bundle> bundleList = controller.bundleController.getAll(u);
 				for (Bundle b : bundleList)
 				{
+					//сделать список бандлов для перемещения
+					//а внутри сервиса сохранить изменения в базу внутри одной болдьшой транзакции
 					oldGroupCourses.add(b.getCourse());
 					if (b.getState() != BundleState.EMPTY)
 					{
@@ -162,9 +163,10 @@ public class CourseController implements ICourseController
 			{
 				for (Requirement req : c.getRequirementSet())
 				{
-					genBundlesForReq(list,req,c,u);
+					genBundlesForReq(list, req, c, u);
 				}
 			}
+			controller.bundleController.add(list);
 		}
 	}
 

@@ -3,6 +3,8 @@ package dataAccess.entity;
 import com.google.gson.annotations.Expose;
 import exception.Business.BusinessException;
 import exception.Business.NoRightException;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.*;
 import java.util.*;

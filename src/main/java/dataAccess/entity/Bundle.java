@@ -2,9 +2,9 @@ package dataAccess.entity;
 
 import business.bundle.Similarity;
 import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType;
-import configuration.BusinessConfiguration;
 import exception.Business.BusinessException;
 import exception.Business.NoRightException;
+import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
@@ -28,7 +28,7 @@ public class Bundle implements Serializable, Similarity
 	@Enumerated(EnumType.STRING)
 	@Type(type = "pgsql_enum")
 	private BundleState    state        = BundleState.EMPTY;
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "id_course",
 				referencedColumnName = "id")
 	private Course         course;
@@ -61,65 +61,33 @@ public class Bundle implements Serializable, Similarity
 		this.report     = new Report();
 	}
 
-	private boolean isContainAuthor(User user)
+	public Bundle(String folder, int num, BundleState state, BundleType bundleType,
+				  Report report, Set<BundleACL> bundleACLSet)
 	{
-		BundleACL obj = new BundleACL(this, user, null);
-		if (bundleACLSet.contains(obj))
-		{
-			return true;
-		}
-		return false;
-	}
-
-	public void addAuthor(User user, Author rights)
-	{
-		if (isContainAuthor(user))
-		{
-			return;
-		}
-		bundleACLSet.add(new BundleACL(this, user, rights));
-
-		if(rights==Author.AUTHOR)
-		{
-			folder = user.getGroup().getName() + "/" + user.getLastName() + " " +
-					user.getFirstName().charAt(0) + user.getFatherName().charAt(0) + "/" +
-					course.getName() + "/" + bundleType.getName() + " " + num;
-		}
+		this.folder       = folder;
+		this.num          = num;
+		this.state        = state;
+		this.bundleType   = bundleType;
+		this.report       = report;
+		this.bundleACLSet = bundleACLSet;
 	}
 
 	public User getAuthor()
 	{
-		for(BundleACL acl: bundleACLSet)
+		for (BundleACL acl : bundleACLSet)
 		{
-			if(acl.getRights()==Author.AUTHOR)
+			if (acl.getRights() == Author.AUTHOR)
 			{
 				return acl.getUser();
 			}
 		}
-		return null;
+		throw new BusinessException(new NoRightException());
 	}
 
-	public void removeAuthor(User user)
-	{
-		BundleACL obj = new BundleACL(this, user, null);
-		if (isContainAuthor(user))
-		{
-			Iterator<BundleACL> iterator = bundleACLSet.iterator();
-			while (iterator.hasNext())
-			{
-				obj = iterator.next();
-				if (obj.getUser().equals(user) && obj.getRights()!=Author.AUTHOR)
-				{
-					iterator.remove();
-				}
-			}
-		}
-	}
-
-	public Author checkRights(User user) throws NoRightException
+	public Author getRights(User user) throws NoRightException
 	{
 		BundleACL obj = null;
-		if (!isContainAuthor(user))
+		if (!existsACE(user))
 		{
 			throw new BusinessException(new NoRightException());
 		}
@@ -135,26 +103,79 @@ public class Bundle implements Serializable, Similarity
 		throw new BusinessException(new NoRightException());
 	}
 
-	public BundleACL getBundleACL(User user) throws NoRightException
+	public void addACE(User user, Author rights)
 	{
-		Iterator<BundleACL> iterator = bundleACLSet.iterator();
-		while (iterator.hasNext())
+		if (existsACE(user))
 		{
-			BundleACL bundleACL_obj = iterator.next();
-			if (bundleACL_obj.getUser().equals(user))
+			return;
+		}
+		bundleACLSet.add(new BundleACL(this, user, rights));
+
+		if (rights == Author.AUTHOR)
+		{
+			folder = user.getGroup().getName() + "/" + user.getLastName() + " " +
+					user.getFirstName().charAt(0) + user.getFatherName().charAt(0) + "/" +
+					course.getName() + "/" + bundleType.getName() + " " + num;
+		}
+	}
+
+	private boolean existsACE(User user)
+	{
+		BundleACL obj = new BundleACL(this, user, null);
+		if (bundleACLSet.contains(obj))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public BundleACL getACE(User user) throws NoRightException
+	{
+		for (BundleACL ace : bundleACLSet)
+		{
+			if (ace.getUser().equals(user))
 			{
-				return bundleACL_obj;
+				return ace;
 			}
 		}
 		throw new BusinessException(new NoRightException());
 	}
 
-	public Set<BundleACL> getBundleACLSet()
+	public BundleACL getAuthorACE()
+	{
+		for (BundleACL acl : bundleACLSet)
+		{
+			if (acl.getRights() == Author.AUTHOR)
+			{
+				return acl;
+			}
+		}
+		throw new BusinessException(new NoRightException());
+	}
+
+	public void removeACE(User user)
+	{
+		BundleACL obj = new BundleACL(this, user, null);
+		if (existsACE(user))
+		{
+			Iterator<BundleACL> iterator = bundleACLSet.iterator();
+			while (iterator.hasNext())
+			{
+				obj = iterator.next();
+				if (obj.getUser().equals(user) && obj.getRights() != Author.AUTHOR)
+				{
+					iterator.remove();
+				}
+			}
+		}
+	}
+
+	public Set<BundleACL> getACL()
 	{
 		return bundleACLSet;
 	}
 
-	public void setBundleACLSet(Set<BundleACL> bundleACLSet)
+	public void setACL(Set<BundleACL> bundleACLSet)
 	{
 		this.bundleACLSet = bundleACLSet;
 	}
@@ -210,6 +231,11 @@ public class Bundle implements Serializable, Similarity
 	public long getId()
 	{
 		return id;
+	}
+
+	public void setFolder(String folder)
+	{
+		this.folder = folder;
 	}
 
 	public String getFolder()

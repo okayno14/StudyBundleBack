@@ -41,7 +41,14 @@ public class BundleService implements IBundleService
 	@Override
 	public Bundle get(long id)
 	{
-		return null;
+		Bundle res = bundleCache.get(id);
+		if(res!=null)
+		{
+			return res;
+		}
+		res= bundleRepo.get(id);
+		bundleCache.put(res);
+		return res;
 	}
 
 	@Override
@@ -74,7 +81,7 @@ public class BundleService implements IBundleService
 	public void groupChanged(Bundle client)
 	{
 		Bundle d= new Bundle(client.getNum(),client.getCourse(),client.getBundleType());
-		d.addAuthor(client.getAuthor(), Author.AUTHOR);
+		d.addACE(client.getAuthor(), Author.AUTHOR);
 		bundleRepoFile.move(client,d.getFolder());
 	}
 

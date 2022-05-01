@@ -78,7 +78,7 @@ public class GroupController implements IGroupController
 	{
 		List<User> userList = filterUserIDList(users);
 		service.addUsers(client, userList);
-		controller.courseController.GroupChanged(client,users);
+		controller.courseController.GroupChanged(client,userList);
 	}
 
 	@Override

@@ -102,7 +102,7 @@ public class CacheController implements Runnable
 			bundle.setBundleType(bundleTypeCache.get(bt.getId()));
 		}
 		//обновить кеш пользователей (добавить владельцев)
-		Set<BundleACL>      bundleACLSet      = bundle.getBundleACLSet();
+		Set<BundleACL>      bundleACLSet      = bundle.getACL();
 		Iterator<BundleACL> bundleACLIterator = bundleACLSet.iterator();
 		BundleACL           bundleACL         = null;
 		while (bundleACLIterator.hasNext())

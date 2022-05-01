@@ -95,10 +95,9 @@ public class GroupRepoHiber extends RepoHiberBase implements IGroupRepo
 	{
 		Transaction t = getOrBegin();
 		Session session = sessionFactory.getCurrentSession();
-		Iterator<User> userIterator = users.iterator();
-		while (userIterator.hasNext())
+		for(User u:users)
 		{
-			session.update(userIterator.next());
+			session.update(u);
 		}
 		t.commit();
 	}
