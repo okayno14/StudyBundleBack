@@ -12,7 +12,7 @@ import java.util.Set;
 
 public class GroupService implements IGroupService
 {
-	private IGroupRepo repo;
+	private IGroupRepo  repo;
 	private IGroupCache cache;
 
 	public GroupService(IGroupRepo repo, IGroupCache cache)
@@ -31,8 +31,8 @@ public class GroupService implements IGroupService
 	@Override
 	public Group get(long id)
 	{
-		Group res= cache.get(id);
-		if(res!=null)
+		Group res = cache.get(id);
+		if (res != null)
 		{
 			return res;
 		}
@@ -58,14 +58,14 @@ public class GroupService implements IGroupService
 		Iterator<User> userIterator = users.iterator();
 		while (userIterator.hasNext())
 		{
-			User user = userIterator.next();
+			User  user     = userIterator.next();
 			Group curGroup = user.getGroup();
-			if(curGroup!=null &&repo.isStudentsFetched(curGroup))
+			if (curGroup != null && repo.isStudentsFetched(curGroup))
 			{
 				curGroup.removeStudent(user);
 			}
 			user.setGroup(newGroup);
-			if(newGroup!=null && repo.isStudentsFetched(newGroup))
+			if (newGroup != null && repo.isStudentsFetched(newGroup))
 			{
 				newGroup.addStudent(user);
 			}
@@ -82,7 +82,7 @@ public class GroupService implements IGroupService
 	@Override
 	public Set<User> getUsers(Group client)
 	{
-		if(!repo.isStudentsFetched(client))
+		if (!repo.isStudentsFetched(client))
 		{
 			repo.fetchStudents(client);
 			cache.putWithUsers(client);
@@ -100,9 +100,9 @@ public class GroupService implements IGroupService
 	public void delete(Group client)
 	{
 		long id = client.getId();
-		if(id!=-1L)
+		if (id != -1L)
 		{
-			if(cache.contains(id))
+			if (cache.contains(id))
 			{
 				cache.delete(id);
 			}

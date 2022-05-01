@@ -50,6 +50,11 @@ public class Course
 		this.addAuthor(author, Author.AUTHOR);
 	}
 
+	public boolean contains(Group g)
+	{
+		return groupes.contains(g);
+	}
+
 	public void addGroup(Group group)
 	{
 		if (groupes.contains(group))

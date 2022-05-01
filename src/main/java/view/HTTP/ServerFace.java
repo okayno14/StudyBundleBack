@@ -357,6 +357,22 @@ public class ServerFace
 				return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
 			});
 
+			put("/addGroup/:groupID/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long groupID = Long.parseLong(req.params(":groupID"));
+				long courseID = Long.parseLong(req.params(":id"));
+				Group g = groupController.get(groupID);
+				Course c = courseController.get(courseID);
+
+				courseController.addGroup(c,g);
+
+				return gson.toJson(new Response(gson.toJsonTree(c),"Успех"));
+			});
+
 			path("/requirement", () ->
 			{
 				post("/:courseID/:bundleTypeID/:q", (req, resp) ->
@@ -369,12 +385,12 @@ public class ServerFace
 					long bundleTypeID = Long.parseLong(req.params("bundleTypeID"));
 					int  q            = Integer.parseInt(req.params("q"));
 
-					BundleType bt = bundleTypeController.get(bundleTypeID);
-					Course course = courseController.get(courseID);
+					BundleType bt     = bundleTypeController.get(bundleTypeID);
+					Course     course = courseController.get(courseID);
 
 					try
 					{
-						courseController.addRequirement(course,bt,q);
+						courseController.addRequirement(course, bt, q);
 						resp.status(200);
 						return gson.toJson(new Response(gson.toJsonTree(course), "Успех"));
 					}
@@ -397,6 +413,8 @@ public class ServerFace
 					return "F";
 				});
 			});
+
+
 		});
 
 

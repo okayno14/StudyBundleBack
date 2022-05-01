@@ -72,7 +72,7 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 	{
 		Transaction t = getOrBegin();
 		HQL="select b from Bundle as b inner join b.course as c " +
-				"inner join b.bundleACLSet as own " +
+				"inner join fetch b.bundleACLSet as own " +
 				"inner join own.user as u " +
 				"inner join u.group as g " +
 				"where c.name = :course and " +
@@ -101,11 +101,30 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 	{
 		Transaction t = getOrBegin();
 		HQL="select b from Bundle as b inner join b.course as c " +
-				"inner join b.bundleACLSet as own " +
+				"inner join fetch b.bundleACLSet as own " +
 				"inner join own.user as u " +
 				"where c.id=:course and u.id = :user";
 		q=sessionFactory.getCurrentSession().createQuery(HQL);
 		q.setParameter("course",course.getId());
+		q.setParameter("user",user.getId());
+		List<Bundle> res = q.getResultList();
+		t.commit();
+		if(res.size()!=0)
+		{
+			return res;
+		}
+		throw new DataAccessException(new ObjectNotFoundException());
+	}
+
+	@Override
+	public List<Bundle> getAll(User user)
+	{
+		Transaction t = getOrBegin();
+		HQL="select b from Bundle as b inner join b.course as c " +
+				"inner join fetch b.bundleACLSet as own " +
+				"inner join own.user as u " +
+				"where u.id = :user";
+		q=sessionFactory.getCurrentSession().createQuery(HQL);
 		q.setParameter("user",user.getId());
 		List<Bundle> res = q.getResultList();
 		t.commit();

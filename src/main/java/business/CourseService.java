@@ -6,9 +6,9 @@ import dataAccess.entity.*;
 import dataAccess.repository.ICourseRepo;
 import dataAccess.repository.IRequirementRepo;
 import exception.Business.BusinessException;
+import exception.Business.GroupAlreadyContains;
 import exception.Business.RequirementExistsException;
 
-import java.util.Iterator;
 import java.util.List;
 
 public class CourseService implements ICourseService
@@ -72,6 +72,17 @@ public class CourseService implements ICourseService
 	}
 
 	@Override
+	public List<Course> getByGroup(Group g)
+	{
+		List<Course> res= repo.getByGroup(g);
+		for(Course c:res)
+		{
+			cache.put(c);
+		}
+		return res;
+	}
+
+	@Override
 	public Requirement addRequirement(Course client, BundleType bt, int q)
 	{
 		//Проверить есть ли требование с этим bt в курсе. Если есть, то исключение
@@ -125,13 +136,18 @@ public class CourseService implements ICourseService
 	}
 
 	@Override
-	public void subscribe(Group group)
+	public void addGroup(Course client, Group group)
 	{
-
+		if(client.contains(group))
+		{
+			throw new BusinessException(new GroupAlreadyContains(group,client));
+		}
+		client.addGroup(group);
+		repo.save(client);
 	}
 
 	@Override
-	public void unsubscribe(Group group)
+	public void delGroup(Course client, Group group)
 	{
 
 	}

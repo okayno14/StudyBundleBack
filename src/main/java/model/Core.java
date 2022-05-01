@@ -10,7 +10,6 @@ import configuration.DateAccessConf;
 import dataAccess.cache.*;
 import dataAccess.entity.*;
 import dataAccess.repository.*;
-import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
@@ -347,7 +346,7 @@ public class Core
 			e.printStackTrace();
 		}
 
-		bundleCache.get(lr1).getReport().setFileName("doc.docx", text);
+		bundleCache.get(lr1).getReport().setFileNameAndMeta("doc.docx", text);
 		bundleCache.get(lr1).accept();
 		bundleCache.get(lr1).addAuthor(userCache.get(me), Author.COAUTHOR);
 		sessionFactory.getCurrentSession().merge(bundleCache.get(lr1));

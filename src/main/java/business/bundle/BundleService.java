@@ -1,7 +1,10 @@
 package business.bundle;
 
 import dataAccess.cache.IBundleCache;
+import dataAccess.entity.Author;
 import dataAccess.entity.Bundle;
+import dataAccess.entity.Course;
+import dataAccess.entity.User;
 import dataAccess.repository.IBundleRepo;
 import dataAccess.repository.IBundleRepoFile;
 
@@ -33,5 +36,69 @@ public class BundleService implements IBundleService
 		{
 			bundleCache.put(b);
 		}
+	}
+
+	@Override
+	public Bundle get(long id)
+	{
+		return null;
+	}
+
+	@Override
+	public List<Bundle> get(String courseName, String groupName, User authorFIO)
+	{
+		return null;
+	}
+
+	@Override
+	public List<Bundle> get(Course course, User author)
+	{
+		return null;
+	}
+
+	@Override
+	public List<Bundle> getAll(User author)
+	{
+		List<Bundle> res = bundleRepo.getAll(author);
+		for(Bundle b:res)
+		{
+			if(!bundleCache.contains(b.getId()))
+			{
+				bundleCache.put(b);
+			}
+		}
+		return res;
+	}
+
+	@Override
+	public void groupChanged(Bundle client)
+	{
+		Bundle d= new Bundle(client.getNum(),client.getCourse(),client.getBundleType());
+		d.addAuthor(client.getAuthor(), Author.AUTHOR);
+		bundleRepoFile.move(client,d.getFolder());
+	}
+
+	@Override
+	public byte[] downloadReport(Bundle client)
+	{
+		return new byte[0];
+	}
+
+	@Override
+	public void uploadReport(Bundle client, byte[] document)
+	{
+
+	}
+
+	@Override
+	public void decline(Bundle client)
+	{
+
+	}
+
+	@Override
+	public void delete(Bundle client)
+	{
+
 	}
 }

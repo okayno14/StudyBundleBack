@@ -9,7 +9,8 @@ public interface IBundleRepoFile
 {
 	void save(Bundle bundle, byte array[]);
 	byte[] get(Bundle bundle);
-	void fillReport(Bundle bundle);
-	void fillReport(List<Bundle> bundleList);
+	void fillTextVector(Bundle bundle);
+	void fillTextVector(List<Bundle> bundleList);
+	void move(Bundle client, String destinationFolder);
 	void delete(Bundle bundle);
 }

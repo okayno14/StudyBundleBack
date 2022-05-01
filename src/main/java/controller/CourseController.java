@@ -2,7 +2,10 @@ package controller;
 
 import business.ICourseService;
 import dataAccess.entity.*;
+import exception.DataAccess.DataAccessException;
+import exception.DataAccess.ObjectNotFoundException;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -48,21 +51,31 @@ public class CourseController implements ICourseController
 	}
 
 	@Override
+	public List<Course> getByGroup(Group g)
+	{
+		return service.getByGroup(g);
+	}
+
+	private void genBundlesForReq(List<Bundle> list, Requirement req, Course client, User u)
+	{
+		for (int i = 1; i <= req.getQuantity(); i++)
+		{
+			Bundle b = new Bundle(i, client, req.getBundleType());
+			b.addAuthor(u, Author.AUTHOR);
+			list.add(b);
+		}
+	}
+
+	@Override
 	public Requirement addRequirement(Course client, BundleType bt, int q)
 	{
-		Requirement req= service.addRequirement(client, bt, q);
+		Requirement        req  = service.addRequirement(client, bt, q);
 		LinkedList<Bundle> list = new LinkedList<>();
-		for(Group g:client.getGroupes())
+		for (Group g : client.getGroupes())
 		{
-			controller.groupController.getUsers(g);
-			for(User u: g.getStudents())
+			for (User u : controller.groupController.getUsers(g))
 			{
-				for(int i=0;i<q;i++)
-				{
-					Bundle b = new Bundle(i,client,req.getBundleType());
-					b.addAuthor(u,Author.AUTHOR);
-					list.add(b);
-				}
+				genBundlesForReq(list, req, client, u);
 			}
 		}
 		controller.bundleController.add(list);
@@ -82,13 +95,81 @@ public class CourseController implements ICourseController
 	}
 
 	@Override
-	public void subscribe(Group group)
+	public List<Bundle> genBundlesForUser(Course client, User u)
 	{
-
+		LinkedList<Bundle> list = new LinkedList<>();
+		for (Requirement req : client.getRequirementSet())
+		{
+			genBundlesForReq(list, req, client, u);
+		}
+		return list;
 	}
 
 	@Override
-	public void unsubscribe(Group group)
+	public void addGroup(Course client, Group g)
+	{
+		service.addGroup(client, g);
+		LinkedList<Bundle> list = new LinkedList<>();
+		for (User u : controller.groupController.getUsers(g))
+		{
+			list.addAll(genBundlesForUser(client, u));
+		}
+		controller.bundleController.add(list);
+	}
+
+	@Override
+	public void GroupChanged(Group g, List<User> userList)
+	{
+		HashSet<Course> curGroupCourses = new HashSet<>();
+		try
+		{
+			curGroupCourses = new HashSet<>(getByGroup(g));
+		}
+		catch (DataAccessException e)
+		{
+		}
+		for (User u : userList)
+		{
+			HashSet<Course> oldGroupCourses = new HashSet<>();
+			try
+			{
+				List<Bundle> bundleList = controller.bundleController
+						.getAll(u);
+				for (Bundle b : bundleList)
+				{
+					oldGroupCourses.add(b.getCourse());
+					if (b.getState() != BundleState.EMPTY)
+					{
+						controller.bundleController.groupChanged(b);
+					}
+				}
+			}
+			catch (DataAccessException e)
+			{
+				if (!(e.getCause().getClass() == ObjectNotFoundException.class))
+				{
+					throw e;
+				}
+			}
+			//выполняем вычитание множеств
+			curGroupCourses.removeAll(oldGroupCourses);
+			if (curGroupCourses.size() == 0)
+			{
+				return;
+			}
+			List<Bundle> list = new LinkedList<>();
+			for (Course c : curGroupCourses)
+			{
+				for (Requirement req : c.getRequirementSet())
+				{
+					genBundlesForReq(list,req,c,u);
+				}
+			}
+		}
+	}
+
+	@Override
+	public void delGroup(Course client, Group group)
 	{
 
 	}

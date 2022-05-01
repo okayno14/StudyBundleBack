@@ -11,11 +11,12 @@ public interface ICourseService
 	List<Course> get(User owner, String name);
 	List<Course> getByOwner(User owner);
 	List<Course> getByStudent(User student);
+	List<Course> getByGroup(Group g);
 	Requirement addRequirement(Course client, BundleType bt, int q);
 	void updateRequirement(Course client, BundleType bt, int q);
 	void deleteRequirement(Course client, BundleType bt, int q);
-	void subscribe(Group group);
-	void unsubscribe(Group group);
+	void addGroup(Course client, Group group);
+	void delGroup(Course client, Group group);
 	void updateName(Course client, String name);
 	void delete(Course client);
 }

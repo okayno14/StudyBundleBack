@@ -83,7 +83,7 @@ public class BundleRepoFile implements IBundleRepoFile
 			buf[i] = (byte) zIN.read();
 		}
 		ByteArrayInputStream doc = new ByteArrayInputStream(buf);
-		bundle.getReport().setFileName(name, wordParser.parseDoc(doc));
+		bundle.getReport().setFileNameAndMeta(name, wordParser.parseDoc(doc));
 		doc.reset();
 		FileOutputStream fOut       = new FileOutputStream(bundleDir + "/" + name);
 		int              readed     = 0;
@@ -241,23 +241,69 @@ public class BundleRepoFile implements IBundleRepoFile
 	}
 
 	@Override
-	public void fillReport(Bundle bundle)
+	public void fillTextVector(Bundle bundle)
 	{
 		String name = bundle.getReport().getFileName();
 		if (name == null)
 		{
 			throw new DataAccessException(new FileNotFoundException(bundle));
 		}
-		bundle.getReport().setFileName(name, wordParser.parseDoc(name));
+		bundle.getReport().setFileNameAndMeta(name, wordParser.parseDoc(name));
 	}
 
 	@Override
-	public void fillReport(List<Bundle> bundleList)
+	public void fillTextVector(List<Bundle> bundleList)
 	{
 		Iterator<Bundle> iterator = bundleList.iterator();
 		while (iterator.hasNext())
 		{
-			fillReport(iterator.next());
+			fillTextVector(iterator.next());
+		}
+	}
+
+	private Path changeGroup(String oldPath, String newRoot)
+	{
+		Path source      = Paths.get(oldPath);
+		Path destination = source.subpath(1, source.getNameCount());
+		destination = Paths.get(newRoot, "/", destination.toString());
+		return destination;
+	}
+
+	private void moveBundleRec(File oldBundleTree, File newBundleRoot) throws IOException
+	{
+		File nodes[] = oldBundleTree.listFiles();
+		//цикл обхода
+		for (File node : nodes)
+		{
+			if (node.isDirectory())
+			{
+				Path destination = changeGroup(node.getPath(), newBundleRoot.getPath());
+				Files.createDirectory(destination);
+			}
+			moveBundleRec(node, newBundleRoot);
+		}
+		//обработка
+		if (oldBundleTree.isDirectory())
+		{
+			return;
+		}
+		Path source = Paths.get(oldBundleTree.getPath());
+		Files.move(source, changeGroup(source.toString(), newBundleRoot.getPath()));
+	}
+
+	@Override
+	public void move(Bundle client, String destinationFolder)
+	{
+		File oldBundle = new File(client.getFolder());
+		File bundleNew = new File(destinationFolder);
+		bundleNew.mkdir();
+		try
+		{
+			moveBundleRec(oldBundle,bundleNew);
+		}
+		catch (IOException e)
+		{
+			throw new DataAccessException(e);
 		}
 	}
 
@@ -269,14 +315,15 @@ public class BundleRepoFile implements IBundleRepoFile
 		{
 			throw new DataAccessException(new FileNotFoundException(bundle));
 		}
-		boolean flag=false;
-		for (File node = toDel.getParentFile();flag==false && !node.getPath().replace("\\", "/").equals(storage);
+		boolean flag = false;
+		for (File node = toDel.getParentFile();
+			 flag == false && !node.getPath().replace("\\", "/").equals(storage);
 			 node = node.getParentFile())
 		{
 			if (node.listFiles().length == 0 && node.exists())
 			{
 				node.delete();
-				flag=true;
+				flag = true;
 			}
 		}
 	}

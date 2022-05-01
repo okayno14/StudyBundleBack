@@ -13,5 +13,6 @@ public interface IBundleRepo
 	Bundle get(long id);
 	List<Bundle> get(String courseName, String groupName, User fio);
 	List<Bundle> get(Course course, User user);
+	List<Bundle> getAll(User user);
 	void delete(Bundle bundle);
 }

@@ -13,17 +13,17 @@ public class Report implements Serializable, Similarity
 {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private long                 id              = -1;
+	private long                 id              = -1L;
 	@Column(name = "file_name")
 	private String               fileName        = null;
 	@Column(name = "sym_count")
-	private long                 symCount        = 0;
+	private long                 symCount        = 0L;
 	@Column(name = "unique_words")
-	private long                 uniqueWords     = 0;
+	private long                 uniqueWords     = 0L;
 	@Column(name = "word_count")
-	private long                 wordCount       = 0;
+	private long                 wordCount       = 0L;
 	@Column(name = "sym_count_no_space")
-	private long                 symCountNoSpace = 0;
+	private long                 symCountNoSpace = 0L;
 	@Transient
 	private boolean              isSetCompatible = true;
 	@Transient
@@ -38,7 +38,7 @@ public class Report implements Serializable, Similarity
 	public Report(String textStr, String filename)
 	{
 		this.fileName = filename;
-		fillTextVector(textStr);
+		fillMetricAndTextVec(textStr);
 	}
 
 	private void fillText(String textStr)
@@ -72,7 +72,7 @@ public class Report implements Serializable, Similarity
 		return res;
 	}
 
-	private void fillTextVector(String textStr)
+	private void fillMetricAndTextVec(String textStr)
 	{
 		if (!this.hasTextVector())
 		{
@@ -143,10 +143,10 @@ public class Report implements Serializable, Similarity
 		return fileName;
 	}
 
-	public void setFileName(String fileName, String textStr)
+	public void setFileNameAndMeta(String fileName, String textStr)
 	{
 		this.fileName = fileName;
-		fillTextVector(textStr);
+		fillMetricAndTextVec(textStr);
 	}
 
 	public long getId()

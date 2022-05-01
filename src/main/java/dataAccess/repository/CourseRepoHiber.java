@@ -1,6 +1,7 @@
 package dataAccess.repository;
 
 import dataAccess.entity.Course;
+import dataAccess.entity.Group;
 import dataAccess.entity.User;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.NotUniqueException;
@@ -79,7 +80,7 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	{
 		Transaction t       = getOrBegin();
 		Session     session = sessionFactory.getCurrentSession();
-		HQL = "select c from Course as c inner join c.courseACL_Set as o " +
+		HQL = "select c from Course as c inner join fetch c.courseACL_Set as o " +
 				"where o.id.userID=:id and c.name=:name";
 		q   = session.createQuery(HQL);
 		q.setParameter("id", owner.getId());
@@ -98,7 +99,7 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	{
 		Transaction t       = getOrBegin();
 		Session     session = sessionFactory.getCurrentSession();
-		HQL = "select c from Course as c inner join c.courseACL_Set as o " +
+		HQL = "select c from Course as c inner join fetch c.courseACL_Set as o "+
 				"where o.id.userID=:id";
 		q   = session.createQuery(HQL);
 		q.setParameter("id", owner.getId());
@@ -116,11 +117,31 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	{
 		Transaction t       = getOrBegin();
 		Session     session = sessionFactory.getCurrentSession();
-		HQL = "select c from Course as c inner join c.groupes as g inner join g.students as u " +
+		HQL = "select c from Course as c inner join c.groupes as g " +
+				"inner join g.students as u " +
+				"inner join fetch c.courseACL_Set " +
 				"where u.id=:id";
 		q   = session.createQuery(HQL);
 		q.setParameter("id", student.getId());
 		List<Course> res = q.getResultList();
+		t.commit();
+		if (res.size() == 0)
+		{
+			throw new DataAccessException(new ObjectNotFoundException());
+		}
+		return res;
+	}
+
+	@Override
+	public List<Course> getByGroup(Group g)
+	{
+		Transaction t = getOrBegin();
+		HQL="select c from Course as c inner join c.groupes as g " +
+				"inner join fetch c.courseACL_Set " +
+				"where g.id = :id";
+		q = sessionFactory.getCurrentSession().createQuery(HQL);
+		q.setParameter("id", g.getId());
+		List<Course> res =q.getResultList();
 		t.commit();
 		if (res.size() == 0)
 		{

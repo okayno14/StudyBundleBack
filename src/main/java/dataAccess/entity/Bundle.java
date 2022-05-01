@@ -87,12 +87,32 @@ public class Bundle implements Serializable, Similarity
 		}
 	}
 
+	public User getAuthor()
+	{
+		for(BundleACL acl: bundleACLSet)
+		{
+			if(acl.getRights()==Author.AUTHOR)
+			{
+				return acl.getUser();
+			}
+		}
+		return null;
+	}
+
 	public void removeAuthor(User user)
 	{
 		BundleACL obj = new BundleACL(this, user, null);
 		if (isContainAuthor(user))
 		{
-			bundleACLSet.remove(obj);
+			Iterator<BundleACL> iterator = bundleACLSet.iterator();
+			while (iterator.hasNext())
+			{
+				obj = iterator.next();
+				if (obj.getUser().equals(user) && obj.getRights()!=Author.AUTHOR)
+				{
+					iterator.remove();
+				}
+			}
 		}
 	}
 

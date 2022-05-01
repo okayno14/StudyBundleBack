@@ -1,6 +1,7 @@
 package controller;
 
 import business.IGroupService;
+import dataAccess.entity.Bundle;
 import dataAccess.entity.Course;
 import dataAccess.entity.Group;
 import dataAccess.entity.User;
@@ -8,10 +9,7 @@ import dataAccess.repository.IGroupRepo;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.ObjectNotFoundException;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class GroupController implements IGroupController
 {
@@ -78,7 +76,9 @@ public class GroupController implements IGroupController
 	@Override
 	public void addUsers(Group client, List<User> users)
 	{
-		service.addUsers(client, filterUserIDList(users));
+		List<User> userList = filterUserIDList(users);
+		service.addUsers(client, userList);
+		controller.courseController.GroupChanged(client,users);
 	}
 
 	@Override
