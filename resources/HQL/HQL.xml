@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<macros>
+    <name="FULL_GRAPH_BUNDLE"/>
+    <body>
+        inner join fetch 
+            b.bundleACLSet as bACL 
+        inner join fetch 
+            b.course as c 
+        inner join fetch 
+            c.courseACL_Set as cACL
+
+    </body>
+<macros>
+
+<query>
+    <name="GET_BUNDLE_ID"/>
+    <body>
+        select 
+            b 
+        from 
+            Bundle as b 
+        <macros_ref="FULL_GRAPH_BUNDLE">
+        where 
+            b.id=:id
+    </body>
+</query>
+
+<query>
+    <name="GET_FULL_BUNDLE_BY_COURSENAME_GROUPNAME_FIO"/>
+    <body>
+        select 
+            b 
+        from 
+            Bundle as b 
+        <macros_ref="FULL_GRAPH_BUNDLE">
+        inner join 
+            bACL.user as u 
+        inner join 
+            u.group as g 
+        where 
+            c.name = :course and 
+            g.name = :group and 
+            u.lastName = :lastName and 
+            u.firstName = :firstName and
+            u.fatherName = :fatherName
+    </body>
+</query>
+
+<query>
+    <name="GET_BUNDLE(NO_COURSE)_BY_COURSENAME_GROUPNAME_FIO"/>
+    <body>
+        select 
+            b 
+        from 
+            Bundle as b 
+        inner join fetch 
+            b.bundleACLSet as bACL 
+        inner join 
+            b.course as c
+        inner join 
+            bACL.user as u 
+        inner join 
+            u.group as g 
+        where 
+            u.id = :user and 
+            c.id = :course
+    </body>
+</query>
+
+<query>
+    <name="GET_ALL_COURSES_WITH_BUNDLE_FOR_USER"/>
+    <body>
+        select distinct 
+            c 
+        from 
+            Bundle as b
+        inner join 
+            b.bundleACLSet as bACL
+        inner join 
+            b.course as c
+        inner join fetch 
+            c.courseACL_Set as cACL
+        where 
+            bACL.user.id = :user
+    </body>
+</query>
