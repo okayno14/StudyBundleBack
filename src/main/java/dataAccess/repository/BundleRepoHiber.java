@@ -8,16 +8,18 @@ import exception.DataAccess.ObjectNotFoundException;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
 public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 {
-	private String fullGraph = "select b from Bundle as b " +
-			"inner join fetch b.bundleACLSet as bACL " + "inner join fetch b.course as c " +
-			"left join c.courseACL_Set as cACL ";
+	private final String FULL_GRAPH_BUNDLE =
+			"inner join fetch \n" +
+			"	b.bundleACLSet as bACL \n" +
+			"inner join fetch \n" +
+			"	b.course as c \n" +
+			"inner join fetch \n" +
+			"	c.courseACL_Set as cACL\n";
 
 	public BundleRepoHiber(SessionFactory sessionFactory)
 	{
@@ -30,24 +32,24 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 		return super.getOrBegin();
 	}
 
-	private void saveNewBundle(Bundle b)
+	private void saveAction(Bundle b)
 	{
-		sessionFactory.getCurrentSession().save(b);
-		sessionFactory.getCurrentSession().save(b.getAuthorACE());
+		if (b.getId() == -1L)
+		{
+			sessionFactory.getCurrentSession().save(b);
+			sessionFactory.getCurrentSession().save(b.getAuthorACE());
+		}
+		else
+		{
+			sessionFactory.getCurrentSession().merge(b);
+		}
 	}
 
 	@Override
 	public void save(Bundle b)
 	{
 		Transaction t = getOrBegin();
-		if (b.getId() == -1L)
-		{
-			saveNewBundle(b);
-		}
-		else
-		{
-			sessionFactory.getCurrentSession().merge(b);
-		}
+		saveAction(b);
 		t.commit();
 	}
 
@@ -58,7 +60,7 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 		Transaction t = getOrBegin();
 		for (Bundle b : bundles)
 		{
-			saveNewBundle(b);
+			saveAction(b);
 		}
 		t.commit();
 	}
@@ -67,7 +69,13 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 	public Bundle get(long id)
 	{
 		Transaction t = getOrBegin();
-		HQL = fullGraph + "where b.id=:id";
+		HQL = "select \n" +
+				"	b \n" +
+				"from \n" +
+				"	Bundle as b\n"+
+				FULL_GRAPH_BUNDLE+
+				" where\n" +
+				"	b.id=:id";
 		q   = sessionFactory.getCurrentSession().createQuery(HQL);
 		q.setParameter("id", id);
 		Bundle res = (Bundle) q.getSingleResult();
@@ -86,13 +94,21 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 	public List<Bundle> get(String courseName, String groupName, User fio)
 	{
 		Transaction t = getOrBegin();
-		HQL = fullGraph +
-				"inner join bACL.user as u " +
-				"inner join u.group as g " +
-				"where c.name = :course and " +
-				"g.name = :group and " +
-				"u.lastName = :lastName and " + "u.firstName = :firstName and " +
-				"u.fatherName = :fatherName";
+		HQL = "select \n" +
+				"	b \n" +
+				"from \n" +
+				"	Bundle as b\n"+
+				FULL_GRAPH_BUNDLE+
+				"inner join \n" +
+				"	bACL.user as u \n" +
+				"inner join \n" +
+				"	u.group as g \n"+
+				"where \n" +
+				"	c.name = :course and \n" +
+				"	g.name = :group and \n" +
+				"	u.lastName = :lastName and \n" +
+				"	u.firstName = :firstName and\n" +
+				"	u.fatherName = :fatherName";
 		q   = sessionFactory.getCurrentSession().createQuery(HQL);
 		q.setParameter("course", courseName);
 		q.setParameter("group", groupName);
@@ -100,18 +116,7 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 		q.setParameter("firstName", fio.getFirstName());
 		q.setParameter("fatherName", fio.getFatherName());
 		List<Bundle> res = q.getResultList();
-
-		//Для загрузки ACL курса. Так как при eager будет генерироваться ошибка,
-		//а в hql нельзя фетчить коллекции, связью с которыми не владеет вызываемый объект
-		Course c = res.get(0).getCourse();
-		c.getCourseACL_Set();
 		t.commit();
-
-		for(Bundle b:res)
-		{
-			b.setCourse(c);
-		}
-
 		if (res.size() != 0)
 		{
 			return res;
@@ -123,7 +128,16 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 	public List<Bundle> get(Course course, User user)
 	{
 		Transaction t = getOrBegin();
-		HQL = fullGraph + "inner join bACL.user as u " + "where c.id=:course and u.id = :user";
+		HQL = "select \n" +
+				"	b \n" +
+				"from \n" +
+				"	Bundle as b\n"+
+				FULL_GRAPH_BUNDLE+
+				"inner join \n"+
+				"	bACL.user as u \n" +
+				"where \n"+
+				"	c.id=:course and \n"+
+				"	u.id = :user";
 		q   = sessionFactory.getCurrentSession().createQuery(HQL);
 		q.setParameter("course", course.getId());
 		q.setParameter("user", user.getId());
@@ -149,22 +163,46 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 	@Override
 	public List<Bundle> getAll(User user)
 	{
+		//Данный запрос выгоднее по времени и данным выполнить в два этапа:
+		//1) получить все курсы
+		//2) для каждого из курсов извлечь бандлы
 		Transaction t = getOrBegin();
-		HQL = "select distinct c from Bundle as b " +
-				"inner join b.course as c " +
-				"inner join fetch c.courseACL_Set as cACL " +
-				"inner join b.bundleACLSet as bACL " +
-				"where bACL.user.id = :user";
+		HQL=
+				"select distinct \n" +
+				"	c \n" +
+				"from \n" +
+				"	Bundle as b\n" +
+				"inner join \n" +
+				"	b.bundleACLSet as bACL\n" +
+				"inner join \n" +
+				"	b.course as c\n" +
+				"inner join fetch \n" +
+				"	c.courseACL_Set as cACL\n" +
+				"where \n" +
+				"	bACL.user.id = :user";
 		q   = sessionFactory.getCurrentSession().createQuery(HQL);
 		q.setParameter("user", user.getId());
 		List<Course> courseList = q.getResultList();
 		List<Bundle> res        = new LinkedList<>();
 		for (Course c : courseList)
 		{
-			HQL = "select b from Bundle as b " +
-					"inner join fetch b.bundleACLSet as bACL " +
-					"inner join b.course as c " +
-					"where bACL.user.id = :user and c.id= :course";
+			HQL=
+			"select \n" +
+			"	b \n" +
+			"from \n" +
+			"	Bundle as b \n" +
+			"inner join fetch \n" +
+			"	b.bundleACLSet as bACL \n" +
+			"inner join \n" +
+			"	b.course as c\n" +
+			"inner join \n" +
+			"	bACL.user as u \n" +
+			"inner join \n"+
+			"	u.group as g \n" +
+			"where \n" +
+			"	u.id = :user and \n" +
+			"	c.id = :course";
+
 			q   = sessionFactory.getCurrentSession().createQuery(HQL);
 			q.setParameter("user", user.getId());
 			q.setParameter("course", c.getId());

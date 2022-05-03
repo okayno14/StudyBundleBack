@@ -5,6 +5,7 @@ import configuration.DateAccessConf;
 import configuration.HTTP_Conf;
 import dataAccess.entity.Role;
 import dataAccess.entity.User;
+import org.apache.log4j.xml.DOMConfigurator;
 import parser.JSON.entity.RoleParser;
 import parser.JSON.entity.UserParser;
 import view.HTTP.Response;
@@ -15,11 +16,17 @@ import view.HTTP.request.LoginReq;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.util.Properties;
 
 public class main
 {
 	public static void main(String arg[])
 	{
+		Properties props = System.getProperties();
+		props.setProperty("org.jboss.logging.provider", "slf4j");
+
+		DOMConfigurator.configure("resources/Config/log4j2.xml");
+
 		try (BufferedReader fileReader = new BufferedReader(
 				new FileReader("resources/Config/conf.json")))
 		{

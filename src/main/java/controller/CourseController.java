@@ -121,6 +121,7 @@ public class CourseController implements ICourseController
 	public void GroupChanged(Group g, List<User> userList)
 	{
 		HashSet<Course> curGroupCourses = new HashSet<>();
+		List<Bundle> list = new LinkedList<>();
 		try
 		{
 			curGroupCourses = new HashSet<>(getByGroup(g));
@@ -136,12 +137,11 @@ public class CourseController implements ICourseController
 				List<Bundle> bundleList = controller.bundleController.getAll(u);
 				for (Bundle b : bundleList)
 				{
-					//сделать список бандлов для перемещения
-					//а внутри сервиса сохранить изменения в базу внутри одной болдьшой транзакции
 					oldGroupCourses.add(b.getCourse());
 					if (b.getState() != BundleState.EMPTY)
 					{
 						controller.bundleController.groupChanged(b);
+						list.add(b);
 					}
 				}
 			}
@@ -158,7 +158,6 @@ public class CourseController implements ICourseController
 			{
 				return;
 			}
-			List<Bundle> list = new LinkedList<>();
 			for (Course c : curGroupCourses)
 			{
 				for (Requirement req : c.getRequirementSet())

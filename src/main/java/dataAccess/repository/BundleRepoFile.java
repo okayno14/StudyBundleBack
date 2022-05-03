@@ -261,45 +261,57 @@ public class BundleRepoFile implements IBundleRepoFile
 		}
 	}
 
-	private Path changeGroup(String oldPath, String newRoot)
+	private Path changeGroup(Path oldPath, String OLD_GROUP, String NEW_GROUP)
 	{
-		Path source      = Paths.get(oldPath);
-		Path destination = source.subpath(1, source.getNameCount());
-		destination = Paths.get(newRoot, "/", destination.toString());
-		return destination;
+		String str = oldPath.toString();
+		str = str.replaceFirst(OLD_GROUP, NEW_GROUP);
+		return Paths.get(str);
 	}
 
-	private void moveBundleRec(File oldBundleTree, File newBundleRoot) throws IOException
+
+	private void moveBundleRec(File oldBundleNode, String OLD_GROUP, String NEW_GROUP)
+			throws IOException
 	{
-		File nodes[] = oldBundleTree.listFiles();
+		File children[] = oldBundleNode.listFiles();
 		//цикл обхода
-		for (File node : nodes)
+		if (children != null)
 		{
-			if (node.isDirectory())
+			for (File child : children)
 			{
-				Path destination = changeGroup(node.getPath(), newBundleRoot.getPath());
-				Files.createDirectory(destination);
+				if (child.isDirectory())
+				{
+					Path destination = changeGroup(child.toPath(), OLD_GROUP, NEW_GROUP);
+					Files.createDirectory(destination);
+				}
+				moveBundleRec(child, OLD_GROUP, NEW_GROUP);
 			}
-			moveBundleRec(node, newBundleRoot);
 		}
 		//обработка
-		if (oldBundleTree.isDirectory())
+		if (oldBundleNode.isDirectory())
 		{
 			return;
 		}
-		Path source = Paths.get(oldBundleTree.getPath());
-		Files.move(source, changeGroup(source.toString(), newBundleRoot.getPath()));
+		Path source      = Paths.get(oldBundleNode.getPath());
+		Path destination = changeGroup(source, OLD_GROUP, NEW_GROUP);
+		Files.move(source, destination);
 	}
 
 	@Override
-	public void move(Bundle client, String destinationFolder)
+	public void moveGroupChanged(Bundle client, String destinationFolder)
 	{
-		File oldBundle = new File(client.getFolder());
-		File bundleNew = new File(destinationFolder);
-		bundleNew.mkdir();
+		StringBuffer buffer    = new StringBuffer(client.getFolder());
+		int          b         = buffer.indexOf("/");
+		final String OLD_GROUP = buffer.substring(0, b);
+		buffer = new StringBuffer(destinationFolder);
+		b      = buffer.indexOf("/");
+		final String NEW_GROUP = buffer.substring(0, b);
+
+		File oldFolder = new File(storage + "/" + client.getFolder());
 		try
 		{
-			moveBundleRec(oldBundle,bundleNew);
+			checkBundleDir(storage + "/" + destinationFolder);
+			moveBundleRec(oldFolder, OLD_GROUP, NEW_GROUP);
+			delete(client);
 			client.setFolder(destinationFolder);
 		}
 		catch (IOException e)
@@ -316,16 +328,12 @@ public class BundleRepoFile implements IBundleRepoFile
 		{
 			throw new DataAccessException(new FileNotFoundException(bundle));
 		}
-		boolean flag = false;
+		File root = new File(storage);
 		for (File node = toDel.getParentFile();
-			 flag == false && !node.getPath().replace("\\", "/").equals(storage);
+			 !node.equals(root) && node.listFiles().length == 0 && node != null;
 			 node = node.getParentFile())
 		{
-			if (node.listFiles().length == 0 && node.exists())
-			{
-				node.delete();
-				flag = true;
-			}
+			node.delete();
 		}
 	}
 }

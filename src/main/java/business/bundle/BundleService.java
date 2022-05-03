@@ -32,7 +32,7 @@ public class BundleService implements IBundleService
 			return;
 		}
 		bundleRepo.save(bundles);
-		for(Bundle b:bundles)
+		for (Bundle b : bundles)
 		{
 			bundleCache.put(b);
 		}
@@ -42,11 +42,11 @@ public class BundleService implements IBundleService
 	public Bundle get(long id)
 	{
 		Bundle res = bundleCache.get(id);
-		if(res!=null)
+		if (res != null)
 		{
 			return res;
 		}
-		res= bundleRepo.get(id);
+		res = bundleRepo.get(id);
 		bundleCache.put(res);
 		return res;
 	}
@@ -54,7 +54,15 @@ public class BundleService implements IBundleService
 	@Override
 	public List<Bundle> get(String courseName, String groupName, User authorFIO)
 	{
-		return null;
+		List<Bundle> res = bundleRepo.get(courseName, groupName, authorFIO);
+		for (Bundle b : res)
+		{
+			if (!bundleCache.contains(b.getId()))
+			{
+				bundleCache.put(b);
+			}
+		}
+		return res;
 	}
 
 	@Override
@@ -67,9 +75,9 @@ public class BundleService implements IBundleService
 	public List<Bundle> getAll(User author)
 	{
 		List<Bundle> res = bundleRepo.getAll(author);
-		for(Bundle b:res)
+		for (Bundle b : res)
 		{
-			if(!bundleCache.contains(b.getId()))
+			if (!bundleCache.contains(b.getId()))
 			{
 				bundleCache.put(b);
 			}
@@ -80,9 +88,9 @@ public class BundleService implements IBundleService
 	@Override
 	public void groupChanged(Bundle client)
 	{
-		Bundle d= new Bundle(client.getNum(),client.getCourse(),client.getBundleType());
+		Bundle d = new Bundle(client.getNum(), client.getCourse(), client.getBundleType());
 		d.addACE(client.getAuthor(), Author.AUTHOR);
-		bundleRepoFile.move(client,d.getFolder());
+		bundleRepoFile.moveGroupChanged(client, d.getFolder());
 	}
 
 	@Override

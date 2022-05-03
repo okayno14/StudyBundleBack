@@ -11,6 +11,6 @@ public interface IBundleRepoFile
 	byte[] get(Bundle bundle);
 	void fillTextVector(Bundle bundle);
 	void fillTextVector(List<Bundle> bundleList);
-	void move(Bundle client, String destinationFolder);
+	void moveGroupChanged(Bundle client, String destinationFolder);
 	void delete(Bundle bundle);
 }

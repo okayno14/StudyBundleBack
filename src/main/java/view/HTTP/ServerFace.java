@@ -7,7 +7,6 @@ import configuration.HTTP_Conf;
 import controller.*;
 import dataAccess.entity.*;
 import exception.Business.BusinessException;
-import exception.Business.RequirementExistsException;
 import exception.Controller.ControllerException;
 import exception.Controller.TokenNotFound;
 import exception.DataAccess.DataAccessException;
