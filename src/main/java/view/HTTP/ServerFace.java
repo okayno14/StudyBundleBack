@@ -7,6 +7,7 @@ import configuration.HTTP_Conf;
 import controller.*;
 import dataAccess.entity.*;
 import exception.Business.BusinessException;
+import exception.Business.NoSuchCourseStateAction;
 import exception.Controller.ControllerException;
 import exception.Controller.TokenNotFound;
 import exception.DataAccess.DataAccessException;
@@ -51,6 +52,14 @@ public class ServerFace
 	private IRoleController       roleController;
 
 	private final String any = "ANY";
+
+	private static final int OK                             =200;
+	private static final int NO_RIGHT_FOR_OPERATION         =403;
+	private static final int AUTHENTICATION_ERROR           =401;
+	private static final int USER_DATA_NOT_VALID            =400;
+	private static final int INTERNAL_CRITICAL_SERVER_ERROR =500;
+	private static final int SEMANTIC_ERROR                 =422;
+	private static final int OBJECT_NOT_FOUND               =404;
 
 	public ServerFace(HTTP_Conf http_conf, ConfMain confMain, Gson gson, GsonBuilder gsonBuilder)
 	{
@@ -100,7 +109,7 @@ public class ServerFace
 			//если пользователь персистентен и не подтвердил почту, то ему нельзя работать в системе
 			if (!client.isEmailState() && client.getId() != -1)
 			{
-				halt(403, "У пользователя нет права на это действие");
+				halt(NO_RIGHT_FOR_OPERATION, "У пользователя нет права на это действие");
 			}
 			Route route = client.getRole().getRouteList().get(0);
 			if (route.getMethod().toString().equals(any) && route.getUrn().equals(any))
@@ -150,13 +159,13 @@ public class ServerFace
 					return client;
 				}
 			}
-			halt(403, "У пользователя нет права на это действие");
+			halt(NO_RIGHT_FOR_OPERATION, "У пользователя нет права на это действие");
 		}
 		catch (ControllerException e)
 		{
 			if (e.getCause() instanceof TokenNotFound)
 			{
-				halt(401, "Закончился срок аренды токена");
+				halt(AUTHENTICATION_ERROR, "Закончился срок аренды токена");
 			}
 		}
 		return null;
@@ -173,7 +182,7 @@ public class ServerFace
 		{
 			groupController.deleteUsers(idReq.getArr());
 		}
-		resp.status(200);
+		resp.status(OK);
 		return gson.toJson(new Response("Успех"));
 	}
 
@@ -235,7 +244,7 @@ public class ServerFace
 					userParser.defendData(jsonObject);
 					jsonArray.add(jsonObject);
 				}
-				resp.status(200);
+				resp.status(OK);
 				return gson.toJson(new Response(jsonArray));
 			}));
 
@@ -249,11 +258,11 @@ public class ServerFace
 				if (userController
 						.login(token, tokenExpires, loginReq.getEmail(), loginReq.getPass()))
 				{
-					resp.status(200);
+					resp.status(OK);
 					JsonElement data = gson.toJsonTree(userController.getByToken(token));
 					return gson.toJson(new Response(data, "Успешно"));
 				}
-				resp.status(401);
+				resp.status(AUTHENTICATION_ERROR);
 				return gson.toJson(new Response(
 						"У пользователя уже есть токен. Или данные не введены корректно"));
 			});
@@ -291,12 +300,12 @@ public class ServerFace
 					try
 					{
 						groupController.add(group);
-						resp.status(200);
+						resp.status(OK);
 						return gson.toJson(new Response(gson.toJsonTree(group), "Успех"));
 					}
 					catch (DataAccessException e)
 					{
-						resp.status(422);
+						resp.status(SEMANTIC_ERROR);
 						return gson.toJson(new Response(e.getCause().getMessage()));
 					}
 
@@ -329,12 +338,12 @@ public class ServerFace
 						Group toDel  = new Group();
 						toDel.setId(id);
 						groupController.delete(toDel);
-						resp.status(200);
+						resp.status(OK);
 						return gson.toJson(new Response("Успех"));
 					}
 					catch (DataAccessException e)
 					{
-						resp.status(404);
+						resp.status(OBJECT_NOT_FOUND);
 						return gson.toJson(new Response(
 								"Объект не найден\n " + e.getCause().getMessage()));
 					}
@@ -352,7 +361,7 @@ public class ServerFace
 				Course c = new Course(createObjReq.getName(),
 									  userController.get(createObjReq.getId()));
 				courseController.add(c);
-				resp.status(200);
+				resp.status(OK);
 				return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
 			});
 
@@ -362,14 +371,26 @@ public class ServerFace
 				String token        = client.getToken();
 				long   tokenExpires = client.getTokenExpires();
 
-				long groupID = Long.parseLong(req.params(":groupID"));
-				long courseID = Long.parseLong(req.params(":id"));
-				Group g = groupController.get(groupID);
+				long   groupID  = Long.parseLong(req.params(":groupID"));
+				long   courseID = Long.parseLong(req.params(":id"));
+				Group  g        = groupController.get(groupID);
+				Course c        = courseController.get(courseID);
+
+				courseController.addGroup(c, g);
+
+				return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
+			});
+
+			put("/publish/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+				long   courseID     = Long.parseLong(req.params(":id"));
+
 				Course c = courseController.get(courseID);
-
-				courseController.addGroup(c,g);
-
-				return gson.toJson(new Response(gson.toJsonTree(c),"Успех"));
+				courseController.publish(c);
+				return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
 			});
 
 			path("/requirement", () ->
@@ -390,12 +411,12 @@ public class ServerFace
 					try
 					{
 						courseController.addRequirement(course, bt, q);
-						resp.status(200);
+						resp.status(OK);
 						return gson.toJson(new Response(gson.toJsonTree(course), "Успех"));
 					}
 					catch (BusinessException e)
 					{
-						resp.status(409);
+						resp.status(SEMANTIC_ERROR);
 						return gson.toJson(new Response(e.getCause().getMessage()));
 					}
 				});
@@ -419,7 +440,7 @@ public class ServerFace
 
 		exception(NumberFormatException.class, (e, req, resp) ->
 		{
-			resp.status(415);
+			resp.status(USER_DATA_NOT_VALID);
 			resp.body(gson.toJson(new Response("Неправильный формат ID")));
 		});
 
@@ -427,15 +448,24 @@ public class ServerFace
 		{
 			if (e.getCause().getClass() == ObjectNotFoundException.class)
 			{
-				resp.status(404);
+				resp.status(OBJECT_NOT_FOUND);
 				resp.body(gson.toJson(new Response("Объект с запрошенным id не найден")));
+			}
+		});
+
+		exception(BusinessException.class, (e, req, resp) ->
+		{
+			if (e.getCause().getClass() == NoSuchCourseStateAction.class)
+			{
+				resp.status(SEMANTIC_ERROR);
+				resp.body(gson.toJson(new Response(e.getMessage())));
 			}
 		});
 
 		//Если ничего не получилось найти, то швыряем стак трэйс в клиентский код
 		exception(Exception.class, (e, req, resp) ->
 		{
-			resp.status(500);
+			resp.status(INTERNAL_CRITICAL_SERVER_ERROR);
 			StringWriter sw = new StringWriter();
 			PrintWriter  pw = new PrintWriter(sw);
 			e.printStackTrace(pw);

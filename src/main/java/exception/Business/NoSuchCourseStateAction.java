@@ -12,4 +12,10 @@ public class NoSuchCourseStateAction extends RuntimeException
 		this.courseState = courseState;
 		this.message     = "Операция недопустима для состояния "+ courseState.toString();
 	}
+
+	@Override
+	public String getMessage()
+	{
+		return message;
+	}
 }
