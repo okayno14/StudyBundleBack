@@ -68,10 +68,9 @@ public class CourseController implements ICourseController
 	}
 
 	@Override
-	public Requirement addRequirement(Course client, BundleType bt, int q)
+	public void addRequirement(Course client, BundleType bt, int q)
 	{
-		Requirement        req  = service.addRequirement(client, bt, q);
-		return req;
+		service.addRequirement(client, bt, q);
 	}
 
 	@Override
@@ -84,6 +83,12 @@ public class CourseController implements ICourseController
 	public void deleteRequirement(Course client, BundleType bt, int q)
 	{
 
+	}
+
+	@Override
+	public void publish(Course client)
+	{
+		service.publish(client);
 	}
 
 	//@Override

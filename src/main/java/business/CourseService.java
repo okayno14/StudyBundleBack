@@ -7,6 +7,7 @@ import dataAccess.repository.ICourseRepo;
 import dataAccess.repository.IRequirementRepo;
 import exception.Business.BusinessException;
 import exception.Business.GroupAlreadyContains;
+import exception.Business.NoSuchCourseStateAction;
 import exception.Business.RequirementExistsException;
 
 import java.util.List;
@@ -83,8 +84,13 @@ public class CourseService implements ICourseService
 	}
 
 	@Override
-	public Requirement addRequirement(Course client, BundleType bt, int q)
+	public void addRequirement(Course client, BundleType bt, int q)
 	{
+		if(client.getState()==CourseState.PUBLISHED)
+		{
+			throw new BusinessException(new NoSuchCourseStateAction(client.getState()));
+		}
+
 		//Проверить есть ли требование с этим bt в курсе. Если есть, то исключение
 		//Проверить есть ли такое требование в системе. Если есть, то добавим к курсу этот объект
 		//Если нет, то создадим новое
@@ -115,12 +121,15 @@ public class CourseService implements ICourseService
 		client.addRequirement(req);
 		reqRepo.save(req);
 		repo.save(client);
-		return req;
 	}
 
 	@Override
 	public void updateRequirement(Course client, BundleType bt, int q)
 	{
+		if(client.getState()==CourseState.PUBLISHED)
+		{
+			throw new BusinessException(new NoSuchCourseStateAction(client.getState()));
+		}
 		//найти старое требование
 		//посмотреть в базе количество ссылок на него
 		//если 1, то сохранить изменения старого требования в базе
@@ -130,14 +139,32 @@ public class CourseService implements ICourseService
 	@Override
 	public void deleteRequirement(Course client, BundleType bt, int q)
 	{
+		if(client.getState()==CourseState.PUBLISHED)
+		{
+			throw new BusinessException(new NoSuchCourseStateAction(client.getState()));
+		}
 		//посмотреть в базе количество ссылок на него
 		//если 1, то удалить старый объект из базы
 		//если больше, то отвязать от старого
 	}
 
 	@Override
+	public void publish(Course client)
+	{
+		if(client.getState()==CourseState.IN_PROGRESS)
+		{
+			client.publish();
+			repo.save(client);
+		}
+	}
+
+	@Override
 	public void addGroup(Course client, Group group)
 	{
+		if(client.getState()!=CourseState.PUBLISHED)
+		{
+			throw new BusinessException(new NoSuchCourseStateAction(client.getState()));
+		}
 		if(client.contains(group))
 		{
 			throw new BusinessException(new GroupAlreadyContains(group,client));
@@ -149,13 +176,19 @@ public class CourseService implements ICourseService
 	@Override
 	public void delGroup(Course client, Group group)
 	{
-
+		if(client.getState()!=CourseState.PUBLISHED)
+		{
+			throw new BusinessException(new NoSuchCourseStateAction(client.getState()));
+		}
 	}
 
 	@Override
 	public void updateName(Course client, String name)
 	{
-
+		if(client.getState()==CourseState.PUBLISHED)
+		{
+			throw new BusinessException(new NoSuchCourseStateAction(client.getState()));
+		}
 	}
 
 	@Override

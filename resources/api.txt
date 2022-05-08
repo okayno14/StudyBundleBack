@@ -37,7 +37,8 @@
 "PUT", "/course/delCoAuthor/:id/:coAuthorID"
 "PUT", "/course/addGroup/:groupID/:id"
 "PUT", "/course/delGroup/:groupID/:id"
-"PUT", "/course/:id"
+"PUT", "/course/:id/:name"
+"PUT", "/course/publish/:id"
 "DELETE", "/course/:id"
 
 "POST", "/course/requirement/:courseID/:bundleTypeID/:q"

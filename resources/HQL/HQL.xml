@@ -88,22 +88,21 @@
 <query>
     <name="COUNT_BUNDLES_FOR_USERS"/>
     <body>
-        select 
-            count (b) 
-        from
-            Bundle as b
-        inner join
-            b.bundleACLSet as bACL 
-        inner join
-            b.course as c 
-        inner join 
-            c.courseACL_Set as cACL
-        inner join 
-            bACL.user as u 
-        where
-            u.id in (:user) and
-            c.id = :course
-        group by 
+        select distinct 
             u
+        from
+		    User as u
+        left outer join
+            BundleACL as bACL 
+        with
+		    bACL.user.id = u.id
+        inner join
+            bACL.bundle as b
+        inner join
+		    b.course as c 
+        where
+		    u.id in (:user) and
+            c.id = :course
+
     </body>
 </query>

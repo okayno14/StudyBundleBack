@@ -147,7 +147,10 @@ INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO "route" (method,urn) VALUES ('PUT', '/course/delGroup/:groupID/:id');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('PUT', '/course/:id');
+INSERT INTO "route" (method,urn) VALUES ('PUT', '/course/:id/:name');
+INSERT INTO role_route VALUES (10,(select max(id) from "route"));
+
+INSERT INTO "route" (method,urn) VALUES ('PUT', '/course/publish/:id');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('DELETE', '/course/:id');
