@@ -100,6 +100,15 @@ public class Core
 		iUserService       = new UserService(new UserRepoHiber(sessionFactory), userCache);
 
 		//ТЕСТЫ
+		LinkedList<User> usersList = new LinkedList<>();
+		User u = new User();
+		u.setId(71L);
+		usersList.add(u);
+		u = new User();
+		u.setId(72L);
+		usersList.add(u);
+		Course c = new Course();
+		c.setId(69L);
 
 		//new CourseRepoHiber(sessionFactory).get(112L);
 

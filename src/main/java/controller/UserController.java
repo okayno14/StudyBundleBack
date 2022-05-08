@@ -2,6 +2,7 @@ package controller;
 
 import business.IUserService;
 import business.UserValidationService;
+import dataAccess.entity.Course;
 import dataAccess.entity.Role;
 import dataAccess.entity.User;
 import exception.Business.BusinessException;
@@ -11,10 +12,7 @@ import exception.DataAccess.DataAccessException;
 import exception.DataAccess.NotUniqueException;
 import exception.DataAccess.NotValidException;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class UserController implements IUserController
 {
@@ -145,6 +143,12 @@ public class UserController implements IUserController
 	public List<User> getByCourse(User fio, String courseName)
 	{
 		return null;
+	}
+
+	@Override
+	public Set<User> filter(List<User> userList, Course c)
+	{
+		return service.filter(userList,c);
 	}
 
 	@Override

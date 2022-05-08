@@ -8,8 +8,7 @@ import exception.DataAccess.ObjectNotFoundException;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 {

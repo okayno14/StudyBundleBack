@@ -8,6 +8,7 @@ import exception.DataAccess.ObjectNotFoundException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class CourseController implements ICourseController
 {
@@ -70,15 +71,6 @@ public class CourseController implements ICourseController
 	public Requirement addRequirement(Course client, BundleType bt, int q)
 	{
 		Requirement        req  = service.addRequirement(client, bt, q);
-		LinkedList<Bundle> list = new LinkedList<>();
-		for (Group g : client.getGroupes())
-		{
-			for (User u : controller.groupController.getUsers(g))
-			{
-				genBundlesForReq(list, req, client, u);
-			}
-		}
-		controller.bundleController.add(list);
 		return req;
 	}
 
@@ -94,8 +86,8 @@ public class CourseController implements ICourseController
 
 	}
 
-	@Override
-	public List<Bundle> genBundlesForUser(Course client, User u)
+	//@Override
+	private List<Bundle> genBundlesForUser(Course client, User u)
 	{
 		LinkedList<Bundle> list = new LinkedList<>();
 		for (Requirement req : client.getRequirementSet())
@@ -110,9 +102,14 @@ public class CourseController implements ICourseController
 	{
 		service.addGroup(client, g);
 		LinkedList<Bundle> list = new LinkedList<>();
-		for (User u : controller.groupController.getUsers(g))
+		List<User> userList = new LinkedList<User>(controller.groupController.getUsers(g));
+		Set<User> userWithBundles = controller.userController.filter(userList,client);
+		for (User u : userList)
 		{
-			list.addAll(genBundlesForUser(client, u));
+			if(!userWithBundles.contains(u))
+			{
+				list.addAll(genBundlesForUser(client, u));
+			}
 		}
 		controller.bundleController.add(list);
 	}

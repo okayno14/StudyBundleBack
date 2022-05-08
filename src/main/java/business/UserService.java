@@ -1,6 +1,7 @@
 package business;
 
 import dataAccess.cache.IUserCache;
+import dataAccess.entity.Course;
 import dataAccess.entity.Role;
 import dataAccess.entity.User;
 import dataAccess.repository.IUserRepo;
@@ -10,6 +11,7 @@ import exception.DataAccess.DataAccessException;
 import exception.DataAccess.ObjectNotFoundException;
 
 import java.util.List;
+import java.util.Set;
 
 public class UserService implements IUserService
 {
@@ -141,6 +143,12 @@ public class UserService implements IUserService
 	public List<User> getByCourse(User fio, String courseName)
 	{
 		return null;
+	}
+
+	@Override
+	public Set<User> filter(List<User> userList, Course c)
+	{
+		return userRepo.filter(userList,c);
 	}
 
 	@Override

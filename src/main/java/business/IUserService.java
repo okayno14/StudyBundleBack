@@ -1,9 +1,11 @@
 package business;
 
+import dataAccess.entity.Course;
 import dataAccess.entity.Role;
 import dataAccess.entity.User;
 
 import java.util.List;
+import java.util.Set;
 
 public interface IUserService
 {
@@ -15,6 +17,7 @@ public interface IUserService
 	User getByToken(String token);
 	User get(User fio, Role role);
 	List<User> getByCourse(User fio, String courseName);
+	Set<User> filter(List<User> userList, Course c);
 	void updateFIO(User client, User fio);
 	void updatePass(User client, String pass);
 	void updateMail(User client, String email);

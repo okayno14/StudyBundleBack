@@ -47,7 +47,7 @@
 </query>
 
 <query>
-    <name="GET_BUNDLE(NO_COURSE)_BY_COURSENAME_GROUPNAME_FIO"/>
+    <name="GET_BUNDLE(NO_COURSE)"/>
     <body>
         select 
             b 
@@ -82,5 +82,28 @@
             c.courseACL_Set as cACL
         where 
             bACL.user.id = :user
+    </body>
+</query>
+
+<query>
+    <name="COUNT_BUNDLES_FOR_USERS"/>
+    <body>
+        select 
+            count (b) 
+        from
+            Bundle as b
+        inner join
+            b.bundleACLSet as bACL 
+        inner join
+            b.course as c 
+        inner join 
+            c.courseACL_Set as cACL
+        inner join 
+            bACL.user as u 
+        where
+            u.id in (:user) and
+            c.id = :course
+        group by 
+            u
     </body>
 </query>
