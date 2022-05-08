@@ -1,6 +1,3 @@
-CREATE DATABASE study_bundle;
-\c study_bundle
-
 CREATE SEQUENCE hibernate_sequence;
 
 CREATE TYPE method_HTTP AS ENUM ('POST', 'GET', 'PUT', 'DELETE','ANY');
@@ -44,9 +41,12 @@ CREATE TABLE "user"(
     FOREIGN KEY (id_group) REFERENCES "group"(id)
 );
 
+CREATE TYPE course_state as ENUM ('EMPTY', 'IN_PROGRESS', 'PUBLISHED');
+
 CREATE TABLE course(
     id BIGINT PRIMARY KEY DEFAULT nextval('hibernate_sequence'),
-    "name" VARCHAR(255) NOT NULL
+    "name" VARCHAR(255) NOT NULL,
+    state course_state NOT NULL
 );
 
 CREATE TABLE group_course(

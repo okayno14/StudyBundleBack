@@ -1,15 +1,20 @@
 package dataAccess.entity;
 
 import com.google.gson.annotations.Expose;
+import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType;
 import exception.Business.BusinessException;
 import exception.Business.NoRightException;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.*;
 import java.util.*;
 
+
+
 @Entity
+@TypeDef(name = "pgsql_enum",
+		 typeClass = PostgreSQLEnumType.class)
 public class Course
 {
 	@Id
@@ -17,13 +22,17 @@ public class Course
 	@Expose
 	private long           id            = -1;
 	@Expose
-	private String         name;
+	private String      name;
+	@Enumerated(EnumType.STRING)
+	@Type(type = "pgsql_enum")
+	@Expose
+	private CourseState state   = CourseState.EMPTY;
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "group_course",
 			   joinColumns = {@JoinColumn(name = "id_course")},
 			   inverseJoinColumns = {@JoinColumn(name = "id_group")})
 	@Expose
-	private Set<Group>     groupes       = new HashSet<Group>();
+	private Set<Group>  groupes = new HashSet<Group>();
 	//поменял CascadeType.ALL на MERGE
 	@OneToMany(mappedBy = "course",
 			   cascade = {CascadeType.MERGE, CascadeType.REMOVE})
@@ -148,6 +157,7 @@ public class Course
 			return;
 		}
 		requirementSet.add(requirement);
+		state = CourseState.IN_PROGRESS;
 	}
 
 	public void removeRequirement(Requirement requirement)
@@ -230,5 +240,15 @@ public class Course
 	public Set<CourseACL> getCourseACL_Set()
 	{
 		return courseACL_Set;
+	}
+
+	public CourseState getState()
+	{
+		return state;
+	}
+
+	public void publish()
+	{
+		this.state = CourseState.PUBLISHED;
 	}
 }

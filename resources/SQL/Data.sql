@@ -21,14 +21,14 @@ INSERT INTO "role" ("name") VALUES ('Гость');
 
 --Первый админ
 INSERT INTO "user" ("email","email_state","pass","lastname","firstname","fathername","id_role") 
-VALUES ('admin@host.ru',0,'password','Администратор','Администратор','Администратор',9);
+VALUES ('admin@host.ru',1,'password','Администратор','Администратор','Администратор',9);
 
 --Пути
 INSERT INTO "route" (method,urn) VALUES ('ANY', 'ANY');
 INSERT INTO role_route VALUES (9,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('POST', '/user/');
-INSERT INTO role_route VALUES (9,(select max(id) from "route"));
+--INSERT INTO role_route VALUES (9,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('POST', '/user/:groupID');
 

@@ -167,7 +167,6 @@ public class CourseController implements ICourseController
 			}
 			controller.bundleController.add(list);
 		}
-		//kkk
 	}
 
 	@Override
