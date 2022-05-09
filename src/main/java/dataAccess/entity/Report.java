@@ -128,10 +128,10 @@ public class Report implements Serializable, Similarity
 		isSetCompatible = setCompatible;
 	}
 
-	public List<String> getText()
-	{
-		return new LinkedList<String>(text);
-	}
+//	public List<String> getText()
+//	{
+//		return new LinkedList<String>(text);
+//	}
 
 	public Map<String, Integer> getTextVector()
 	{

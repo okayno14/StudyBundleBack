@@ -54,9 +54,11 @@ public class BuilderWords implements BuilderMatrix
 		while (i.hasNext())
 		{
 			Bundle bundle = i.next();
-			words.addAll(bundle.getReport().getText());
+			words.addAll(bundle.getReport().getTextVector().keySet());
+
+			//words.addAll(bundle.getReport().getText());
 		}
-		words.addAll(toCompare.getReport().getText());
+		words.addAll(toCompare.getReport().getTextVector().keySet());
 		header = new ArrayList<String>(words);
 	}
 
@@ -86,7 +88,7 @@ public class BuilderWords implements BuilderMatrix
         {
             buf = report.getTextVector().get(word);
         }
-		Float tf = (buf / (float) report.getText().size());
+		Float tf = (buf / (float) report.getTextVector().size());
 		return tf * idf.get(word);
 	}
 

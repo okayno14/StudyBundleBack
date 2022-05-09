@@ -111,7 +111,7 @@ public class BundleService implements IBundleService
 	public Bundle uploadReport(Bundle client, byte[] document)
 	{
 		bundleRepoFile.save(client, document);
-		Bundle bestMatch = new Bundle();
+		Bundle bestMatchBundle = new Bundle();
 		//написать алгоритм сверки
 		try
 		{
@@ -124,19 +124,22 @@ public class BundleService implements IBundleService
 
 			bundleList = new LinkedList<>();
 			Row rows[] = res.getRows();
-			for (int i = 0; i < WINDOW; i++)
+			for (int i = 0; i < WINDOW && i<rows.length; i++)
 			{
 				bundleList.add((Bundle) rows[i].getObj());
 			}
 
-			int methodsQuantity = res.getWidth();
+			bundleRepoFile.fillTextVector(bundleList);
 
 			builderMatrix = new BuilderWords(client, bundleList);
 			res           = groupVoters.verdict(builderMatrix.buildMatrix());
+			int methodsQuantity = res.getWidth();
+
 			res.sortDesc(methodsQuantity - 1);
 
-			bestMatch =  (Bundle) res.getRows()[0].getObj();
-			if (res.getRows()[0].getCortege()[methodsQuantity - 1] <= CRITICAL_RES)
+			bestMatchBundle =  (Bundle) res.getRows()[0].getObj();
+			float bestMatchScore = res.getRows()[0].getCortege()[methodsQuantity - 1];
+			if (bestMatchScore <= CRITICAL_RES)
 			{
 				client.accept();
 			}
@@ -153,7 +156,7 @@ public class BundleService implements IBundleService
 		finally
 		{
 			bundleRepo.save(client);
-			return bestMatch;
+			return bestMatchBundle;
 		}
 	}
 

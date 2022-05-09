@@ -17,11 +17,11 @@ import java.util.zip.ZipOutputStream;
 
 public class BundleRepoFile implements IBundleRepoFile
 {
-	private WordParser    wordParser = new WordParser();
-	private String        storage;
-	private String        supportedFormats[];
-	private int           zipFileSizeLimit;
-	private final Charset charset    = Charset.forName("cp866");
+	private       WordParser wordParser = new WordParser();
+	private       String     storage;
+	private       String     supportedFormats[];
+	private       int        zipFileSizeLimit;
+	private final Charset    charset    = Charset.forName("cp866");
 
 	public BundleRepoFile(String storage, String[] supportedFormats, int zipFileSizeLimit)
 	{
@@ -81,8 +81,8 @@ public class BundleRepoFile implements IBundleRepoFile
 		{
 			buf[i] = (byte) zIN.read();
 		}
-		ByteArrayInputStream doc = new ByteArrayInputStream(buf);
-		String text = wordParser.parseDoc(doc);
+		ByteArrayInputStream doc  = new ByteArrayInputStream(buf);
+		String               text = wordParser.parseDoc(doc);
 		bundle.getReport().setFileNameAndMeta(name, text);
 		doc.reset();
 		FileOutputStream fOut       = new FileOutputStream(bundleDir + "/" + name);
@@ -148,7 +148,7 @@ public class BundleRepoFile implements IBundleRepoFile
 	{
 		if (array.length > zipFileSizeLimit)
 		{
-			throw new ZipFileSizeException(array.length, zipFileSizeLimit);
+			throw new DataAccessException(new ZipFileSizeException(array.length, zipFileSizeLimit));
 		}
 		try (ZipInputStream zIN = new ZipInputStream(new ByteArrayInputStream(array), charset))
 		{
@@ -247,11 +247,11 @@ public class BundleRepoFile implements IBundleRepoFile
 	@Override
 	public void fillTextVector(Bundle bundle)
 	{
-		String name = bundle.getReport().getFileName();
-		if (name == null)
+		if (bundle.getReport().getFileName() == null)
 		{
 			throw new DataAccessException(new FileNotFoundException(bundle));
 		}
+		String name = storage + "/" + bundle.getFolder() + "/" + bundle.getReport().getFileName();
 		bundle.getReport().setFileNameAndMeta(name, wordParser.parseDoc(name));
 	}
 

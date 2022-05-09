@@ -13,6 +13,7 @@ import exception.Controller.TokenNotFound;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.ObjectNotFoundException;
 import exception.DataAccess.ZipDamaged;
+import exception.DataAccess.ZipFileSizeException;
 import parser.JSON.CreateObjReqParser;
 import parser.JSON.LoginReqParser;
 import parser.JSON.ResponseParser;
@@ -39,18 +40,18 @@ import static spark.Spark.*;
 
 public class ServerFace
 {
-	private       HTTP_Conf http_conf;
-	private final int       zipFileSizeLimit;
-	private final String any = "ANY";
-	private static final int OK                             = 200;
-	private static final int NO_RIGHT_FOR_OPERATION         = 403;
-	private static final int AUTHENTICATION_ERROR           = 401;
-	private static final int USER_DATA_NOT_VALID            = 400;
-	private static final int INTERNAL_CRITICAL_SERVER_ERROR = 500;
-	private static final int SEMANTIC_ERROR                 = 422;
-	private static final int OBJECT_NOT_FOUND               = 404;
+	private              HTTP_Conf http_conf;
+	private final        int       zipFileSizeLimit;
+	private final        String    any                            = "ANY";
+	private static final int       OK                             = 200;
+	private static final int       NO_RIGHT_FOR_OPERATION         = 403;
+	private static final int       AUTHENTICATION_ERROR           = 401;
+	private static final int       USER_DATA_NOT_VALID            = 400;
+	private static final int       INTERNAL_CRITICAL_SERVER_ERROR = 500;
+	private static final int       SEMANTIC_ERROR                 = 422;
+	private static final int       OBJECT_NOT_FOUND               = 404;
 
-	private Controller controller;
+	private Controller            controller;
 	private IBundleController     bundleController;
 	private IBundleTypeController bundleTypeController;
 	private ICourseController     courseController;
@@ -71,7 +72,7 @@ public class ServerFace
 		Spark.port(http_conf.getPort());
 
 		//строим контроллер
-		controller = new Controller(confMain);
+		controller           = new Controller(confMain);
 		bundleController     = controller.getBundleController();
 		bundleTypeController = controller.getBundleTypeController();
 		courseController     = controller.getCourseController();
@@ -455,16 +456,28 @@ public class ServerFace
 				{
 					if (is.available() <= zipFileSizeLimit)
 					{
-						// Use the input stream to create a file
-						int c = is.available();
+						int  c     = is.available();
 						byte buf[] = new byte[is.available()];
 						is.read(buf);
-//						for(int i=0;i<buf.length;i++)
-//						{
-//							buf[i] = (byte) is.read();
-//						}
-						bundleController.uploadReport(b,buf);
-						return "File uploaded";
+						Bundle bestMatch = bundleController.uploadReport(b, buf);
+						//запилиить вывод с инфой по похожести и отправить пользователю изменённый бандл
+
+						String      message = "";
+						JsonElement data    = null;
+						if (b.getState() == BundleState.ACCEPTED)
+						{
+							message = "Отчёт успешно прошёл проверку";
+							data    = gson.toJsonTree(b);
+						}
+						else if (b.getState() == BundleState.CANCELED)
+						{
+							message = "Отчёт недостаточно оригинален.\n";
+							Bundle arr[] = new Bundle[2];
+							arr[0] = b;
+							arr[1] = bestMatch;
+									 data = gson.toJsonTree(arr);
+						}
+						return new Response(data, message);
 					}
 				}
 				return "fail";
@@ -486,7 +499,8 @@ public class ServerFace
 				resp.status(OBJECT_NOT_FOUND);
 				resp.body(gson.toJson(new Response("Объект с запрошенным id не найден")));
 			}
-			if (e.getCause().getClass() == ZipDamaged.class)
+			if (e.getCause().getClass() == ZipDamaged.class ||
+					e.getCause().getClass() == ZipFileSizeException.class)
 			{
 				resp.status(USER_DATA_NOT_VALID);
 				resp.body(gson.toJson(new Response(e.getMessage())));
