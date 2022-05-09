@@ -27,7 +27,7 @@ public class BundleController implements IBundleController
 	@Override
 	public Bundle get(long id)
 	{
-		return null;
+		return bundleService.get(id);
 	}
 
 	@Override
@@ -63,7 +63,7 @@ public class BundleController implements IBundleController
 	@Override
 	public void uploadReport(Bundle client, byte[] document)
 	{
-
+		bundleService.uploadReport(client,document);
 	}
 
 	@Override

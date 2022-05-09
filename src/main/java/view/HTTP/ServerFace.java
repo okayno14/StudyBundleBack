@@ -22,6 +22,8 @@ import view.HTTP.request.CreateObjReq;
 import view.HTTP.request.IDReq;
 import view.HTTP.request.LoginReq;
 
+import javax.servlet.MultipartConfigElement;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Type;
@@ -36,14 +38,18 @@ import static spark.Spark.*;
 
 public class ServerFace
 {
+	private       HTTP_Conf http_conf;
+	private final int       zipFileSizeLimit;
+	private final String any = "ANY";
+	private static final int OK                             = 200;
+	private static final int NO_RIGHT_FOR_OPERATION         = 403;
+	private static final int AUTHENTICATION_ERROR           = 401;
+	private static final int USER_DATA_NOT_VALID            = 400;
+	private static final int INTERNAL_CRITICAL_SERVER_ERROR = 500;
+	private static final int SEMANTIC_ERROR                 = 422;
+	private static final int OBJECT_NOT_FOUND               = 404;
+
 	private Controller controller;
-
-	private HTTP_Conf   http_conf;
-	private GsonBuilder gsonBuilder;
-	private Gson        gson;
-
-	private UserParser userParser;
-
 	private IBundleController     bundleController;
 	private IBundleTypeController bundleTypeController;
 	private ICourseController     courseController;
@@ -51,27 +57,20 @@ public class ServerFace
 	private IUserController       userController;
 	private IRoleController       roleController;
 
-	private final String any = "ANY";
+	private GsonBuilder gsonBuilder;
+	private Gson        gson;
+	private UserParser  userParser;
 
-	private static final int OK                             =200;
-	private static final int NO_RIGHT_FOR_OPERATION         =403;
-	private static final int AUTHENTICATION_ERROR           =401;
-	private static final int USER_DATA_NOT_VALID            =400;
-	private static final int INTERNAL_CRITICAL_SERVER_ERROR =500;
-	private static final int SEMANTIC_ERROR                 =422;
-	private static final int OBJECT_NOT_FOUND               =404;
-
-	public ServerFace(HTTP_Conf http_conf, ConfMain confMain, Gson gson, GsonBuilder gsonBuilder)
+	public ServerFace(ConfMain confMain, Gson gson, GsonBuilder gsonBuilder)
 	{
-		this.http_conf   = http_conf;
-		this.gson        = gson;
-		this.gsonBuilder = gsonBuilder;
+		this.http_conf   = confMain.getHttp_conf();
+		zipFileSizeLimit = confMain.getDateAccessConf().getZipFileSizeLimit();
+
 		//применяем параметры конфигурации для сервера
 		Spark.port(http_conf.getPort());
 
 		//строим контроллер
 		controller = new Controller(confMain);
-
 		bundleController     = controller.getBundleController();
 		bundleTypeController = controller.getBundleTypeController();
 		courseController     = controller.getCourseController();
@@ -79,8 +78,9 @@ public class ServerFace
 		userController       = controller.getUserController();
 		roleController       = controller.getRoleController();
 
-
 		//регистрация парсеров JSON для серверных записей
+		this.gson        = gson;
+		this.gsonBuilder = gsonBuilder;
 		gsonBuilder.registerTypeAdapter(Response.class, new ResponseParser(gsonBuilder.create()));
 		gsonBuilder.registerTypeAdapter(LoginReq.class, new LoginReqParser());
 		gsonBuilder.registerTypeAdapter(CreateObjReqParser.class, new CreateObjReqParser());
@@ -435,6 +435,40 @@ public class ServerFace
 			});
 
 
+		});
+
+		path("/bundle", () ->
+		{
+			post("/upload/:id", (req, resp) ->
+			{
+				//				User   client       = authentAuthorize(req, resp);
+				//				String token        = client.getToken();
+				//				long   tokenExpires = client.getTokenExpires();
+
+				long   bundleID = Long.parseLong(req.params("id"));
+				Bundle b        = bundleController.get(bundleID);
+
+				req.attribute("org.eclipse.jetty.multipartConfig",
+							  new MultipartConfigElement("/temp"));
+				try (InputStream is = req.raw().getPart("uploaded_bundle").getInputStream())
+				{
+					if (is.available() <= zipFileSizeLimit)
+					{
+						// Use the input stream to create a file
+						int c = is.available();
+						byte buf[] = new byte[is.available()];
+						is.read(buf);
+//						for(int i=0;i<buf.length;i++)
+//						{
+//							buf[i] = (byte) is.read();
+//						}
+						bundleController.uploadReport(b,buf);
+						return "File uploaded";
+					}
+				}
+				return "fail";
+
+			});
 		});
 
 

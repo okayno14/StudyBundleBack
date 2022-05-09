@@ -24,8 +24,9 @@ public class main
 	{
 		Properties props = System.getProperties();
 		props.setProperty("org.jboss.logging.provider", "slf4j");
+		props.setProperty("org.apache.poi.util.POILogger","org.apache.poi.util.SLF4JLogger");
 
-		DOMConfigurator.configure("resources/Config/log4j2.xml");
+		DOMConfigurator.configure("resources/Config/log4j.xml");
 
 		try (BufferedReader fileReader = new BufferedReader(
 				new FileReader("resources/Config/conf.json")))
@@ -42,8 +43,7 @@ public class main
 
 
 
-			ServerFace serverFace = new ServerFace(confMain.getHttp_conf(), confMain,
-												   gsonBuilder.create(), gsonBuilder);
+			ServerFace serverFace = new ServerFace(confMain, gsonBuilder.create(), gsonBuilder);
 		}
 		catch (Exception e)
 		{

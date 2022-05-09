@@ -83,7 +83,8 @@ public class BundleRepoFile implements IBundleRepoFile
 			buf[i] = (byte) zIN.read();
 		}
 		ByteArrayInputStream doc = new ByteArrayInputStream(buf);
-		bundle.getReport().setFileNameAndMeta(name, wordParser.parseDoc(doc));
+		String text = wordParser.parseDoc(doc);
+		bundle.getReport().setFileNameAndMeta(name, text);
 		doc.reset();
 		FileOutputStream fOut       = new FileOutputStream(bundleDir + "/" + name);
 		int              readed     = 0;

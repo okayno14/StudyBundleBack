@@ -102,7 +102,14 @@ public class BundleService implements IBundleService
 	@Override
 	public void uploadReport(Bundle client, byte[] document)
 	{
+		bundleRepoFile.save(client,document);
+		//написать алгоритм сверки
 
+
+
+
+		client.accept();
+		bundleRepo.save(client);
 	}
 
 	@Override
