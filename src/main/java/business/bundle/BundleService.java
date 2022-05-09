@@ -1,5 +1,6 @@
 package business.bundle;
 
+import business.bundle.matrix.*;
 import dataAccess.cache.IBundleCache;
 import dataAccess.entity.Author;
 import dataAccess.entity.Bundle;
@@ -7,7 +8,9 @@ import dataAccess.entity.Course;
 import dataAccess.entity.User;
 import dataAccess.repository.IBundleRepo;
 import dataAccess.repository.IBundleRepoFile;
+import exception.DataAccess.DataAccessException;
 
+import java.util.LinkedList;
 import java.util.List;
 
 public class BundleService implements IBundleService
@@ -15,6 +18,11 @@ public class BundleService implements IBundleService
 	private IBundleRepoFile bundleRepoFile;
 	private IBundleRepo     bundleRepo;
 	private IBundleCache    bundleCache;
+
+	private GroupVoters groupVoters = new GroupVoters(null);
+
+	private final int   WINDOW       = 5;
+	private final float CRITICAL_RES = 0.75f;
 
 	public BundleService(IBundleRepoFile bundleRepoFile, IBundleRepo bundleRepo,
 						 IBundleCache bundleCache)
@@ -100,16 +108,53 @@ public class BundleService implements IBundleService
 	}
 
 	@Override
-	public void uploadReport(Bundle client, byte[] document)
+	public Bundle uploadReport(Bundle client, byte[] document)
 	{
-		bundleRepoFile.save(client,document);
+		bundleRepoFile.save(client, document);
+		Bundle bestMatch = new Bundle();
 		//написать алгоритм сверки
+		try
+		{
+			List<Bundle> bundleList = bundleRepo
+					.get(client.getCourse(), client.getBundleType(), client.getNum());
+			BuilderMatrix builderMatrix = new BuilderMeta(client, bundleList);
+			groupVoters.setM(builderMatrix.buildMatrix());
+			Matrix res = groupVoters.verdict();
+			res.sortDesc(res.getWidth() - 1);
 
+			bundleList = new LinkedList<>();
+			Row rows[] = res.getRows();
+			for (int i = 0; i < WINDOW; i++)
+			{
+				bundleList.add((Bundle) rows[i].getObj());
+			}
 
+			int methodsQuantity = res.getWidth();
 
+			builderMatrix = new BuilderWords(client, bundleList);
+			res           = groupVoters.verdict(builderMatrix.buildMatrix());
+			res.sortDesc(methodsQuantity - 1);
 
-		client.accept();
-		bundleRepo.save(client);
+			bestMatch =  (Bundle) res.getRows()[0].getObj();
+			if (res.getRows()[0].getCortege()[methodsQuantity - 1] <= CRITICAL_RES)
+			{
+				client.accept();
+			}
+			else
+			{
+				client.cancel();
+			}
+		}
+		//если работа была первой,то она автоматически принимается системой
+		catch (DataAccessException e)
+		{
+			client.accept();
+		}
+		finally
+		{
+			bundleRepo.save(client);
+			return bestMatch;
+		}
 	}
 
 	@Override

@@ -12,6 +12,7 @@ import exception.Controller.ControllerException;
 import exception.Controller.TokenNotFound;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.ObjectNotFoundException;
+import exception.DataAccess.ZipDamaged;
 import parser.JSON.CreateObjReqParser;
 import parser.JSON.LoginReqParser;
 import parser.JSON.ResponseParser;
@@ -484,6 +485,11 @@ public class ServerFace
 			{
 				resp.status(OBJECT_NOT_FOUND);
 				resp.body(gson.toJson(new Response("Объект с запрошенным id не найден")));
+			}
+			if (e.getCause().getClass() == ZipDamaged.class)
+			{
+				resp.status(USER_DATA_NOT_VALID);
+				resp.body(gson.toJson(new Response(e.getMessage())));
 			}
 		});
 

@@ -1,6 +1,7 @@
 package dataAccess.repository;
 
 import dataAccess.entity.Bundle;
+import dataAccess.entity.BundleType;
 import dataAccess.entity.Course;
 import dataAccess.entity.User;
 
@@ -15,5 +16,6 @@ public interface IBundleRepo
 	List<Bundle> get(String courseName, String groupName, User fio);
 	List<Bundle> get(Course course, User user);
 	List<Bundle> getAll(User user);
+	List<Bundle> get(Course course, BundleType bt, int num);
 	void delete(Bundle bundle);
 }

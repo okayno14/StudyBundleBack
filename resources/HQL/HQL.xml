@@ -1,4 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+<!--USER-->
+<query>
+    <name="GET_USERS_WITH_BUNDLES"/>
+    <body>
+        select distinct 
+            u
+        from
+		    User as u
+        left outer join
+            BundleACL as bACL 
+        with
+		    bACL.user.id = u.id
+        inner join
+            bACL.bundle as b
+        inner join
+		    b.course as c 
+        where
+		    u.id in (:user) and
+            c.id = :course
+
+    </body>
+</query>
+
+<!--BUNDLE-->
 <macros>
     <name="FULL_GRAPH_BUNDLE"/>
     <body>
@@ -8,7 +33,6 @@
             b.course as c 
         inner join fetch 
             c.courseACL_Set as cACL
-
     </body>
 <macros>
 
@@ -86,23 +110,17 @@
 </query>
 
 <query>
-    <name="COUNT_BUNDLES_FOR_USERS"/>
+    <name="GET_SAME_BUNDLES"/>
     <body>
-        select distinct 
-            u
-        from
-		    User as u
-        left outer join
-            BundleACL as bACL 
-        with
-		    bACL.user.id = u.id
-        inner join
-            bACL.bundle as b
-        inner join
-		    b.course as c 
+        select 
+            b 
+        from 
+            Bundle as b 
+        <macros_ref="FULL_GRAPH_BUNDLE">
         where
-		    u.id in (:user) and
-            c.id = :course
-
+            c.id=:course and
+            b.bundleType.id =:bt and
+            b.num = :num and
+            b.state = 'ACCEPTED'
     </body>
 </query>

@@ -1,13 +1,11 @@
 package dataAccess.repository;
 
 import dataAccess.entity.Bundle;
-import exception.DataAccess.DataAccessException;
+import exception.DataAccess.*;
 import exception.DataAccess.FileNotFoundException;
-import exception.DataAccess.FormatNotSupported;
-import exception.DataAccess.WordParserException;
-import exception.DataAccess.ZipFileSizeException;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,10 +17,11 @@ import java.util.zip.ZipOutputStream;
 
 public class BundleRepoFile implements IBundleRepoFile
 {
-	private WordParser wordParser = new WordParser();
-	private String     storage;
-	private String     supportedFormats[];
-	private int        zipFileSizeLimit;
+	private WordParser    wordParser = new WordParser();
+	private String        storage;
+	private String        supportedFormats[];
+	private int           zipFileSizeLimit;
+	private final Charset charset    = Charset.forName("cp866");
 
 	public BundleRepoFile(String storage, String[] supportedFormats, int zipFileSizeLimit)
 	{
@@ -151,7 +150,7 @@ public class BundleRepoFile implements IBundleRepoFile
 		{
 			throw new ZipFileSizeException(array.length, zipFileSizeLimit);
 		}
-		try (ZipInputStream zIN = new ZipInputStream(new ByteArrayInputStream(array)))
+		try (ZipInputStream zIN = new ZipInputStream(new ByteArrayInputStream(array), charset))
 		{
 			String bundleDir = storage + "/" + bundle.getFolder();
 			checkBundleDir(bundleDir);
@@ -172,6 +171,10 @@ public class BundleRepoFile implements IBundleRepoFile
 		catch (WordParserException | IOException e)
 		{
 			throw new DataAccessException(e);
+		}
+		catch (IllegalArgumentException ee)
+		{
+			throw new DataAccessException(new ZipDamaged());
 		}
 	}
 

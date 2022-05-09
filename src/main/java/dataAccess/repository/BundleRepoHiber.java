@@ -1,6 +1,7 @@
 package dataAccess.repository;
 
 import dataAccess.entity.Bundle;
+import dataAccess.entity.BundleType;
 import dataAccess.entity.Course;
 import dataAccess.entity.User;
 import exception.DataAccess.DataAccessException;
@@ -212,6 +213,39 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 				res.add(b);
 			}
 		}
+		t.commit();
+		if (res.size() != 0)
+		{
+			return res;
+		}
+		throw new DataAccessException(new ObjectNotFoundException());
+	}
+
+	@Override
+	public List<Bundle> get(Course course, BundleType bt, int num)
+	{
+		Transaction t = getOrBegin();
+		HQL=
+				"        select \n" +
+				"            b \n" +
+				"        from \n" +
+				"            Bundle as b \n" +
+				"        inner join fetch \n" +
+				"            b.bundleACLSet as bACL \n" +
+				"        inner join fetch \n" +
+				"            b.course as c \n" +
+				"        inner join fetch \n" +
+				"            c.courseACL_Set as cACL\n" +
+				"        where\n" +
+				"            c.id=:course and\n" +
+				"            b.bundleType.id =:bt and\n" +
+				"            b.num = :num and\n" +
+				"            b.state = 'ACCEPTED'";
+		q=sessionFactory.getCurrentSession().createQuery(HQL);
+		q.setParameter("course",course.getId());
+		q.setParameter("bt",bt.getId());
+		q.setParameter("num",num);
+		List<Bundle> res = q.getResultList();
 		t.commit();
 		if (res.size() != 0)
 		{
