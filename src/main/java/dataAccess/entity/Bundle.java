@@ -1,6 +1,7 @@
 package dataAccess.entity;
 
 import business.bundle.Similarity;
+import com.google.gson.annotations.Expose;
 import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType;
 import exception.Business.BusinessException;
 import exception.Business.NoRightException;
@@ -22,11 +23,15 @@ public class Bundle implements Serializable, Similarity
 {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	@Expose
 	private long           id           = -1;
+	@Expose
 	private String         folder       = null;
+	@Expose
 	private int            num          = 0;
 	@Enumerated(EnumType.STRING)
 	@Type(type = "pgsql_enum")
+	@Expose
 	private BundleState    state        = BundleState.EMPTY;
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "id_course",
@@ -35,16 +40,18 @@ public class Bundle implements Serializable, Similarity
 	@ManyToOne
 	@JoinColumn(name = "id_bundle_type",
 				referencedColumnName = "id")
+	@Expose
 	private BundleType     bundleType;
 	@OneToOne(cascade = CascadeType.ALL,
 			  orphanRemoval = true)
 	@JoinColumn(name = "id_report",
 				referencedColumnName = "id")
+	@Expose
 	private Report         report;
 	@OneToMany(cascade = {CascadeType.MERGE, CascadeType.REMOVE},
 			   mappedBy = "bundle")
+	@Expose
 	private Set<BundleACL> bundleACLSet = new HashSet<BundleACL>();
-
 
 	public Bundle()
 	{

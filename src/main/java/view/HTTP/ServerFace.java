@@ -58,9 +58,11 @@ public class ServerFace
 	private IUserController       userController;
 	private IRoleController       roleController;
 
-	private GsonBuilder gsonBuilder;
-	private Gson        gson;
-	private UserParser  userParser;
+	private GsonBuilder  gsonBuilder;
+	private Gson         gson;
+	private UserParser   userParser;
+	private BundleParser bundleParser;
+	private CourseParser courseParser;
 
 	public ServerFace(ConfMain confMain, Gson gson, GsonBuilder gsonBuilder)
 	{
@@ -94,8 +96,15 @@ public class ServerFace
 		gsonBuilder.registerTypeAdapter(Group.class, groupParser);
 		gsonBuilder.registerTypeAdapter(BundleType.class, new BundleTypeParser());
 		gsonBuilder.registerTypeAdapter(Requirement.class, new RequirementParser(gson));
-		gsonBuilder.registerTypeAdapter(CourseACL.class, new CourseACL_Parser(gson));
-		gsonBuilder.registerTypeAdapter(Course.class, new CourseParser(gson));
+		CourseACL_Parser courseACL_parser = new CourseACL_Parser(gson, userParser);
+		gsonBuilder.registerTypeAdapter(CourseACL.class,courseACL_parser );
+		courseParser=new CourseParser(gson,courseACL_parser);
+		gsonBuilder.registerTypeAdapter(Course.class, courseParser);
+		BundleACLParser bundleACLParser = new BundleACLParser(gson, userParser);
+		gsonBuilder.registerTypeAdapter(BundleACL.class, bundleACLParser);
+		bundleParser = new BundleParser(bundleACLParser);
+		gsonBuilder.registerTypeAdapter(Bundle.class, bundleParser);
+
 
 		//стартуем сервер
 		endpoints();
@@ -366,6 +375,22 @@ public class ServerFace
 				return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
 			});
 
+			get("/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long courseID = Long.parseLong(req.params("id"));
+
+				Course res = courseController.get(courseID);
+
+				JsonObject resJSON = gson.toJsonTree(res).getAsJsonObject();
+				courseParser.filterGroupStudents(resJSON);
+				courseParser.defend(resJSON);
+				return gson.toJson(new Response(resJSON));
+			});
+
 			put("/addGroup/:groupID/:id", (req, resp) ->
 			{
 				User   client       = authentAuthorize(req, resp);
@@ -442,9 +467,9 @@ public class ServerFace
 		{
 			post("/upload/:id", (req, resp) ->
 			{
-//				User   client       = authentAuthorize(req, resp);
-//				String token        = client.getToken();
-//				long   tokenExpires = client.getTokenExpires();
+				//				User   client       = authentAuthorize(req, resp);
+				//				String token        = client.getToken();
+				//				long   tokenExpires = client.getTokenExpires();
 
 				long   bundleID = Long.parseLong(req.params("id"));
 				Bundle b        = bundleController.get(bundleID);
@@ -469,10 +494,10 @@ public class ServerFace
 				{
 					User client = new User();
 					client.setRole(roleController.getAdmin());
-					Bundle      bestMatch = bundleController.uploadReport(client,b, buf);
+					Bundle bestMatch = bundleController.uploadReport(client, b, buf);
 
-					String      message   = "";
-					JsonElement data      = null;
+					String      message = "";
+					JsonElement data    = null;
 					if (b.getState() == BundleState.ACCEPTED)
 					{
 						message = "Отчёт успешно прошёл проверку";
@@ -497,6 +522,22 @@ public class ServerFace
 					}
 				}
 				return null;
+			});
+
+			get("/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long bundleID = Long.parseLong(req.params("id"));
+
+				Bundle res = bundleController.get(bundleID);
+
+				JsonObject bundleJSON = gson.toJsonTree(res).getAsJsonObject();
+				bundleParser.defend(bundleJSON);
+				resp.status(OK);
+				return gson.toJson(new Response(bundleJSON, "Успех"));
 			});
 		});
 

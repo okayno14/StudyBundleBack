@@ -66,5 +66,6 @@ public class UserParser implements JsonSerializer<User>, JsonDeserializer<User>
 		jsonObject.remove("token");
 		jsonObject.remove("tokenExpires");
 		jsonObject.remove("pass");
+		jsonObject.remove("emailState");
 	}
 }

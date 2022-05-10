@@ -11,22 +11,19 @@ import java.lang.reflect.Type;
 public class CourseACL_Parser implements JsonSerializer<CourseACL>, JsonDeserializer<CourseACL>
 {
 	private Gson gson;
+	private UserParser userParser;
 
-	public CourseACL_Parser(Gson gson)
+	public CourseACL_Parser(Gson gson, UserParser userParser)
 	{
 		this.gson = gson;
+		this.userParser=userParser;
 	}
 
 	@Override
 	public JsonElement serialize(CourseACL courseACL, Type type,
 								 JsonSerializationContext jsonSerializationContext)
 	{
-		Course c = courseACL.getCourse();
-		courseACL.setCourse(null);
 		JsonObject jsonObject = new JsonObject();
-		jsonObject.add("user", gson.toJsonTree(courseACL.getUser()));
-		jsonObject.addProperty("rights", courseACL.getRights().toString());
-		courseACL.setCourse(c);
 		return jsonObject;
 	}
 
@@ -40,5 +37,10 @@ public class CourseACL_Parser implements JsonSerializer<CourseACL>, JsonDeserial
 		courseACL.setUser(gson.fromJson(jsonObject.get("user"), User.class));
 		courseACL.setRights(Author.valueOf(jsonObject.get("rights").getAsString()));
 		return courseACL;
+	}
+
+	public void defend(JsonObject cACE)
+	{
+		userParser.defendData(cACE.get("user").getAsJsonObject());
 	}
 }

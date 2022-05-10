@@ -13,10 +13,12 @@ import java.util.Set;
 public class CourseParser implements JsonSerializer<Course>, JsonDeserializer<Course>
 {
 	private Gson gson;
+	private CourseACL_Parser courseACL_parser;
 
-	public CourseParser(Gson gson)
+	public CourseParser(Gson gson, CourseACL_Parser courseACL_parser)
 	{
-		this.gson = gson;
+		this.gson             = gson;
+		this.courseACL_parser = courseACL_parser;
 	}
 
 	@Override
@@ -24,20 +26,6 @@ public class CourseParser implements JsonSerializer<Course>, JsonDeserializer<Co
 								 JsonSerializationContext jsonSerializationContext)
 	{
 		JsonObject jsonObject = new JsonObject();
-		jsonObject.addProperty("id", course.getId());
-		jsonObject.addProperty("name", course.getName());
-		if (course.getGroupes().size()!=0)
-		{
-			jsonObject.add("groupes", gson.toJsonTree(course.getGroupes()));
-		}
-		if(course.getCourseACL_Set().size()!=0)
-		{
-			jsonObject.add("courseACL_Set", gson.toJsonTree(course.getCourseACL_Set()));
-		}
-		if(course.getRequirementSet().size()!=0)
-		{
-			jsonObject.add("requirementSet", gson.toJsonTree(course.getRequirementSet()));
-		}
 		return jsonObject;
 	}
 
@@ -63,5 +51,26 @@ public class CourseParser implements JsonSerializer<Course>, JsonDeserializer<Co
 		}.getType();
 		c.setRequirementSet(gson.fromJson(jsonObject.get("requirementSet"), type3));
 		return c;
+	}
+
+	public void filterGroupStudents(JsonObject course)
+	{
+		JsonArray arr = course.getAsJsonArray("groupes");
+		for(JsonElement jsonElement: arr)
+		{
+			JsonObject gOBJ = jsonElement.getAsJsonObject();
+			if(gOBJ.has("students"))
+			{
+				gOBJ.remove("students");
+			}
+		}
+	}
+
+	public void defend(JsonObject course)
+	{
+		for(JsonElement cACE:course.get("courseACL_Set").getAsJsonArray())
+		{
+			courseACL_parser.defend(cACE.getAsJsonObject());
+		}
 	}
 }

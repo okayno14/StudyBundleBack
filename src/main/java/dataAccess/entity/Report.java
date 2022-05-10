@@ -1,6 +1,7 @@
 package dataAccess.entity;
 
 import business.bundle.Similarity;
+import com.google.gson.annotations.Expose;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -13,16 +14,22 @@ public class Report implements Serializable, Similarity
 {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	@Expose
 	private long                 id              = -1L;
 	@Column(name = "file_name")
+	@Expose
 	private String               fileName        = null;
 	@Column(name = "sym_count")
+	@Expose
 	private long                 symCount        = 0L;
 	@Column(name = "unique_words")
+	@Expose
 	private long                 uniqueWords     = 0L;
 	@Column(name = "word_count")
+	@Expose
 	private long                 wordCount       = 0L;
 	@Column(name = "sym_count_no_space")
+	@Expose
 	private long                 symCountNoSpace = 0L;
 	@Transient
 	private boolean              isSetCompatible = true;
@@ -127,11 +134,6 @@ public class Report implements Serializable, Similarity
 	{
 		isSetCompatible = setCompatible;
 	}
-
-//	public List<String> getText()
-//	{
-//		return new LinkedList<String>(text);
-//	}
 
 	public Map<String, Integer> getTextVector()
 	{
