@@ -453,8 +453,21 @@ public class ServerFace
 
 				delete("/:courseID/:bundleTypeID/:q", (req, resp) ->
 				{
+					User   client       = authentAuthorize(req, resp);
+					String token        = client.getToken();
+					long   tokenExpires = client.getTokenExpires();
 
-					return "F";
+					long courseID = Long.parseLong(req.params("courseID"));
+					long btID = Long.parseLong(req.params("bundleTypeID"));
+					int  q    = Integer.parseInt(req.params("q"));
+
+					Course course = courseController.get(courseID);
+					BundleType  bt = bundleTypeController.get(btID);
+
+					courseController.deleteRequirement(course,bt,q);
+
+					resp.status(OK);
+					return gson.toJson(new Response("Успех"));
 				});
 			});
 

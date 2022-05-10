@@ -82,7 +82,7 @@ public class CourseController implements ICourseController
 	@Override
 	public void deleteRequirement(Course client, BundleType bt, int q)
 	{
-
+		service.deleteRequirement(client,bt,q);
 	}
 
 	@Override

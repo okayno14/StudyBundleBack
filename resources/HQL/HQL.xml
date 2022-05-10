@@ -22,6 +22,20 @@
 
     </body>
 </query>
+<!--COURSE-->
+<!--REQUIREMENT-->
+<query>
+    <name="REQ_COUNT_REF"/>
+    <body>
+        select
+            count (c)
+        from
+            Course as c
+        inner join
+            c.requirementSet as req
+        where req.id = :req
+    </body>
+</query>
 
 <!--BUNDLE-->
 <macros>

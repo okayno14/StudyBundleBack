@@ -50,9 +50,18 @@ public class RequirementRepoHiber extends RepoHiberBase implements IRequirementR
 	public long countReferences(Requirement req)
 	{
 		Transaction t = getOrBegin();
-		HQL="select count (c) from Course as c where c.requirement.id = :id";
+		HQL=
+				"        select\n" +
+				"            count (c)\n" +
+				"        from\n" +
+				"            Course as c\n" +
+				"        inner join\n" +
+				"            c.requirementSet as req\n" +
+				"        where req.id = :req";
 		q=sessionFactory.getCurrentSession().createQuery(HQL);
-		q.setParameter("id",req.getId());
-		return (long) q.uniqueResult();
+		q.setParameter("req",req.getId());
+		long res = (long) q.uniqueResult();
+		t.commit();
+		return res;
 	}
 }

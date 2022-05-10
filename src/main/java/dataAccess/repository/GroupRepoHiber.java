@@ -132,7 +132,7 @@ public class GroupRepoHiber extends RepoHiberBase implements IGroupRepo
 		}
 		catch (OptimisticLockException e)
 		{
-			throw new DataAccessException(e);
+			throw new DataAccessException(new ObjectNotFoundException());
 		}
 	}
 }
