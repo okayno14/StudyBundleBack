@@ -88,12 +88,15 @@ public class CourseService implements ICourseService
 	}
 
 	@Override
-	public void addRequirement(Course client, BundleType bt, int q)
+	public void addRequirement(/*User initiator,*/ Course client, BundleType bt, int q)
 	{
 		if (client.getState() == CourseState.PUBLISHED)
 		{
 			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
+
+
+
 
 		//Проверить есть ли требование с этим bt в курсе. Если есть, то исключение
 		//Проверить есть ли такое требование в системе. Если есть, то добавим к курсу этот объект
@@ -125,19 +128,6 @@ public class CourseService implements ICourseService
 		client.addRequirement(req);
 		reqRepo.save(req);
 		repo.save(client);
-	}
-
-	@Override
-	public void updateRequirement(Course client, BundleType bt, int q)
-	{
-		if (client.getState() == CourseState.PUBLISHED)
-		{
-			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
-		}
-		//найти старое требование
-		//посмотреть в базе количество ссылок на него
-		//если 1, то сохранить изменения старого требования в базе
-		//если больше, то отвязать от старого, создать новый объект и сохранить его в базу
 	}
 
 	@Override

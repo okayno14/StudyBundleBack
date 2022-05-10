@@ -157,7 +157,7 @@ public class CacheController implements Runnable
 
 
 		//обновить кеш пользователей (добавить владельцев)
-		Set<CourseACL>      courseACLSet      = course.getCourseACL_Set();
+		Set<CourseACL>      courseACLSet      = course.getACL();
 		Iterator<CourseACL> courseACLIterator = courseACLSet.iterator();
 		CourseACL           courseACL         = null;
 		while (courseACLIterator.hasNext())

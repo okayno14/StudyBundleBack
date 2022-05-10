@@ -183,6 +183,7 @@ public class BundleService implements IBundleService
 	@Override
 	public void decline(Bundle client)
 	{
+		//может только автор курса
 		if(client.getState()!=BundleState.ACCEPTED)
 		{
 			throw new BusinessException(
@@ -193,6 +194,8 @@ public class BundleService implements IBundleService
 	@Override
 	public void delete(Bundle client)
 	{
-
+		//удаление - удаление файла с диска
+		//имеет право только автор курса
+		//действие допустимо как в состоянии ACCEPTED, так и CANCELED
 	}
 }

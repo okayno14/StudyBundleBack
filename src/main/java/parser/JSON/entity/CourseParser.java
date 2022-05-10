@@ -45,7 +45,7 @@ public class CourseParser implements JsonSerializer<Course>, JsonDeserializer<Co
 		Type type2 = new TypeToken<Set<CourseACL>>()
 		{
 		}.getType();
-		c.setCourseACL_Set(gson.fromJson(jsonObject.get("courseACL_Set"), type2));
+		c.setACL(gson.fromJson(jsonObject.get("courseACL_Set"), type2));
 		Type type3 = new TypeToken<Set<Requirement>>()
 		{
 		}.getType();

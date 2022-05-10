@@ -169,7 +169,7 @@ public class Bundle implements Serializable, Similarity
 			while (iterator.hasNext())
 			{
 				obj = iterator.next();
-				if (obj.getUser().equals(user) && obj.getRights() != Author.AUTHOR)
+				if (obj.getUser().equals(user) && !obj.getRights().equals(Author.AUTHOR))
 				{
 					iterator.remove();
 				}

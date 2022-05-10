@@ -68,15 +68,9 @@ public class CourseController implements ICourseController
 	}
 
 	@Override
-	public void addRequirement(Course client, BundleType bt, int q)
+	public void addRequirement(/*User initiator, */Course client, BundleType bt, int q)
 	{
-		service.addRequirement(client, bt, q);
-	}
-
-	@Override
-	public void updateRequirement(Course client, BundleType bt, int q)
-	{
-
+		service.addRequirement(/*initiator,*/ client, bt, q);
 	}
 
 	@Override

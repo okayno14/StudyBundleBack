@@ -182,7 +182,7 @@ public class Core
 		course.setId(++sequence);
 		long pp = sequence;
 		course.addGroup(groupCache.get(avt815));
-		course.addAuthor(userCache.get(teacher), Author.AUTHOR);
+		course.addACE(userCache.get(teacher), Author.AUTHOR);
 		course.addRequirement(new Requirement(4, bundleTypeCache.get(1L)));
 		courseCache.put(course);
 
@@ -306,7 +306,7 @@ public class Core
 		sessionFactory.getCurrentSession().persist(course);
 		courseCache.put(course.getId(), course);
 		long pp = course.getId();
-		course.addAuthor(userCache.get(teacher), Author.AUTHOR);
+		course.addACE(userCache.get(teacher), Author.AUTHOR);
 		sessionFactory.getCurrentSession().merge(course);
 		sessionFactory.getCurrentSession().getTransaction().commit();
 

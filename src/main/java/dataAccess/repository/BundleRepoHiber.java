@@ -78,9 +78,6 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 			q   = sessionFactory.getCurrentSession().createQuery(HQL);
 			q.setParameter("id", id);
 			Bundle res = (Bundle) q.getSingleResult();
-			//Для загрузки ACL курса. Так как при eager будет генерироваться ошибка,
-			//а в hql нельзя фетчить коллекции, связью с которыми не владеет вызываемый объект
-			res.getCourse().getCourseACL_Set().size();
 			t.commit();
 			return res;
 		}
@@ -119,8 +116,16 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 	public List<Bundle> get(Course course, User user)
 	{
 		Transaction t = getOrBegin();
-		HQL = "select \n" + "	b \n" + "from \n" + "	Bundle as b\n" + FULL_GRAPH_BUNDLE +
-				"inner join \n" + "	bACL.user as u \n" + "where \n" + "	c.id=:course and \n" +
+		HQL =
+				"select \n" +
+				"	b \n" +
+				"from \n" +
+				"	Bundle as b\n" +
+				FULL_GRAPH_BUNDLE +
+				"inner join \n" +
+				"	bACL.user as u \n" +
+				"where \n" +
+				"	c.id=:course and \n" +
 				"	u.id = :user";
 		q   = sessionFactory.getCurrentSession().createQuery(HQL);
 		q.setParameter("course", course.getId());
@@ -129,14 +134,14 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 
 		//Для загрузки ACL курса. Так как при eager будет генерироваться ошибка,
 		//а в hql нельзя фетчить коллекции, связью с которыми не владеет вызываемый объект
-		Course c = res.get(0).getCourse();
-		c.getCourseACL_Set();
+//		Course c = res.get(0).getCourse();
+//		c.getACL();
 		t.commit();
 
-		for (Bundle b : res)
-		{
-			b.setCourse(c);
-		}
+//		for (Bundle b : res)
+//		{
+//			b.setCourse(c);
+//		}
 		if (res.size() != 0)
 		{
 			return res;
@@ -151,22 +156,40 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 		//1) получить все курсы
 		//2) для каждого из курсов извлечь бандлы
 		Transaction t = getOrBegin();
-		HQL = "select distinct \n" + "	c \n" + "from \n" + "	Bundle as b\n" +
-				"inner join \n" + "	b.bundleACLSet as bACL\n" + "inner join \n" +
-				"	b.course as c\n" + "inner join fetch \n" + "	c.courseACL_Set as cACL\n" +
-				"where \n" + "	bACL.user.id = :user";
+		HQL =
+				"select distinct \n" +
+				"	c \n" +
+				"from \n" +
+				"	Bundle as b\n" +
+				"inner join \n" +
+				"	b.bundleACLSet as bACL\n" +
+				"inner join \n" +
+				"	b.course as c\n" + "inner join fetch \n" +
+				"	c.courseACL_Set as cACL\n" +
+				"where \n" +
+				"	bACL.user.id = :user";
 		q   = sessionFactory.getCurrentSession().createQuery(HQL);
 		q.setParameter("user", user.getId());
 		List<Course> courseList = q.getResultList();
 		List<Bundle> res        = new LinkedList<>();
 		for (Course c : courseList)
 		{
-			HQL = "select \n" + "	b \n" + "from \n" + "	Bundle as b \n" +
-					"inner join fetch \n" + "	b.bundleACLSet as bACL \n" + "inner join \n" +
-					"	b.course as c\n" + "inner join \n" + "	bACL.user as u \n" +
-					"inner join \n" + "	u.group as g \n" + "where \n" +
-					"	u.id = :user and \n" + "	c.id = :course";
-
+			HQL =
+					"select \n" +
+					"	b \n" +
+					"from \n" +
+					"	Bundle as b \n" +
+					"inner join fetch \n" +
+					"	b.bundleACLSet as bACL \n" +
+					"inner join \n" +
+					"	b.course as c\n" +
+					"inner join \n" +
+					"	bACL.user as u \n" +
+					"inner join \n" +
+					"	u.group as g \n" +
+					"where \n" +
+					"	u.id = :user and \n" +
+					"	c.id = :course";
 			q = sessionFactory.getCurrentSession().createQuery(HQL);
 			q.setParameter("user", user.getId());
 			q.setParameter("course", c.getId());
@@ -189,13 +212,22 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 	public List<Bundle> get(Course course, BundleType bt, int num)
 	{
 		Transaction t = getOrBegin();
-		HQL = "        select \n" + "            b \n" + "        from \n" +
-				"            Bundle as b \n" + "        inner join fetch \n" +
-				"            b.bundleACLSet as bACL \n" + "        inner join fetch \n" +
-				"            b.course as c \n" + "        inner join fetch \n" +
-				"            c.courseACL_Set as cACL\n" + "        where\n" +
-				"            c.id=:course and\n" + "            b.bundleType.id =:bt and\n" +
-				"            b.num = :num and\n" + "            b.state = 'ACCEPTED'";
+		HQL =
+				"        select \n" +
+				"            b \n" +
+				"        from \n" +
+				"            Bundle as b \n" +
+				"        inner join fetch \n" +
+				"            b.bundleACLSet as bACL \n" +
+				"        inner join fetch \n" +
+				"            b.course as c \n" +
+				"        inner join fetch \n" +
+				"            c.courseACL_Set as cACL\n" +
+				"        where\n" +
+				"            c.id=:course and\n" +
+				"            b.bundleType.id =:bt and\n" +
+				"            b.num = :num and\n" +
+				"            b.state = 'ACCEPTED'";
 		q   = sessionFactory.getCurrentSession().createQuery(HQL);
 		q.setParameter("course", course.getId());
 		q.setParameter("bt", bt.getId());

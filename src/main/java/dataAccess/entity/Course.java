@@ -11,7 +11,6 @@ import javax.persistence.*;
 import java.util.*;
 
 
-
 @Entity
 @TypeDef(name = "pgsql_enum",
 		 typeClass = PostgreSQLEnumType.class)
@@ -22,17 +21,17 @@ public class Course
 	@Expose
 	private long           id            = -1;
 	@Expose
-	private String      name;
+	private String         name;
 	@Enumerated(EnumType.STRING)
 	@Type(type = "pgsql_enum")
 	@Expose
-	private CourseState state   = CourseState.EMPTY;
+	private CourseState    state         = CourseState.EMPTY;
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "group_course",
 			   joinColumns = {@JoinColumn(name = "id_course")},
 			   inverseJoinColumns = {@JoinColumn(name = "id_group")})
 	@Expose
-	private Set<Group>  groupes = new HashSet<Group>();
+	private Set<Group>     groupes       = new HashSet<Group>();
 	//поменял CascadeType.ALL на MERGE
 	@OneToMany(mappedBy = "course",
 			   cascade = {CascadeType.MERGE, CascadeType.REMOVE})
@@ -58,7 +57,108 @@ public class Course
 	public Course(String name, User author)
 	{
 		this.name = name;
-		this.addAuthor(author, Author.AUTHOR);
+		this.addACE(author, Author.AUTHOR);
+	}
+
+	public User getAuthor()
+	{
+		for (CourseACL acl : courseACL_Set)
+		{
+			if (acl.getRights() == Author.AUTHOR)
+			{
+				return acl.getUser();
+			}
+		}
+		throw new BusinessException(new NoRightException());
+	}
+
+	public Author getRights(User user) throws NoRightException
+	{
+		CourseACL obj = null;
+		if (!existsACE(user))
+		{
+			throw new BusinessException(new NoRightException());
+		}
+		Iterator<CourseACL> iterator = courseACL_Set.iterator();
+		while (iterator.hasNext())
+		{
+			obj = iterator.next();
+			if (obj.getUser().equals(user))
+			{
+				return obj.getRights();
+			}
+		}
+		throw new BusinessException(new NoRightException());
+	}
+
+	public void addACE(User user, Author rights)
+	{
+		if (existsACE(user))
+		{
+			return;
+		}
+		courseACL_Set.add(new CourseACL(this, user, rights));
+	}
+
+	private boolean existsACE(User user)
+	{
+		CourseACL obj = new CourseACL(this, user, Author.AUTHOR);
+		if (courseACL_Set.contains(obj))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public CourseACL getACE(User user) throws NoRightException
+	{
+		for (CourseACL ace : courseACL_Set)
+		{
+			if (ace.getUser().equals(user))
+			{
+				return ace;
+			}
+		}
+		throw new BusinessException(new NoRightException());
+	}
+
+	public CourseACL getAuthorACE()
+	{
+		for (CourseACL ace : courseACL_Set)
+		{
+			if (ace.getRights().equals(Author.AUTHOR))
+			{
+				return ace;
+			}
+		}
+		throw new BusinessException(new NoRightException());
+	}
+
+	public void removeACE(User user)
+	{
+		CourseACL obj = null;
+		if (existsACE(user))
+		{
+			Iterator<CourseACL> iterator = courseACL_Set.iterator();
+			while (iterator.hasNext())
+			{
+				obj = iterator.next();
+				if (obj.getUser().equals(user) && !obj.getRights().equals(Author.AUTHOR))
+				{
+					iterator.remove();
+				}
+			}
+		}
+	}
+
+	public Set<CourseACL> getACL()
+	{
+		return courseACL_Set;
+	}
+
+	public void setACL(Set<CourseACL> courseACL_Set)
+	{
+		this.courseACL_Set = courseACL_Set;
 	}
 
 	public boolean contains(Group g)
@@ -84,72 +184,6 @@ public class Course
 		groupes.remove(group);
 	}
 
-	private boolean isContainAuthor(User user)
-	{
-		CourseACL obj = new CourseACL(this, user, Author.AUTHOR);
-		if (courseACL_Set.contains(obj))
-		{
-			return true;
-		}
-		return false;
-	}
-
-	public void addAuthor(User user, Author rights)
-	{
-		if (isContainAuthor(user))
-		{
-			return;
-		}
-		courseACL_Set.add(new CourseACL(this, user, rights));
-	}
-
-	public void removeAuthor(User user)
-	{
-		CourseACL obj = new CourseACL(this, user, Author.AUTHOR);
-		if (isContainAuthor(user))
-		{
-			courseACL_Set.remove(obj);
-		}
-	}
-
-	public Author checkRights(User user) throws NoRightException
-	{
-		CourseACL obj = new CourseACL(this, user, Author.AUTHOR);
-		if (!isContainAuthor(user))
-		{
-			throw new BusinessException(new NoRightException());
-		}
-		Iterator<CourseACL> iterator = courseACL_Set.iterator();
-		while (iterator.hasNext())
-		{
-			obj = iterator.next();
-			if (obj.getUser().equals(user))
-			{
-				return obj.getRights();
-			}
-		}
-		throw new  BusinessException(new NoRightException());
-	}
-
-	public CourseACL getCourseACL(User user) throws NoRightException
-	{
-		Iterator<CourseACL> iterator = courseACL_Set.iterator();
-		while (iterator.hasNext())
-		{
-			CourseACL courseACL_obj = iterator.next();
-			if (courseACL_obj.getUser().equals(user))
-			{
-				return courseACL_obj;
-			}
-		}
-		throw new BusinessException(new NoRightException());
-	}
-
-	public void setCourseACL_Set(Set<CourseACL> courseACL_Set)
-	{
-		this.courseACL_Set = courseACL_Set;
-	}
-
 	public void addRequirement(Requirement requirement)
 	{
 		if (requirementSet.contains(requirement))
@@ -171,7 +205,7 @@ public class Course
 
 	public boolean isContainRequirement(BundleType bt, int q)
 	{
-		Requirement req = new Requirement(q,bt);
+		Requirement req = new Requirement(q, bt);
 		return requirementSet.contains(req);
 	}
 
@@ -187,8 +221,8 @@ public class Course
 			return false;
 		}
 		Course course = (Course) o;
-		return name.equals(course.name) && Objects.equals(groupes, course.groupes) && Objects
-				.equals(requirementSet, course.requirementSet);
+		return name.equals(course.name) && Objects.equals(groupes, course.groupes) &&
+				Objects.equals(requirementSet, course.requirementSet);
 	}
 
 	@Override
@@ -235,11 +269,6 @@ public class Course
 	public void setRequirementSet(Set<Requirement> requirementSet)
 	{
 		this.requirementSet = requirementSet;
-	}
-
-	public Set<CourseACL> getCourseACL_Set()
-	{
-		return courseACL_Set;
 	}
 
 	public CourseState getState()

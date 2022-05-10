@@ -32,20 +32,20 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	}
 
 	@Override
-	public void save(Course course)
+	public void  save(Course course)
 	{
 		try
 		{
 			Transaction t       = getOrBegin();
 			Session     session = sessionFactory.getCurrentSession();
-			if (course.getId() != -1)
+			if (course.getId() == -1L)
 			{
-				session.update(course);
+				session.save(course);
+				session.save(course.getAuthorACE());
 			}
 			else
 			{
-				session.save(course);
-				session.save(course.getCourseACL_Set().iterator().next());
+				session.update(course);
 			}
 			t.commit();
 		}
@@ -84,7 +84,9 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	{
 		Transaction t       = getOrBegin();
 		Session     session = sessionFactory.getCurrentSession();
-		HQL = fullGraph + "where cACL.id.userID=:id and c.name=:name";
+		HQL =
+				fullGraph +
+				"where cACL.id.userID=:id and c.name=:name";
 		q   = session.createQuery(HQL);
 		q.setParameter("id", owner.getId());
 		q.setParameter("name", name);
@@ -119,7 +121,10 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	{
 		Transaction t       = getOrBegin();
 		Session     session = sessionFactory.getCurrentSession();
-		HQL = fullGraph + "inner join c.groupes as g " + "inner join g.students as u " +
+		HQL =
+				fullGraph +
+				"inner join c.groupes as g " +
+				"inner join g.students as u " +
 				"where u.id=:id";
 		q   = session.createQuery(HQL);
 		q.setParameter("id", student.getId());

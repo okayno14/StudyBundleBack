@@ -445,12 +445,6 @@ public class ServerFace
 					}
 				});
 
-				put("/:courseID/:bundleTypeID/:q", (req, resp) ->
-				{
-
-					return "F";
-				});
-
 				delete("/:courseID/:bundleTypeID/:q", (req, resp) ->
 				{
 					User   client       = authentAuthorize(req, resp);
