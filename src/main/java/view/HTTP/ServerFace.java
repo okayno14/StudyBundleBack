@@ -442,9 +442,9 @@ public class ServerFace
 		{
 			post("/upload/:id", (req, resp) ->
 			{
-				User   client       = authentAuthorize(req, resp);
-				String token        = client.getToken();
-				long   tokenExpires = client.getTokenExpires();
+//				User   client       = authentAuthorize(req, resp);
+//				String token        = client.getToken();
+//				long   tokenExpires = client.getTokenExpires();
 
 				long   bundleID = Long.parseLong(req.params("id"));
 				Bundle b        = bundleController.get(bundleID);
@@ -467,8 +467,10 @@ public class ServerFace
 				}
 				try
 				{
+					User client = new User();
+					client.setRole(roleController.getAdmin());
 					Bundle      bestMatch = bundleController.uploadReport(client,b, buf);
-					//Bundle      bestMatch = bundleController.uploadReport(b, buf);
+
 					String      message   = "";
 					JsonElement data      = null;
 					if (b.getState() == BundleState.ACCEPTED)

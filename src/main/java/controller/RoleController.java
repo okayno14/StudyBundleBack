@@ -27,4 +27,10 @@ public class RoleController implements  IRoleController
 	{
 		return roleService.getGuest();
 	}
+
+	@Override
+	public Role getAdmin()
+	{
+		return roleService.getAdmin();
+	}
 }

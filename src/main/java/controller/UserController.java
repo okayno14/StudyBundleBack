@@ -8,9 +8,6 @@ import dataAccess.entity.User;
 import exception.Business.BusinessException;
 import exception.Controller.ControllerException;
 import exception.Controller.TokenNotFound;
-import exception.DataAccess.DataAccessException;
-import exception.DataAccess.NotUniqueException;
-import exception.DataAccess.NotValidException;
 
 import java.util.*;
 
@@ -21,7 +18,9 @@ public class UserController implements IUserController
 	private UserValidationService userValidationService;
 	private Authoriser            authoriser = new Authoriser();
 
-	private Role              guest    = null;
+	private Role GUEST = null;
+	private Role ADMIN = null;
+
 	private Map<String, User> guestMap = new HashMap<>();
 
 
@@ -31,6 +30,9 @@ public class UserController implements IUserController
 		this.controller            = controller;
 		this.service               = userService;
 		this.userValidationService = userValidationService;
+
+		GUEST = controller.roleController.getGuest();
+		ADMIN = controller.roleController.getAdmin();
 	}
 
 	@Override
@@ -93,12 +95,8 @@ public class UserController implements IUserController
 	@Override
 	public User getGuestUser()
 	{
-		if (guest == null)
-		{
-			guest = controller.roleController.getGuest();
-		}
 		User user = new User();
-		user.setRole(guest);
+		user.setRole(GUEST);
 		String token = authoriser.genToken();
 		user.setToken(token);
 		user.setTokenExpires(authoriser.timeLeft(token));
@@ -148,7 +146,7 @@ public class UserController implements IUserController
 	@Override
 	public Set<User> filter(List<User> userList, Course c)
 	{
-		return service.filter(userList,c);
+		return service.filter(userList, c);
 	}
 
 	@Override

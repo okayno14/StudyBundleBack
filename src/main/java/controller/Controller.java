@@ -7,8 +7,6 @@ import model.Core;
 
 public class Controller
 {
-	private User client;
-
 	IBundleController     bundleController;
 	IBundleTypeController bundleTypeController;
 	ICourseController     courseController;
@@ -63,15 +61,5 @@ public class Controller
 	public IUserController getUserController()
 	{
 		return userController;
-	}
-
-	public User getClient()
-	{
-		return client;
-	}
-
-	public void setClient(User client)
-	{
-		this.client = client;
 	}
 }

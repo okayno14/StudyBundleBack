@@ -63,6 +63,10 @@ public class BundleController implements IBundleController
 	@Override
 	public Bundle uploadReport(User initiator, Bundle client, byte[] document)
 	{
+		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
+		{
+			initiator=client.getAuthor();
+		}
 		return bundleService.uploadReport(initiator,client,document);
 	}
 
