@@ -13,7 +13,7 @@ public interface ICourseService
 	List<Course> getByStudent(User student);
 	List<Course> getByGroup(Group g);
 	void addRequirement(User initiator, Course client, BundleType bt, int q);
-	void deleteRequirement(Course client, BundleType bt, int q);
+	void deleteRequirement(User initiator, Course client, BundleType bt, int q);
 	void publish(Course client);
 	void addGroup(Course client, Group group);
 	void delGroup(Course client, Group group);

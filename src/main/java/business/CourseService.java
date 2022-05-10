@@ -124,12 +124,15 @@ public class CourseService implements ICourseService
 	}
 
 	@Override
-	public void deleteRequirement(Course client, BundleType bt, int q)
+	public void deleteRequirement(User initiator, Course client, BundleType bt, int q)
 	{
 		if (client.getState() == CourseState.PUBLISHED)
 		{
 			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
+
+		Author author = client.getRights(initiator);
+
 		//посмотреть в базе количество ссылок на него
 		//если 1, то удалить старый объект из базы
 		//если больше, то отвязать от старого

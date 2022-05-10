@@ -458,7 +458,7 @@ public class ServerFace
 					Course course = courseController.get(courseID);
 					BundleType  bt = bundleTypeController.get(btID);
 
-					courseController.deleteRequirement(course,bt,q);
+					courseController.deleteRequirement(client,course,bt,q);
 
 					resp.status(OK);
 					return gson.toJson(new Response("Успех"));
