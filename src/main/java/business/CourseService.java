@@ -5,10 +5,7 @@ import dataAccess.cache.IRequirementCache;
 import dataAccess.entity.*;
 import dataAccess.repository.ICourseRepo;
 import dataAccess.repository.IRequirementRepo;
-import exception.Business.BusinessException;
-import exception.Business.GroupAlreadyContains;
-import exception.Business.NoSuchStateAction;
-import exception.Business.RequirementExistsException;
+import exception.Business.*;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.ObjectNotFoundException;
 
@@ -159,22 +156,25 @@ public class CourseService implements ICourseService
 	}
 
 	@Override
-	public void publish(Course client)
+	public void publish(User initiator, Course client)
 	{
 		if (client.getState() == CourseState.IN_PROGRESS)
 		{
+			Author author = client.getRights(initiator);
+
 			client.publish();
 			repo.save(client);
 		}
 	}
 
 	@Override
-	public void addGroup(Course client, Group group)
+	public void addGroup(User initiator, Course client, Group group)
 	{
 		if (client.getState() != CourseState.PUBLISHED)
 		{
 			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
+		Author author = client.getRights(initiator);
 		if (client.contains(group))
 		{
 			throw new BusinessException(new GroupAlreadyContains(group, client));
@@ -184,26 +184,32 @@ public class CourseService implements ICourseService
 	}
 
 	@Override
-	public void delGroup(Course client, Group group)
+	public void delGroup(User initiator, Course client, Group group)
 	{
 		if (client.getState() != CourseState.PUBLISHED)
 		{
 			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
+		Author author = client.getRights(initiator);
 	}
 
 	@Override
-	public void updateName(Course client, String name)
+	public void updateName(User initiator, Course client, String name)
 	{
 		if (client.getState() == CourseState.PUBLISHED)
 		{
 			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
+		Author author = client.getRights(initiator);
 	}
 
 	@Override
-	public void delete(Course client)
+	public void delete(User initiator, Course client)
 	{
-
+		User author = client.getAuthor();
+		if(!initiator.equals(author))
+		{
+			throw new BusinessException(new NoRightException());
+		}
 	}
 }

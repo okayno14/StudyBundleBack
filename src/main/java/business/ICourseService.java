@@ -14,9 +14,9 @@ public interface ICourseService
 	List<Course> getByGroup(Group g);
 	void addRequirement(User initiator, Course client, BundleType bt, int q);
 	void deleteRequirement(User initiator, Course client, BundleType bt, int q);
-	void publish(Course client);
-	void addGroup(Course client, Group group);
-	void delGroup(Course client, Group group);
-	void updateName(Course client, String name);
-	void delete(Course client);
+	void publish(User initiator, Course client);
+	void addGroup(User initiator, Course client, Group group);
+	void delGroup(User initiator, Course client, Group group);
+	void updateName(User initiator, Course client, String name);
+	void delete(User initiator, Course client);
 }

@@ -88,9 +88,13 @@ public class CourseController implements ICourseController
 	}
 
 	@Override
-	public void publish(Course client)
+	public void publish(User initiator, Course client)
 	{
-		service.publish(client);
+		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
+		{
+			initiator = client.getAuthor();
+		}
+		service.publish(initiator, client);
 	}
 
 	//@Override
@@ -105,9 +109,13 @@ public class CourseController implements ICourseController
 	}
 
 	@Override
-	public void addGroup(Course client, Group g)
+	public void addGroup(User initiator, Course client, Group g)
 	{
-		service.addGroup(client, g);
+		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
+		{
+			initiator = client.getAuthor();
+		}
+		service.addGroup(initiator, client, g);
 		LinkedList<Bundle> list = new LinkedList<>();
 		List<User> userList = new LinkedList<User>(controller.groupController.getUsers(g));
 		Set<User> userWithBundles = controller.userController.filter(userList,client);
@@ -174,20 +182,30 @@ public class CourseController implements ICourseController
 	}
 
 	@Override
-	public void delGroup(Course client, Group group)
+	public void delGroup(User initiator, Course client, Group group)
 	{
-
+		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
+		{
+			initiator = client.getAuthor();
+		}
 	}
 
 	@Override
-	public void updateName(Course client, String name)
+	public void updateName(User initiator, Course client, String name)
 	{
-
+		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
+		{
+			initiator = client.getAuthor();
+		}
 	}
 
 	@Override
-	public void delete(Course client)
+	public void delete(User initiator, Course client)
 	{
 		//это делать может только автор
+		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
+		{
+			initiator = client.getAuthor();
+		}
 	}
 }
