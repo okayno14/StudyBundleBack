@@ -152,6 +152,7 @@ public class CourseService implements ICourseService
 		repo.save(client);
 		if (count == 1)
 		{
+			reqCache.delete(toDel.getId());
 			reqRepo.delete(toDel);
 		}
 	}
