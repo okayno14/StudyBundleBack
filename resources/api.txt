@@ -48,7 +48,7 @@
 "GET", "/bundle/:id"
 "GET", "/bundle/:courseName/:ownerGroupName/:ownerLastName/:ownerFirstName/:ownerFatherName"
 "GET", "/bundle/:courseID/:ownerID"
-"PUT", "/bundle/download/:id"
+"GET", "/bundle/download/:id"
 "POST", "/bundle/upload/:id"
 "PUT", "/bundle/addCoAuthor/:id/:coAuthorID"
 "PUT", "/bundle/delCoAuthor/:id/:coAuthorID"

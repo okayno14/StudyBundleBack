@@ -11,12 +11,15 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.exception.ConstraintViolationException;
 
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceException;
 import java.util.List;
 
 public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 {
-	private String fullGraph = "select c from Course as c inner join fetch c.courseACL_Set as cACL ";
+	private String fullGraph
+			= "select c from Course as c inner join fetch c.courseACL_Set as cACL ";
+
 	public CourseRepoHiber(SessionFactory sessionFactory)
 	{
 		super(sessionFactory);
@@ -59,19 +62,21 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	@Override
 	public Course get(long id)
 	{
-		Transaction t       = getOrBegin();
-		Session     session = sessionFactory.getCurrentSession();
-		HQL = fullGraph + "where c.id=:id";
-		q   = session.createQuery(HQL);
-		q.setParameter("id", id);
-		Course res = (Course) q.getSingleResult();
-		t.commit();
-
-		if (res != null)
+		Transaction t = getOrBegin();
+		try
 		{
+			Session session = sessionFactory.getCurrentSession();
+			HQL = fullGraph + "where c.id=:id";
+			q   = session.createQuery(HQL);
+			q.setParameter("id", id);
+			Course res = (Course) q.getSingleResult();
+			t.commit();
 			return res;
 		}
-		throw new DataAccessException(new ObjectNotFoundException());
+		catch (NoResultException e)
+		{
+			throw new DataAccessException(new ObjectNotFoundException());
+		}
 	}
 
 	@Override
@@ -114,9 +119,7 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	{
 		Transaction t       = getOrBegin();
 		Session     session = sessionFactory.getCurrentSession();
-		HQL = fullGraph +
-				"inner join c.groupes as g " +
-				"inner join g.students as u " +
+		HQL = fullGraph + "inner join c.groupes as g " + "inner join g.students as u " +
 				"where u.id=:id";
 		q   = session.createQuery(HQL);
 		q.setParameter("id", student.getId());
@@ -133,10 +136,10 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	public List<Course> getByGroup(Group g)
 	{
 		Transaction t = getOrBegin();
-		HQL=fullGraph + "inner join c.groupes as g where g.id = :id";
-		q = sessionFactory.getCurrentSession().createQuery(HQL);
+		HQL = fullGraph + "inner join c.groupes as g where g.id = :id";
+		q   = sessionFactory.getCurrentSession().createQuery(HQL);
 		q.setParameter("id", g.getId());
-		List<Course> res =q.getResultList();
+		List<Course> res = q.getResultList();
 		t.commit();
 		if (res.size() == 0)
 		{

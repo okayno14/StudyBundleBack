@@ -178,20 +178,20 @@ public class BundleRepoFile implements IBundleRepoFile
 		}
 	}
 
-	private void zipFolderFromStorage(String root, File zipDir, ZipOutputStream out)
+	private void zipFolderFromStorage(String root, File node, ZipOutputStream out)
 			throws IOException
 	{
 		//Заход в глубь дерева
-		File content[] = zipDir.listFiles();
-		if (content != null)
+		File children[] = node.listFiles();
+		if (children != null)
 		{
-			for (int i = 0; i < content.length; i++)
+			for (int i = 0; i < children.length; i++)
 			{
-				zipFolderFromStorage(root, content[i], out);
+				zipFolderFromStorage(root, children[i], out);
 			}
 		}
 		//зашли в узел
-		String absName = zipDir.getAbsolutePath();
+		String absName = node.getAbsolutePath();
 		absName = absName.replace("\\", "/");
 		String relName = absName.replace(root, "");
 		//если вершина дерева
@@ -202,14 +202,14 @@ public class BundleRepoFile implements IBundleRepoFile
 			return;
 		}
 		//если вершина поддерева
-		if (zipDir.isDirectory())
+		if (node.isDirectory())
 		{
 			out.putNextEntry(new ZipEntry(relName + "/"));
 			out.closeEntry();
 			return;
 		}
 		//если лист (файл)
-		try (BufferedInputStream file = new BufferedInputStream(new FileInputStream(zipDir)))
+		try (BufferedInputStream file = new BufferedInputStream(new FileInputStream(node)))
 		{
 			out.putNextEntry(new ZipEntry(relName));
 			int c = 0;
@@ -227,15 +227,17 @@ public class BundleRepoFile implements IBundleRepoFile
 	@Override
 	public byte[] get(Bundle bundle)
 	{
-		if (bundle.getReport().getFileName() == null)
+		String bundleDir = storage + "/" + bundle.getFolder() + "/";
+		String reportDir = bundleDir + bundle.getReport().getFileName();
+		if (bundle.getReport().getFileName() == null || !new File(reportDir).exists())
 		{
 			throw new DataAccessException(new FileNotFoundException(bundle));
 		}
+
 		try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 			 ZipOutputStream out = new ZipOutputStream(byteArrayOutputStream))
 		{
-			zipFolderFromStorage(storage + "/" + bundle.getFolder() + "/",
-								 new File(storage + "/" + bundle.getFolder()), out);
+			zipFolderFromStorage(bundleDir, new File(bundleDir), out);
 			return byteArrayOutputStream.toByteArray();
 		}
 		catch (IOException e)

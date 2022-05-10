@@ -55,18 +55,16 @@ public class BundleController implements IBundleController
 	}
 
 	@Override
-	public byte[] downloadReport(Bundle client)
+	public byte[] downloadReport(User initiator, Bundle client)
 	{
-		return new byte[0];
+		maskAdminAsAuthor(initiator, client.getAuthor());
+		return bundleService.downloadReport(initiator,client);
 	}
 
 	@Override
 	public Bundle uploadReport(User initiator, Bundle client, byte[] document)
 	{
-		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
-		{
-			initiator=client.getAuthor();
-		}
+		maskAdminAsAuthor(initiator, client.getAuthor());
 		return bundleService.uploadReport(initiator,client,document);
 	}
 
@@ -80,5 +78,14 @@ public class BundleController implements IBundleController
 	public void delete(Bundle client)
 	{
 
+	}
+
+
+	private void maskAdminAsAuthor(User initiator, User author)
+	{
+		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
+		{
+			initiator.set(author);
+		}
 	}
 }

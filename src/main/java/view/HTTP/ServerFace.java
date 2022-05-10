@@ -12,6 +12,7 @@ import exception.Business.NoSuchStateAction;
 import exception.Controller.ControllerException;
 import exception.Controller.TokenNotFound;
 import exception.DataAccess.*;
+import exception.DataAccess.FileNotFoundException;
 import parser.JSON.CreateObjReqParser;
 import parser.JSON.LoginReqParser;
 import parser.JSON.ResponseParser;
@@ -23,10 +24,7 @@ import view.HTTP.request.IDReq;
 import view.HTTP.request.LoginReq;
 
 import javax.servlet.MultipartConfigElement;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -97,8 +95,8 @@ public class ServerFace
 		gsonBuilder.registerTypeAdapter(BundleType.class, new BundleTypeParser());
 		gsonBuilder.registerTypeAdapter(Requirement.class, new RequirementParser(gson));
 		CourseACL_Parser courseACL_parser = new CourseACL_Parser(gson, userParser);
-		gsonBuilder.registerTypeAdapter(CourseACL.class,courseACL_parser );
-		courseParser=new CourseParser(gson,courseACL_parser);
+		gsonBuilder.registerTypeAdapter(CourseACL.class, courseACL_parser);
+		courseParser = new CourseParser(gson, courseACL_parser);
 		gsonBuilder.registerTypeAdapter(Course.class, courseParser);
 		BundleACLParser bundleACLParser = new BundleACLParser(gson, userParser);
 		gsonBuilder.registerTypeAdapter(BundleACL.class, bundleACLParser);
@@ -539,6 +537,27 @@ public class ServerFace
 				resp.status(OK);
 				return gson.toJson(new Response(bundleJSON, "Успех"));
 			});
+
+			get("/download/:id", (req, resp) ->
+			{
+				//				User   client       = authentAuthorize(req, resp);
+				//				String token        = client.getToken();
+				//				long   tokenExpires = client.getTokenExpires();
+
+				long   bundleID = Long.parseLong(req.params("id"));
+				Bundle b        = bundleController.get(bundleID);
+
+				User client = new User();
+				client.setRole(roleController.getAdmin());
+				byte buf[] = bundleController.downloadReport(client, b);
+
+				try (OutputStream out = resp.raw().getOutputStream())
+				{
+					out.write(buf);
+				}
+
+				return resp.raw();
+			});
 		});
 
 
@@ -561,6 +580,12 @@ public class ServerFace
 			{
 				resp.status(USER_DATA_NOT_VALID);
 				resp.body(gson.toJson(new Response(e.getMessage())));
+			}
+			if (e.getCause().getClass() == FileNotFoundException.class ||
+					e.getCause().getClass() == IOException.class)
+			{
+				resp.status(INTERNAL_CRITICAL_SERVER_ERROR);
+				resp.body(gson.toJson(new Response(e.getCause().getMessage())));
 			}
 		});
 

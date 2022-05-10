@@ -14,7 +14,7 @@ public interface IBundleService
 	List<Bundle> get(Course course, User author);
 	List<Bundle> getAll(User author);
 	void groupChanged(Bundle client);
-	byte[] downloadReport(Bundle client);
+	byte[] downloadReport(User initiator, Bundle client);
 	Bundle uploadReport(User initiator, Bundle client, byte document[]);
 	void decline(Bundle client);
 	void delete(Bundle client);

@@ -103,7 +103,7 @@ public class BundleService implements IBundleService
 	}
 
 	@Override
-	public byte[] downloadReport(Bundle client)
+	public byte[] downloadReport(User initiator, Bundle client)
 	{
 		if(client.getState()==BundleState.EMPTY)
 		{
@@ -111,7 +111,7 @@ public class BundleService implements IBundleService
 					new NoSuchStateAction(client.getState().toString()));
 		}
 
-		return new byte[0];
+		return bundleRepoFile.get(client);
 	}
 
 	@Override

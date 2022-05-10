@@ -4,7 +4,7 @@ import dataAccess.entity.Bundle;
 
 public class FileNotFoundException extends RuntimeException
 {
-	private String message = "У запрошенной работы нет файла.";
+	private String message = "Файл работы не найден.";
 	private Bundle bundle;
 
 	public FileNotFoundException(Bundle bundle)
@@ -21,6 +21,6 @@ public class FileNotFoundException extends RuntimeException
 	@Override
 	public String getMessage()
 	{
-		return message.concat("Bundle.id="+bundle.getId());
+		return message+" Bundle.id = "+Long.toString(bundle.getId());
 	}
 }

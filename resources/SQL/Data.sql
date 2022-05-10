@@ -176,7 +176,7 @@ INSERT INTO "route" (method,urn) VALUES ('GET', '/bundle/:courseID/:ownerID');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('PUT', '/bundle/download/:id');
+INSERT INTO "route" (method,urn) VALUES ('GET', '/bundle/download/:id');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
