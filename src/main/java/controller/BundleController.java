@@ -61,9 +61,9 @@ public class BundleController implements IBundleController
 	}
 
 	@Override
-	public Bundle uploadReport(Bundle client, byte[] document)
+	public Bundle uploadReport(User initiator, Bundle client, byte[] document)
 	{
-		return bundleService.uploadReport(client,document);
+		return bundleService.uploadReport(initiator,client,document);
 	}
 
 	@Override

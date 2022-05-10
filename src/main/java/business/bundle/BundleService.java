@@ -2,13 +2,14 @@ package business.bundle;
 
 import business.bundle.matrix.*;
 import dataAccess.cache.IBundleCache;
-import dataAccess.entity.Author;
-import dataAccess.entity.Bundle;
-import dataAccess.entity.Course;
-import dataAccess.entity.User;
+import dataAccess.entity.*;
 import dataAccess.repository.IBundleRepo;
 import dataAccess.repository.IBundleRepoFile;
+import exception.Business.BusinessException;
+import exception.Business.NoRightException;
+import exception.Business.NoSuchStateAction;
 import exception.DataAccess.DataAccessException;
+import exception.DataAccess.FileNotFoundException;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -104,66 +105,89 @@ public class BundleService implements IBundleService
 	@Override
 	public byte[] downloadReport(Bundle client)
 	{
+		if(client.getState()==BundleState.EMPTY)
+		{
+			throw new BusinessException(
+					new NoSuchStateAction(client.getState().toString()));
+		}
+
 		return new byte[0];
 	}
 
 	@Override
-	public Bundle uploadReport(Bundle client, byte[] document)
+	public Bundle uploadReport(User initiator, Bundle client, byte[] document)
 	{
+		if (client.getState() == BundleState.ACCEPTED)
+		{
+			throw new BusinessException(
+					new NoSuchStateAction(client.getState().toString()));
+		}
+		Author rights = client.getRights(initiator);
+
 		bundleRepoFile.save(client, document);
 		Bundle bestMatchBundle = new Bundle();
 		//написать алгоритм сверки
+		List<Bundle> bundleList = null;
 		try
 		{
-			List<Bundle> bundleList = bundleRepo
+			bundleList = bundleRepo
 					.get(client.getCourse(), client.getBundleType(), client.getNum());
-			BuilderMatrix builderMatrix = new BuilderMeta(client, bundleList);
-			groupVoters.setM(builderMatrix.buildMatrix());
-			Matrix res = groupVoters.verdict();
-			res.sortDesc(res.getWidth() - 1);
 
-			bundleList = new LinkedList<>();
-			Row rows[] = res.getRows();
-			for (int i = 0; i < WINDOW && i<rows.length; i++)
-			{
-				bundleList.add((Bundle) rows[i].getObj());
-			}
-
-			bundleRepoFile.fillTextVector(bundleList);
-
-			builderMatrix = new BuilderWords(client, bundleList);
-			res           = groupVoters.verdict(builderMatrix.buildMatrix());
-			int methodsQuantity = res.getWidth();
-
-			res.sortDesc(methodsQuantity - 1);
-
-			bestMatchBundle =  (Bundle) res.getRows()[0].getObj();
-			float bestMatchScore = res.getRows()[0].getCortege()[methodsQuantity - 1];
-			if (bestMatchScore <= CRITICAL_RES)
-			{
-				client.accept();
-			}
-			else
-			{
-				client.cancel();
-			}
 		}
-		//если работа была первой,то она автоматически принимается системой
 		catch (DataAccessException e)
 		{
 			client.accept();
-		}
-		finally
-		{
 			bundleRepo.save(client);
 			return bestMatchBundle;
 		}
+
+		BuilderMatrix builderMatrix = new BuilderMeta(client, bundleList);
+		groupVoters.setM(builderMatrix.buildMatrix());
+		Matrix res = groupVoters.verdict();
+		res.sortDesc(res.getWidth() - 1);
+
+		bundleList = new LinkedList<>();
+		Row rows[] = res.getRows();
+		for (int i = 0; i < WINDOW && i < rows.length; i++)
+		{
+			bundleList.add((Bundle) rows[i].getObj());
+		}
+
+		bundleRepoFile.fillTextVector(bundleList);
+		if(bundleList.size()==0)
+		{
+			throw new DataAccessException(new FileNotFoundException("Ошибка при чтении файлов анализа"));
+		}
+
+		builderMatrix = new BuilderWords(client, bundleList);
+		res           = groupVoters.verdict(builderMatrix.buildMatrix());
+		int methodsQuantity = res.getWidth();
+
+		res.sortDesc(methodsQuantity - 1);
+
+		bestMatchBundle = (Bundle) res.getRows()[0].getObj();
+		float bestMatchScore = res.getRows()[0].getCortege()[methodsQuantity - 1];
+		if (bestMatchScore <= CRITICAL_RES)
+		{
+			client.accept();
+		}
+		else
+		{
+			client.cancel();
+		}
+		bundleRepo.save(client);
+		return bestMatchBundle;
+
 	}
 
 	@Override
 	public void decline(Bundle client)
 	{
-
+		if(client.getState()!=BundleState.ACCEPTED)
+		{
+			throw new BusinessException(
+					new NoSuchStateAction(client.getState().toString()));
+		}
 	}
 
 	@Override

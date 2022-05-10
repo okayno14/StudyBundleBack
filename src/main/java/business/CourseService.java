@@ -7,7 +7,7 @@ import dataAccess.repository.ICourseRepo;
 import dataAccess.repository.IRequirementRepo;
 import exception.Business.BusinessException;
 import exception.Business.GroupAlreadyContains;
-import exception.Business.NoSuchCourseStateAction;
+import exception.Business.NoSuchStateAction;
 import exception.Business.RequirementExistsException;
 
 import java.util.List;
@@ -88,7 +88,7 @@ public class CourseService implements ICourseService
 	{
 		if(client.getState()==CourseState.PUBLISHED)
 		{
-			throw new BusinessException(new NoSuchCourseStateAction(client.getState()));
+			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
 
 		//Проверить есть ли требование с этим bt в курсе. Если есть, то исключение
@@ -128,7 +128,7 @@ public class CourseService implements ICourseService
 	{
 		if(client.getState()==CourseState.PUBLISHED)
 		{
-			throw new BusinessException(new NoSuchCourseStateAction(client.getState()));
+			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
 		//найти старое требование
 		//посмотреть в базе количество ссылок на него
@@ -141,7 +141,7 @@ public class CourseService implements ICourseService
 	{
 		if(client.getState()==CourseState.PUBLISHED)
 		{
-			throw new BusinessException(new NoSuchCourseStateAction(client.getState()));
+			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
 		//посмотреть в базе количество ссылок на него
 		//если 1, то удалить старый объект из базы
@@ -163,7 +163,7 @@ public class CourseService implements ICourseService
 	{
 		if(client.getState()!=CourseState.PUBLISHED)
 		{
-			throw new BusinessException(new NoSuchCourseStateAction(client.getState()));
+			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
 		if(client.contains(group))
 		{
@@ -178,7 +178,7 @@ public class CourseService implements ICourseService
 	{
 		if(client.getState()!=CourseState.PUBLISHED)
 		{
-			throw new BusinessException(new NoSuchCourseStateAction(client.getState()));
+			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
 	}
 
@@ -187,7 +187,7 @@ public class CourseService implements ICourseService
 	{
 		if(client.getState()==CourseState.PUBLISHED)
 		{
-			throw new BusinessException(new NoSuchCourseStateAction(client.getState()));
+			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
 	}
 

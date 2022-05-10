@@ -13,6 +13,11 @@ public class FileNotFoundException extends RuntimeException
 		this.bundle = bundle;
 	}
 
+	public FileNotFoundException(String message)
+	{
+		this.message = message;
+	}
+
 	@Override
 	public String getMessage()
 	{

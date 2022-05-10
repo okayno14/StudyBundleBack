@@ -7,13 +7,11 @@ import configuration.HTTP_Conf;
 import controller.*;
 import dataAccess.entity.*;
 import exception.Business.BusinessException;
-import exception.Business.NoSuchCourseStateAction;
+import exception.Business.NoRightException;
+import exception.Business.NoSuchStateAction;
 import exception.Controller.ControllerException;
 import exception.Controller.TokenNotFound;
-import exception.DataAccess.DataAccessException;
-import exception.DataAccess.ObjectNotFoundException;
-import exception.DataAccess.ZipDamaged;
-import exception.DataAccess.ZipFileSizeException;
+import exception.DataAccess.*;
 import parser.JSON.CreateObjReqParser;
 import parser.JSON.LoginReqParser;
 import parser.JSON.ResponseParser;
@@ -25,6 +23,7 @@ import view.HTTP.request.IDReq;
 import view.HTTP.request.LoginReq;
 
 import javax.servlet.MultipartConfigElement;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -443,45 +442,59 @@ public class ServerFace
 		{
 			post("/upload/:id", (req, resp) ->
 			{
-				//				User   client       = authentAuthorize(req, resp);
-				//				String token        = client.getToken();
-				//				long   tokenExpires = client.getTokenExpires();
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
 
 				long   bundleID = Long.parseLong(req.params("id"));
 				Bundle b        = bundleController.get(bundleID);
 
 				req.attribute("org.eclipse.jetty.multipartConfig",
 							  new MultipartConfigElement("/temp"));
+				byte buf[] = new byte[0];
 				try (InputStream is = req.raw().getPart("uploaded_bundle").getInputStream())
 				{
 					if (is.available() <= zipFileSizeLimit)
 					{
-						int  c     = is.available();
-						byte buf[] = new byte[is.available()];
+						buf = new byte[is.available()];
 						is.read(buf);
-						Bundle bestMatch = bundleController.uploadReport(b, buf);
-						//запилиить вывод с инфой по похожести и отправить пользователю изменённый бандл
-
-						String      message = "";
-						JsonElement data    = null;
-						if (b.getState() == BundleState.ACCEPTED)
-						{
-							message = "Отчёт успешно прошёл проверку";
-							data    = gson.toJsonTree(b);
-						}
-						else if (b.getState() == BundleState.CANCELED)
-						{
-							message = "Отчёт недостаточно оригинален.\n";
-							Bundle arr[] = new Bundle[2];
-							arr[0] = b;
-							arr[1] = bestMatch;
-									 data = gson.toJsonTree(arr);
-						}
-						return new Response(data, message);
 					}
 				}
-				return "fail";
-
+				catch (IOException e)
+				{
+					resp.status(USER_DATA_NOT_VALID);
+					return "Ошибка при чтении архива";
+				}
+				try
+				{
+					Bundle      bestMatch = bundleController.uploadReport(client,b, buf);
+					//Bundle      bestMatch = bundleController.uploadReport(b, buf);
+					String      message   = "";
+					JsonElement data      = null;
+					if (b.getState() == BundleState.ACCEPTED)
+					{
+						message = "Отчёт успешно прошёл проверку";
+						data    = gson.toJsonTree(b);
+					}
+					else if (b.getState() == BundleState.CANCELED)
+					{
+						message = "Отчёт недостаточно оригинален.\n";
+						Bundle arr[] = new Bundle[2];
+						arr[0] = b;
+						arr[1] = bestMatch;
+								 data = gson.toJsonTree(arr);
+					}
+					return gson.toJson(new Response(data, message));
+				}
+				catch (DataAccessException e)
+				{
+					if (e.getCause().getClass() == FileNotFoundException.class)
+					{
+						resp.status(INTERNAL_CRITICAL_SERVER_ERROR);
+						return "Ошибка чтения файлов анализа";
+					}
+				}
+				return null;
 			});
 		});
 
@@ -500,7 +513,8 @@ public class ServerFace
 				resp.body(gson.toJson(new Response("Объект с запрошенным id не найден")));
 			}
 			if (e.getCause().getClass() == ZipDamaged.class ||
-					e.getCause().getClass() == ZipFileSizeException.class)
+					e.getCause().getClass() == ZipFileSizeException.class ||
+					e.getCause().getClass() == FormatNotSupported.class)
 			{
 				resp.status(USER_DATA_NOT_VALID);
 				resp.body(gson.toJson(new Response(e.getMessage())));
@@ -509,9 +523,10 @@ public class ServerFace
 
 		exception(BusinessException.class, (e, req, resp) ->
 		{
-			if (e.getCause().getClass() == NoSuchCourseStateAction.class)
+			if (e.getCause().getClass() == NoSuchStateAction.class ||
+					e.getCause().getClass() == NoRightException.class)
 			{
-				resp.status(SEMANTIC_ERROR);
+				resp.status(NO_RIGHT_FOR_OPERATION);
 				resp.body(gson.toJson(new Response(e.getMessage())));
 			}
 		});
@@ -525,5 +540,6 @@ public class ServerFace
 			e.printStackTrace(pw);
 			resp.body(gson.toJson(new Response(sw.toString())));
 		});
+
 	}
 }

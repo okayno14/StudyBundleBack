@@ -261,7 +261,14 @@ public class BundleRepoFile implements IBundleRepoFile
 		Iterator<Bundle> iterator = bundleList.iterator();
 		while (iterator.hasNext())
 		{
-			fillTextVector(iterator.next());
+			try
+			{
+				fillTextVector(iterator.next());
+			}
+			catch (DataAccessException e)
+			{
+				//логирование
+			}
 		}
 	}
 
