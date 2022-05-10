@@ -105,6 +105,7 @@ public class CourseService implements ICourseService
 		if(!reqCache.contains(toSave))
 		{
 			reqRepo.save(toSave);
+			reqCache.put(toSave);
 		}
 		else
 		{
