@@ -221,14 +221,13 @@ public class Course
 			return false;
 		}
 		Course course = (Course) o;
-		return name.equals(course.name) && Objects.equals(groupes, course.groupes) &&
-				Objects.equals(requirementSet, course.requirementSet);
+		return id == course.id;
 	}
 
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash(name, groupes, requirementSet);
+		return Objects.hash(id);
 	}
 
 	public long getId()

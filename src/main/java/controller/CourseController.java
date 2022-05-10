@@ -68,9 +68,10 @@ public class CourseController implements ICourseController
 	}
 
 	@Override
-	public void addRequirement(/*User initiator, */Course client, BundleType bt, int q)
+	public void addRequirement(User initiator, Course client, BundleType bt, int q)
 	{
-		service.addRequirement(/*initiator,*/ client, bt, q);
+		maskAdminAsAuthor(initiator,client.getAuthor());
+		service.addRequirement(initiator, client, bt, q);
 	}
 
 	@Override
@@ -180,6 +181,14 @@ public class CourseController implements ICourseController
 	@Override
 	public void delete(Course client)
 	{
+		//это делать может только автор
+	}
 
+	private void maskAdminAsAuthor(User initiator, User author)
+	{
+		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
+		{
+			initiator.set(author);
+		}
 	}
 }

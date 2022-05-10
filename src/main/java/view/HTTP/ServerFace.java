@@ -434,7 +434,7 @@ public class ServerFace
 
 					try
 					{
-						courseController.addRequirement(course, bt, q);
+						courseController.addRequirement(client, course, bt, q);
 						resp.status(OK);
 						return gson.toJson(new Response(gson.toJsonTree(course), "Успех"));
 					}

@@ -11,7 +11,6 @@ import exception.Business.NoSuchStateAction;
 import exception.Business.RequirementExistsException;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.ObjectNotFoundException;
-import org.bouncycastle.cert.ocsp.Req;
 
 import java.util.Iterator;
 import java.util.List;
@@ -88,19 +87,14 @@ public class CourseService implements ICourseService
 	}
 
 	@Override
-	public void addRequirement(/*User initiator,*/ Course client, BundleType bt, int q)
+	public void addRequirement(User initiator, Course client, BundleType bt, int q)
 	{
 		if (client.getState() == CourseState.PUBLISHED)
 		{
 			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
 
-
-
-
-		//Проверить есть ли требование с этим bt в курсе. Если есть, то исключение
-		//Проверить есть ли такое требование в системе. Если есть, то добавим к курсу этот объект
-		//Если нет, то создадим новое
+		Author author = client.getRights(initiator);
 
 		for (Requirement req : client.getRequirementSet())
 		{
@@ -110,23 +104,22 @@ public class CourseService implements ICourseService
 			}
 		}
 
-		Requirement req = new Requirement(q, bt);
-		if (reqCache.contains(req))
+		Requirement toSave = new Requirement(q, bt);
+		if(!reqCache.contains(toSave))
 		{
-			for (Requirement i : reqCache.get())
-			{
-				if (i.equals(req))
-				{
-					req = i;
-				}
-			}
+			reqRepo.save(toSave);
 		}
 		else
 		{
-			reqCache.put(req);
+			Iterator<Requirement> iterator = reqCache.get().iterator();
+			Requirement obj = new Requirement();
+			while (iterator.hasNext() && !toSave.equals(obj))
+			{
+				obj=iterator.next();
+			}
+			toSave=obj;
 		}
-		client.addRequirement(req);
-		reqRepo.save(req);
+		client.addRequirement(toSave);
 		repo.save(client);
 	}
 
@@ -142,23 +135,23 @@ public class CourseService implements ICourseService
 		//если больше, то отвязать от старого
 		Requirement           sample   = new Requirement(q, bt);
 		Iterator<Requirement> iterator = client.getRequirementSet().iterator();
-		Requirement           req      = iterator.next();
-		while (iterator.hasNext() && !sample.equals(req))
+		Requirement           toDel      = new Requirement();
+		while (iterator.hasNext() && !sample.equals(toDel))
 		{
-			req = iterator.next();
+			toDel = iterator.next();
 		}
-		if (!sample.equals(req))
+		if (!sample.equals(toDel))
 		{
 			throw new DataAccessException(new ObjectNotFoundException());
 		}
 
-		long count = reqRepo.countReferences(req);
+		long count = reqRepo.countReferences(toDel);
 
-		client.removeRequirement(req);
+		client.removeRequirement(toDel);
 		repo.save(client);
 		if (count == 1)
 		{
-			reqRepo.delete(req);
+			reqRepo.delete(toDel);
 		}
 	}
 

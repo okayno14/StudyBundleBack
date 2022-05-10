@@ -12,7 +12,7 @@ public interface ICourseService
 	List<Course> getByOwner(User owner);
 	List<Course> getByStudent(User student);
 	List<Course> getByGroup(Group g);
-	void addRequirement(/*User initiator,*/ Course client, BundleType bt, int q);
+	void addRequirement(User initiator, Course client, BundleType bt, int q);
 	void deleteRequirement(Course client, BundleType bt, int q);
 	void publish(Course client);
 	void addGroup(Course client, Group group);
