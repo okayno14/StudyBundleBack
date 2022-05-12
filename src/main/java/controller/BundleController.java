@@ -3,6 +3,7 @@ package controller;
 import business.bundle.IBundleService;
 import dataAccess.entity.Bundle;
 import dataAccess.entity.Course;
+import dataAccess.entity.Group;
 import dataAccess.entity.User;
 
 import java.util.List;
@@ -52,6 +53,14 @@ public class BundleController implements IBundleController
 	public void groupChanged(Bundle client)
 	{
 		bundleService.groupChanged(client);
+	}
+
+	@Override
+	public void groupMovedFromCourse(User initiator, Course course, List<Group> groupList)
+	{
+		//Здесь не делается подмена админа на хозяина курса, так как об этом заботиться
+		//CourseController. А другого контекста у этого метода нет
+		bundleService.groupMovedFromCourse(initiator, course,groupList);
 	}
 
 	@Override

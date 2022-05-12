@@ -7,17 +7,17 @@
         select distinct 
             u
         from
-		    User as u
+            User as u
         left outer join
             BundleACL as bACL 
         with
-		    bACL.user.id = u.id
+            bACL.user.id = u.id
         inner join
             bACL.bundle as b
         inner join
-		    b.course as c 
+            b.course as c 
         where
-		    u.id in (:user) and
+            u.id in (:user) and
             c.id = :course
 
     </body>
@@ -49,6 +49,20 @@
             c.courseACL_Set as cACL
     </body>
 <macros>
+
+<macros>
+    <name="BUNDLE_WITH_BACL"/>
+    <body>
+        inner join fetch 
+            b.bundleACLSet as bACL 
+        inner join 
+            bACL.user as u 
+        inner join 
+            b.course as c 
+        inner join 
+            c.courseACL_Set as cACL
+    </body>
+</macros>
 
 <query>
     <name="GET_BUNDLE_ID"/>
@@ -85,22 +99,34 @@
 </query>
 
 <query>
-    <name="GET_BUNDLE(NO_COURSE)"/>
+    <name="GET_BUNDLE_BY_USER_COURSE_WITH_BACL"/>
     <body>
         select 
             b 
         from 
             Bundle as b 
-        inner join fetch 
-            b.bundleACLSet as bACL 
-        inner join 
-            b.course as c
-        inner join 
-            bACL.user as u 
+        <macros_ref="BUNDLE_WITH_BACL">
         inner join 
             u.group as g 
         where 
             u.id = :user and 
+            c.id = :course
+    </body>
+</query>
+
+<query>
+    <name="GET_BUNDLE_BY_GROUP_COURSE_WITH_BACL"/>
+    <body>
+        select 
+            b 
+        from 
+            Bundle as b 
+        <macros_ref="BUNDLE_WITH_BACL">
+        inner join 
+            u.group as g 
+        where 
+            b.state != 'ACCEPTED' and
+            g.id in (:group)  and 
             c.id = :course
     </body>
 </query>

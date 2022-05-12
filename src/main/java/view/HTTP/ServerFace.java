@@ -7,6 +7,7 @@ import configuration.HTTP_Conf;
 import controller.*;
 import dataAccess.entity.*;
 import exception.Business.BusinessException;
+import exception.Business.DeletingImportantData;
 import exception.Business.NoRightException;
 import exception.Business.NoSuchStateAction;
 import exception.Controller.ControllerException;
@@ -405,6 +406,22 @@ public class ServerFace
 				return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
 			});
 
+			put("/delGroup/:groupID/:id",(req,resp)->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long   groupID  = Long.parseLong(req.params(":groupID"));
+				long   courseID = Long.parseLong(req.params(":id"));
+				Group  g        = groupController.get(groupID);
+				Course c        = courseController.get(courseID);
+
+				courseController.delGroup(client,c,g);
+
+				return "f";
+			});
+
 			put("/publish/:id", (req, resp) ->
 			{
 				User   client       = authentAuthorize(req, resp);
@@ -631,7 +648,8 @@ public class ServerFace
 		exception(BusinessException.class, (e, req, resp) ->
 		{
 			if (e.getCause().getClass() == NoSuchStateAction.class ||
-					e.getCause().getClass() == NoRightException.class)
+					e.getCause().getClass() == NoRightException.class ||
+					e.getCause().getClass() == DeletingImportantData.class)
 			{
 				resp.status(NO_RIGHT_FOR_OPERATION);
 				resp.body(gson.toJson(new Response(e.getMessage())));

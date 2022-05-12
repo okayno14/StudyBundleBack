@@ -6,6 +6,7 @@ import dataAccess.entity.*;
 import dataAccess.repository.IBundleRepo;
 import dataAccess.repository.IBundleRepoFile;
 import exception.Business.BusinessException;
+import exception.Business.DeletingImportantData;
 import exception.Business.NoRightException;
 import exception.Business.NoSuchStateAction;
 import exception.DataAccess.DataAccessException;
@@ -103,6 +104,27 @@ public class BundleService implements IBundleService
 	}
 
 	@Override
+	public void groupMovedFromCourse(User initiator, Course course, List<Group> groupList)
+	{
+		isInitiatorINCourseACL(initiator,course);
+		LinkedList<Long> groupIDList = new LinkedList<>();
+		for(Group g:groupList)
+		{
+			groupIDList.add(g.getId());
+		}
+		List<Bundle> bundleList = bundleRepo.delete(course, groupIDList);
+		if (bundleList.size() == 0)
+		{
+			throw new BusinessException(
+					new DeletingImportantData("Запрещено удалять принятые работы"));
+		}
+		for(Bundle b: bundleList)
+		{
+			bundleCache.delete(b.getId());
+		}
+	}
+
+	@Override
 	public byte[] downloadReport(User initiator, Bundle client)
 	{
 		if (client.getState() == BundleState.EMPTY)
@@ -187,7 +209,7 @@ public class BundleService implements IBundleService
 			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
 		//может только автор курса
-		isInitiatorCourseAUTHOR(initiator, client);
+		isInitiatorINCourseACL(initiator, client.getCourse());
 		client.cancel();
 		bundleRepo.save(client);
 	}
@@ -202,7 +224,7 @@ public class BundleService implements IBundleService
 			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
 		//имеет право только автор курса
-		isInitiatorCourseAUTHOR(initiator, client);
+		isInitiatorINCourseACL(initiator, client.getCourse());
 
 		bundleRepoFile.delete(client);
 		client.setState(BundleState.EMPTY);
@@ -223,13 +245,9 @@ public class BundleService implements IBundleService
 		}
 	}
 
-	private void isInitiatorCourseAUTHOR(User initiator, Bundle client) throws BusinessException
+	private void isInitiatorINCourseACL(User initiator, Course client) throws BusinessException
 	{
-		User courseAuthor = client.getCourse().getAuthor();
-		if (!initiator.equals(courseAuthor))
-		{
-			throw new BusinessException(new NoRightException());
-		}
+		client.getRights(initiator);
 	}
 
 	private void isInitiatorInACL_OR_CourseAUTHOR(User initiator, Bundle client)

@@ -191,6 +191,8 @@ public class CourseService implements ICourseService
 			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
 		isInitiatorInACL(initiator, client);
+		client.removeGroup(group);
+		repo.save(client);
 	}
 
 	@Override

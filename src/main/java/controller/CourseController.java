@@ -188,6 +188,10 @@ public class CourseController implements ICourseController
 		{
 			initiator = client.getAuthor();
 		}
+		List<Group> groupList = new LinkedList<>();
+		groupList.add(group);
+		controller.bundleController.groupMovedFromCourse(initiator,client,groupList);
+		service.delGroup(initiator, client, group);
 	}
 
 	@Override

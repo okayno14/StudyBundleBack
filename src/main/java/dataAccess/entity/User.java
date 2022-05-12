@@ -202,19 +202,4 @@ public class User implements Serializable
 	{
 		this.tokenExpires = tokenExpires;
 	}
-
-	public void set(final User orig)
-	{
-		id = orig.getId();
-		token=orig.getToken();
-		tokenExpires=orig.getTokenExpires();
-		role=orig.role;
-		email=orig.email;
-		emailState=orig.emailState;
-		pass=orig.pass;
-		lastName=orig.lastName;
-		firstName=orig.firstName;
-		fatherName=orig.fatherName;
-		group=orig.getGroup();
-	}
 }

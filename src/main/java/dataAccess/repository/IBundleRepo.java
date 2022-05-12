@@ -1,9 +1,6 @@
 package dataAccess.repository;
 
-import dataAccess.entity.Bundle;
-import dataAccess.entity.BundleType;
-import dataAccess.entity.Course;
-import dataAccess.entity.User;
+import dataAccess.entity.*;
 
 import java.util.List;
 import java.util.Set;
@@ -18,4 +15,5 @@ public interface IBundleRepo
 	List<Bundle> getAll(User user);
 	List<Bundle> get(Course course, BundleType bt, int num);
 	void delete(Bundle bundle);
+	List<Bundle> delete(Course course, List<Long> groupIDList);
 }

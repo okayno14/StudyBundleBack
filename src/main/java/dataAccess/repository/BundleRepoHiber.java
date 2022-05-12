@@ -1,9 +1,6 @@
 package dataAccess.repository;
 
-import dataAccess.entity.Bundle;
-import dataAccess.entity.BundleType;
-import dataAccess.entity.Course;
-import dataAccess.entity.User;
+import dataAccess.entity.*;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.ObjectNotFoundException;
 import org.hibernate.SessionFactory;
@@ -247,5 +244,43 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 		Transaction t = getOrBegin();
 		sessionFactory.getCurrentSession().delete(bundle);
 		t.commit();
+	}
+
+	@Override
+	public List<Bundle> delete(Course course, List<Long> groupIDList)
+	{
+		Transaction t = getOrBegin();
+		HQL=
+		"        select \n" +
+		"            b \n" +
+		"        from \n" +
+		"            Bundle as b \n" +
+		"        inner join fetch \n" +
+		"            b.bundleACLSet as bACL \n" +
+		"        inner join \n" +
+		"            bACL.user as u " +
+		"        inner join \n" +
+		"            b.course as c \n" +
+		"        inner join \n" +
+		"            c.courseACL_Set as cACL" +
+		"        inner join \n" +
+		"            u.group as g \n" +
+		"        where \n" +
+		"            b.state != 'ACCEPTED' and\n" +
+		"            g.id in (:group)  and \n" +
+		"            c.id = :course";
+		q = sessionFactory.getCurrentSession().createQuery(HQL);
+		q.setParameter("course", course.getId());
+		q.setParameter("group",groupIDList);
+		List<Bundle> res = q.getResultList();
+		if(res.size()!=0)
+		{
+			for(Bundle b:res)
+			{
+				sessionFactory.getCurrentSession().delete(b);
+			}
+		}
+		t.commit();
+		return  res;
 	}
 }
