@@ -216,7 +216,7 @@ public class BundleService implements IBundleService
 
 	private void isInitiatorAUTHOR(User initiator, Bundle client) throws BusinessException
 	{
-		User courseAuthor = client.getCourse().getAuthor();
+		User courseAuthor = client.getAuthor();
 		if (!initiator.equals(courseAuthor))
 		{
 			throw new BusinessException(new NoRightException());

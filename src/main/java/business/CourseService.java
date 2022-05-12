@@ -90,8 +90,7 @@ public class CourseService implements ICourseService
 		{
 			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
-
-		Author author = client.getRights(initiator);
+		isInitiatorInACL(initiator,client);
 
 		for (Requirement req : client.getRequirementSet())
 		{
@@ -128,8 +127,7 @@ public class CourseService implements ICourseService
 		{
 			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
-
-		Author author = client.getRights(initiator);
+		isInitiatorInACL(initiator, client);
 
 		//посмотреть в базе количество ссылок на него
 		//если 1, то удалить старый объект из базы
@@ -162,7 +160,7 @@ public class CourseService implements ICourseService
 	{
 		if (client.getState() == CourseState.IN_PROGRESS)
 		{
-			Author author = client.getRights(initiator);
+			isInitiatorInACL(initiator, client);
 
 			client.publish();
 			repo.save(client);
@@ -176,7 +174,7 @@ public class CourseService implements ICourseService
 		{
 			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
-		Author author = client.getRights(initiator);
+		isInitiatorInACL(initiator, client);
 		if (client.contains(group))
 		{
 			throw new BusinessException(new GroupAlreadyContains(group, client));
@@ -192,7 +190,7 @@ public class CourseService implements ICourseService
 		{
 			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
-		Author author = client.getRights(initiator);
+		isInitiatorInACL(initiator, client);
 	}
 
 	@Override
@@ -202,14 +200,24 @@ public class CourseService implements ICourseService
 		{
 			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
-		Author author = client.getRights(initiator);
+		isInitiatorInACL(initiator, client);
 	}
 
 	@Override
 	public void delete(User initiator, Course client)
 	{
+		isInitiatorAUTHOR(initiator, client);
+	}
+
+	private void isInitiatorInACL(User initiator, Course client) throws BusinessException
+	{
+		Author rights = client.getRights(initiator);
+	}
+
+	private void isInitiatorAUTHOR(User initiator, Course client) throws BusinessException
+	{
 		User author = client.getAuthor();
-		if(!initiator.equals(author))
+		if (!initiator.equals(author))
 		{
 			throw new BusinessException(new NoRightException());
 		}
