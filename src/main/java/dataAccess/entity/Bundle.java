@@ -126,7 +126,7 @@ public class Bundle implements Serializable, Similarity
 		}
 	}
 
-	private boolean existsACE(User user)
+	public boolean existsACE(User user)
 	{
 		BundleACL obj = new BundleACL(this, user, null);
 		if (bundleACLSet.contains(obj))
@@ -225,24 +225,9 @@ public class Bundle implements Serializable, Similarity
 		return state;
 	}
 
-	public void cancel()
-	{
-		this.state = BundleState.CANCELED;
-	}
-
-	public void accept()
-	{
-		this.state = BundleState.ACCEPTED;
-	}
-
 	public long getId()
 	{
 		return id;
-	}
-
-	public void setFolder(String folder)
-	{
-		this.folder = folder;
 	}
 
 	public String getFolder()
@@ -270,6 +255,31 @@ public class Bundle implements Serializable, Similarity
 		return report;
 	}
 
+	public void setState(BundleState state)
+	{
+		this.state = state;
+	}
+
+	public void cancel()
+	{
+		this.state = BundleState.CANCELED;
+	}
+
+	public void accept()
+	{
+		this.state = BundleState.ACCEPTED;
+	}
+
+	public void setId(long id)
+	{
+		this.id = id;
+	}
+
+	public void setFolder(String folder)
+	{
+		this.folder = folder;
+	}
+
 	public void setReport(Report report)
 	{
 		this.report = report;
@@ -285,8 +295,5 @@ public class Bundle implements Serializable, Similarity
 		this.course = course;
 	}
 
-	public void setId(long id)
-	{
-		this.id = id;
-	}
+
 }

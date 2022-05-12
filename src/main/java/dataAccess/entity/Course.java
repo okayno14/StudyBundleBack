@@ -100,7 +100,7 @@ public class Course
 		courseACL_Set.add(new CourseACL(this, user, rights));
 	}
 
-	private boolean existsACE(User user)
+	public boolean existsACE(User user)
 	{
 		CourseACL obj = new CourseACL(this, user, Author.AUTHOR);
 		if (courseACL_Set.contains(obj))

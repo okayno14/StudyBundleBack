@@ -51,7 +51,7 @@
 "POST", "/bundle/upload/:id"
 "PUT", "/bundle/addCoAuthor/:id/:coAuthorID"
 "PUT", "/bundle/delCoAuthor/:id/:coAuthorID"
-"PUT", "/decline/:id"
+"PUT", "/bundle/decline/:id"
 "DELETE", "/bundle/:id"
 
 "POST", "/bundle/bundleType/:name"

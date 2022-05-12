@@ -400,7 +400,7 @@ public class ServerFace
 				Group  g        = groupController.get(groupID);
 				Course c        = courseController.get(courseID);
 
-				courseController.addGroup(client,c, g);
+				courseController.addGroup(client, c, g);
 
 				return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
 			});
@@ -413,7 +413,7 @@ public class ServerFace
 				long   courseID     = Long.parseLong(req.params(":id"));
 
 				Course c = courseController.get(courseID);
-				courseController.publish(client,c);
+				courseController.publish(client, c);
 				return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
 			});
 
@@ -452,13 +452,13 @@ public class ServerFace
 					long   tokenExpires = client.getTokenExpires();
 
 					long courseID = Long.parseLong(req.params("courseID"));
-					long btID = Long.parseLong(req.params("bundleTypeID"));
-					int  q    = Integer.parseInt(req.params("q"));
+					long btID     = Long.parseLong(req.params("bundleTypeID"));
+					int  q        = Integer.parseInt(req.params("q"));
 
-					Course course = courseController.get(courseID);
-					BundleType  bt = bundleTypeController.get(btID);
+					Course     course = courseController.get(courseID);
+					BundleType bt     = bundleTypeController.get(btID);
 
-					courseController.deleteRequirement(client,course,bt,q);
+					courseController.deleteRequirement(client, course, bt, q);
 
 					resp.status(OK);
 					return gson.toJson(new Response("Успех"));
@@ -547,6 +547,7 @@ public class ServerFace
 
 			get("/download/:id", (req, resp) ->
 			{
+				//Закоментил, чтобы можно было заливать новые файлы с тестовой html-странички
 				//				User   client       = authentAuthorize(req, resp);
 				//				String token        = client.getToken();
 				//				long   tokenExpires = client.getTokenExpires();
@@ -565,6 +566,37 @@ public class ServerFace
 
 				return resp.raw();
 			});
+
+			put("/cancel/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long   bundleID = Long.parseLong(req.params("id"));
+				Bundle bundle   = bundleController.get(bundleID);
+
+				bundleController.cancel(client,bundle);
+
+				resp.status(OK);
+				return gson.toJson(new Response(gson.toJsonTree(bundle),"Успешно"));
+			});
+
+			delete("/:id",(req,resp)->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long bundleID = Long.parseLong(req.params("id"));
+				Bundle bundle = bundleController.get(bundleID);
+
+				bundleController.delete(client,bundle);
+
+				resp.status(OK);
+				return gson.toJson(new Response(gson.toJsonTree(bundle),"Успешно"));
+			});
+
 		});
 
 

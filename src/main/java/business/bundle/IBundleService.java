@@ -16,6 +16,6 @@ public interface IBundleService
 	void groupChanged(Bundle client);
 	byte[] downloadReport(User initiator, Bundle client);
 	Bundle uploadReport(User initiator, Bundle client, byte document[]);
-	void decline(Bundle client);
-	void delete(Bundle client);
+	void cancel(User initiator, Bundle client);
+	void delete(User initiator, Bundle client);
 }

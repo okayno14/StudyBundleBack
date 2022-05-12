@@ -97,19 +97,19 @@ public class BundleService implements IBundleService
 	@Override
 	public void groupChanged(Bundle client)
 	{
-		Bundle d = new Bundle(client.getNum(), client.getCourse(), client.getBundleType());
-		d.addACE(client.getAuthor(), Author.AUTHOR);
-		bundleRepoFile.moveGroupChanged(client, d.getFolder());
+		Bundle dir = new Bundle(client.getNum(), client.getCourse(), client.getBundleType());
+		dir.addACE(client.getAuthor(), Author.AUTHOR);
+		bundleRepoFile.moveGroupChanged(client, dir.getFolder());
 	}
 
 	@Override
 	public byte[] downloadReport(User initiator, Bundle client)
 	{
-		if(client.getState()==BundleState.EMPTY)
+		if (client.getState() == BundleState.EMPTY)
 		{
-			throw new BusinessException(
-					new NoSuchStateAction(client.getState().toString()));
+			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
+		isInitiatorInACL_OR_CourseAUTHOR(initiator, client);
 
 		return bundleRepoFile.get(client);
 	}
@@ -119,11 +119,9 @@ public class BundleService implements IBundleService
 	{
 		if (client.getState() == BundleState.ACCEPTED)
 		{
-			throw new BusinessException(
-					new NoSuchStateAction(client.getState().toString()));
+			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
-		Author rights = client.getRights(initiator);
-
+		isInitiatorInACL(initiator, client);
 		bundleRepoFile.save(client, document);
 		Bundle bestMatchBundle = new Bundle();
 		//написать алгоритм сверки
@@ -154,9 +152,10 @@ public class BundleService implements IBundleService
 		}
 
 		bundleRepoFile.fillTextVector(bundleList);
-		if(bundleList.size()==0)
+		if (bundleList.size() == 0)
 		{
-			throw new DataAccessException(new FileNotFoundException("Ошибка при чтении файлов анализа"));
+			throw new DataAccessException(
+					new FileNotFoundException("Ошибка при чтении файлов анализа"));
 		}
 
 		builderMatrix = new BuilderWords(client, bundleList);
@@ -181,21 +180,65 @@ public class BundleService implements IBundleService
 	}
 
 	@Override
-	public void decline(Bundle client)
+	public void cancel(User initiator, Bundle client)
 	{
-		//может только автор курса
-		if(client.getState()!=BundleState.ACCEPTED)
+		if (client.getState() != BundleState.ACCEPTED)
 		{
-			throw new BusinessException(
-					new NoSuchStateAction(client.getState().toString()));
+			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
+		//может только автор курса
+		isInitiatorCourseAUTHOR(initiator, client);
+		client.cancel();
+		bundleRepo.save(client);
 	}
 
 	@Override
-	public void delete(Bundle client)
+	public void delete(User initiator, Bundle client)
 	{
 		//удаление - удаление файла с диска
-		//имеет право только автор курса
 		//действие допустимо как в состоянии ACCEPTED, так и CANCELED
+		if (client.getState().equals(BundleState.EMPTY))
+		{
+			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
+		}
+		//имеет право только автор курса
+		isInitiatorCourseAUTHOR(initiator, client);
+
+		bundleRepoFile.delete(client);
+		client.setState(BundleState.EMPTY);
+		bundleRepo.save(client);
+	}
+
+	private void isInitiatorInACL(User initiator, Bundle client) throws BusinessException
+	{
+		Author rights = client.getRights(initiator);
+	}
+
+	private void isInitiatorAUTHOR(User initiator, Bundle client) throws BusinessException
+	{
+		User courseAuthor = client.getCourse().getAuthor();
+		if (!initiator.equals(courseAuthor))
+		{
+			throw new BusinessException(new NoRightException());
+		}
+	}
+
+	private void isInitiatorCourseAUTHOR(User initiator, Bundle client) throws BusinessException
+	{
+		User courseAuthor = client.getCourse().getAuthor();
+		if (!initiator.equals(courseAuthor))
+		{
+			throw new BusinessException(new NoRightException());
+		}
+	}
+
+	private void isInitiatorInACL_OR_CourseAUTHOR(User initiator, Bundle client)
+			throws BusinessException
+	{
+		User courseAuthor = client.getCourse().getAuthor();
+		if (!initiator.equals(courseAuthor) && !client.existsACE(initiator))
+		{
+			throw new BusinessException(new NoRightException());
+		}
 	}
 }
