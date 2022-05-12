@@ -400,7 +400,7 @@ public class ServerFace
 				Group  g        = groupController.get(groupID);
 				Course c        = courseController.get(courseID);
 
-				courseController.addGroup(c, g);
+				courseController.addGroup(client,c, g);
 
 				return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
 			});
@@ -413,7 +413,7 @@ public class ServerFace
 				long   courseID     = Long.parseLong(req.params(":id"));
 
 				Course c = courseController.get(courseID);
-				courseController.publish(c);
+				courseController.publish(client,c);
 				return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
 			});
 
