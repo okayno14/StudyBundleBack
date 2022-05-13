@@ -19,5 +19,6 @@ public interface IBundleService
 	byte[] downloadReport(User initiator, Bundle client);
 	Bundle uploadReport(User initiator, Bundle client, byte document[]);
 	void cancel(User initiator, Bundle client);
-	void delete(User initiator, Bundle client);
+	void emptify(User initiator, Bundle client);
+	void delete(User initiator);
 }

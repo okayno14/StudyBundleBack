@@ -17,4 +17,5 @@ public interface IBundleRepo
 	void delete(Bundle bundle);
 	//возвращает список удалённых бандлов
 	List<Bundle> delete(Course course, List<Group> groupList);
+	List<Bundle> delete(User user);
 }

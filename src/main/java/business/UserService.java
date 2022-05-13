@@ -7,6 +7,7 @@ import dataAccess.entity.User;
 import dataAccess.repository.IUserRepo;
 import exception.Business.AuthenticationException;
 import exception.Business.BusinessException;
+import exception.Business.NoRightException;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.ObjectNotFoundException;
 
@@ -194,8 +195,16 @@ public class UserService implements IUserService
 	}
 
 	@Override
-	public void delete(User client)
+	public void delete(User initiator, User client)
 	{
+		if(initiator.getId()!=client.getId())
+		{
+			throw new BusinessException(new NoRightException());
+		}
+
+		//удалить из группы
+
+
 
 	}
 }

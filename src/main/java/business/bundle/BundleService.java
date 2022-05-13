@@ -107,7 +107,10 @@ public class BundleService implements IBundleService
 	public void groupMovedFromCourse(User initiator, Course course, List<Group> groupList)
 	{
 		isInitiatorINCourseACL(initiator,course);
+
 		List<Bundle> bundleList = bundleRepo.delete(course, groupList);
+
+
 		for(Bundle b: bundleList)
 		{
 			bundleCache.delete(b.getId());
@@ -205,7 +208,7 @@ public class BundleService implements IBundleService
 	}
 
 	@Override
-	public void delete(User initiator, Bundle client)
+	public void emptify(User initiator, Bundle client)
 	{
 		//удаление - удаление файла с диска
 		//действие допустимо как в состоянии ACCEPTED, так и CANCELED
@@ -219,6 +222,16 @@ public class BundleService implements IBundleService
 		bundleRepoFile.delete(client);
 		client.setState(BundleState.EMPTY);
 		bundleRepo.save(client);
+	}
+
+	@Override
+	public void delete(User initiator)
+	{
+		List<Bundle> bundleList =  bundleRepo.delete(initiator);
+		for(Bundle b: bundleList)
+		{
+			bundleCache.delete(b.getId());
+		}
 	}
 
 	private void isInitiatorInACL(User initiator, Bundle client) throws BusinessException

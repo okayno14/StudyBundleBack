@@ -151,25 +151,20 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 		throw new DataAccessException(new ObjectNotFoundException());
 	}
 
-	@Override
-	public List<Bundle> getAll(User user)
+	private List<Bundle> getAllACTION(User user)
 	{
-		//Данный запрос выгоднее по времени и данным выполнить в два этапа:
-		//1) получить все курсы
-		//2) для каждого из курсов извлечь бандлы
-		Transaction t = getOrBegin();
 		HQL =
 				"select distinct \n" +
-				"	c \n" +
-				"from \n" +
-				"	Bundle as b\n" +
-				"inner join \n" +
-				"	b.bundleACLSet as bACL\n" +
-				"inner join \n" +
-				"	b.course as c\n" + "inner join fetch \n" +
-				"	c.courseACL_Set as cACL\n" +
-				"where \n" +
-				"	bACL.user.id = :user";
+						"	c \n" +
+						"from \n" +
+						"	Bundle as b\n" +
+						"inner join \n" +
+						"	b.bundleACLSet as bACL\n" +
+						"inner join \n" +
+						"	b.course as c\n" + "inner join fetch \n" +
+						"	c.courseACL_Set as cACL\n" +
+						"where \n" +
+						"	bACL.user.id = :user";
 		q   = sessionFactory.getCurrentSession().createQuery(HQL);
 		q.setParameter("user", user.getId());
 		List<Course> courseList = q.getResultList();
@@ -178,20 +173,20 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 		{
 			HQL =
 					"select \n" +
-					"	b \n" +
-					"from \n" +
-					"	Bundle as b \n" +
-					"inner join fetch \n" +
-					"	b.bundleACLSet as bACL \n" +
-					"inner join \n" +
-					"	b.course as c\n" +
-					"inner join \n" +
-					"	bACL.user as u \n" +
-					"inner join \n" +
-					"	u.group as g \n" +
-					"where \n" +
-					"	u.id = :user and \n" +
-					"	c.id = :course";
+							"	b \n" +
+							"from \n" +
+							"	Bundle as b \n" +
+							"inner join fetch \n" +
+							"	b.bundleACLSet as bACL \n" +
+							"inner join \n" +
+							"	b.course as c\n" +
+							"inner join \n" +
+							"	bACL.user as u \n" +
+							"inner join \n" +
+							"	u.group as g \n" +
+							"where \n" +
+							"	u.id = :user and \n" +
+							"	c.id = :course";
 			q = sessionFactory.getCurrentSession().createQuery(HQL);
 			q.setParameter("user", user.getId());
 			q.setParameter("course", c.getId());
@@ -202,6 +197,17 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 				res.add(b);
 			}
 		}
+		return res;
+	}
+
+	@Override
+	public List<Bundle> getAll(User user)
+	{
+		//Данный запрос выгоднее по времени и данным выполнить в два этапа:
+		//1) получить все курсы
+		//2) для каждого из курсов извлечь бандлы
+		Transaction t = getOrBegin();
+		List<Bundle> res = getAllACTION(user);
 		t.commit();
 		if (res.size() != 0)
 		{
@@ -290,5 +296,25 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 		}
 		t.commit();
 		return  res;
+	}
+
+	@Override
+	public List<Bundle> delete(User user)
+	{
+		Transaction t = getOrBegin();
+		List<Bundle> toDel = getAllACTION(user);
+
+		for(Bundle b:toDel)
+		{
+			if(b.getState().equals(BundleState.ACCEPTED))
+			{
+				t.rollback();
+				throw new BusinessException(
+						new DeletingImportantData("Запрещено удалять принятые работы"));
+			}
+			sessionFactory.getCurrentSession().delete(b);
+		}
+		t.commit();
+		return toDel;
 	}
 }

@@ -94,12 +94,18 @@ public class BundleController implements IBundleController
 	}
 
 	@Override
-	public void delete(User initiator, Bundle client)
+	public void emptify(User initiator, Bundle client)
 	{
 		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
 		{
 			initiator = client.getCourse().getAuthor();
 		}
-		bundleService.delete(initiator,client);
+		bundleService.emptify(initiator, client);
+	}
+
+	@Override
+	public void delete(User initiator)
+	{
+		bundleService.delete(initiator);
 	}
 }

@@ -293,7 +293,7 @@ public class ServerFace
 				long   tokenExpires = client.getTokenExpires();
 				long   id           = Long.parseLong(req.params("id"));
 				User   toDel        = userController.get(id);
-				userController.delete(toDel);
+				userController.delete(client, toDel);
 
 				//можем не найти по id toDel
 				return "Empty";
@@ -629,7 +629,7 @@ public class ServerFace
 				long bundleID = Long.parseLong(req.params("id"));
 				Bundle bundle = bundleController.get(bundleID);
 
-				bundleController.delete(client,bundle);
+				bundleController.emptify(client, bundle);
 
 				resp.status(OK);
 				return gson.toJson(new Response(gson.toJsonTree(bundle),"Успешно"));

@@ -192,11 +192,19 @@ public class UserController implements IUserController
 	}
 
 	@Override
-	public void delete(User client)
+	public void delete(User initiator, User client)
 	{
-		//удалить из группы
+		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
+		{
+			initiator=client;
+		}
 		//удалить все бандлы
 		//удалить все курсы
+		controller.bundleController.delete(initiator);
+
+
+
+		service.delete(initiator,client);
 	}
 
 	@Override
