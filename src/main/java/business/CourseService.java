@@ -9,6 +9,7 @@ import exception.Business.*;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.ObjectNotFoundException;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -64,7 +65,12 @@ public class CourseService implements ICourseService
 	@Override
 	public List<Course> getByOwner(User owner)
 	{
-		return null;
+		List<Course> res =  repo.getByOwner(owner);
+		for(Course c:res)
+		{
+			cache.put(c);
+		}
+		return res;
 	}
 
 	@Override
@@ -210,20 +216,29 @@ public class CourseService implements ICourseService
 	}
 
 	@Override
-	public void delete(User initiator, Course client)
+	public void delete(User initiator, List<Course> clientList)
 	{
-		isInitiatorAUTHOR(initiator, client);
+		HashSet<Requirement> requirementSet = new HashSet<>();
+		for (Course c : clientList)
+		{
+			isInitiatorAUTHOR(initiator, c);
+			requirementSet.addAll(c.getRequirementSet());
+		}
 
-		List<Requirement> requirementList = reqRepo
-				.deleteNotLinked(new LinkedList<>(client.getRequirementSet()));
+		LinkedList<Requirement> reqToDel = new LinkedList<>(requirementSet);
+
+		List<Requirement> requirementList = reqRepo.deleteNotLinked(reqToDel);
 
 		for (Requirement req : requirementList)
 		{
 			reqCache.delete(req.getId());
 		}
 
-		cache.delete(client.getId());
-		repo.delete(client);
+		repo.delete(clientList);
+		for (Course c : clientList)
+		{
+			cache.delete(c.getId());
+		}
 	}
 
 	private void isInitiatorInACL(User initiator, Course client) throws BusinessException

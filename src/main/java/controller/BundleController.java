@@ -1,16 +1,17 @@
 package controller;
 
 import business.bundle.IBundleService;
-import dataAccess.entity.Bundle;
-import dataAccess.entity.Course;
-import dataAccess.entity.Group;
-import dataAccess.entity.User;
+import dataAccess.entity.*;
+import exception.Business.BusinessException;
+import exception.Business.NoRightException;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class BundleController implements IBundleController
 {
-	private Controller controller;
+	private Controller     controller;
 	private IBundleService bundleService;
 
 	public BundleController(Controller controller, IBundleService bundleService)
@@ -56,47 +57,80 @@ public class BundleController implements IBundleController
 	}
 
 	@Override
-	public void groupMovedFromCourse(User initiator, Course course, List<Group> groupList)
+	public void groupMovedFromCourse(User initiator, List<Course> courseList, List<Group> groupList)
 	{
-		//Здесь не делается подмена админа на хозяина курса, так как об этом заботиться
-		//CourseController. А другого контекста у этого метода нет
-		bundleService.groupMovedFromCourse(initiator, course,groupList);
+		//Пересечение членов редколлегии каждого из курсов
+		HashSet<User>  users    = new HashSet<>();
+		Set<CourseACL> firstACL = courseList.iterator().next().getACL();
+		for (CourseACL courseACL : firstACL)
+		{
+			users.add(courseACL.getUser());
+		}
+
+		for (Course c : courseList)
+		{
+			HashSet<User> buf = new HashSet<>();
+			for (CourseACL courseACL : c.getACL())
+			{
+				buf.add(courseACL.getUser());
+			}
+			users.retainAll(buf);
+		}
+
+		if(users.size()==0)
+		{
+			throw new BusinessException(new NoRightException());
+		}
+		//составили список для подмены админа,
+		// но можем заранее проверить исключение
+		if (!(initiator.getRole().getId() == controller.roleController.getAdmin().getId()) &&
+				!users.contains(initiator))
+		{
+			throw new BusinessException(new NoRightException());
+		}
+
+		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
+		{
+			initiator = users.iterator().next();
+		}
+
+		bundleService.groupMovedFromCourse(initiator, courseList, groupList);
 	}
 
 	@Override
 	public byte[] downloadReport(User initiator, Bundle client)
 	{
-		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
+		if (initiator.getRole().getId() == controller.roleController.getAdmin().getId())
 		{
 			initiator = client.getAuthor();
 		}
-		return bundleService.downloadReport(initiator,client);
+		return bundleService.downloadReport(initiator, client);
 	}
 
 	@Override
 	public Bundle uploadReport(User initiator, Bundle client, byte[] document)
 	{
-		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
+		if (initiator.getRole().getId() == controller.roleController.getAdmin().getId())
 		{
 			initiator = client.getAuthor();
 		}
-		return bundleService.uploadReport(initiator,client,document);
+		return bundleService.uploadReport(initiator, client, document);
 	}
 
 	@Override
 	public void cancel(User initiator, Bundle client)
 	{
-		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
+		if (initiator.getRole().getId() == controller.roleController.getAdmin().getId())
 		{
 			initiator = client.getCourse().getAuthor();
 		}
-		bundleService.cancel(initiator,client);
+		bundleService.cancel(initiator, client);
 	}
 
 	@Override
 	public void emptify(User initiator, Bundle client)
 	{
-		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
+		if (initiator.getRole().getId() == controller.roleController.getAdmin().getId())
 		{
 			initiator = client.getCourse().getAuthor();
 		}
@@ -104,8 +138,12 @@ public class BundleController implements IBundleController
 	}
 
 	@Override
-	public void delete(User initiator)
+	public void delete(User initiator, User target)
 	{
-		bundleService.delete(initiator);
+		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
+		{
+			initiator=target;
+		}
+		bundleService.delete(initiator, target);
 	}
 }

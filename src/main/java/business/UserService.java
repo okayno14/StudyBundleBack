@@ -195,16 +195,14 @@ public class UserService implements IUserService
 	}
 
 	@Override
-	public void delete(User initiator, User client)
+	public void delete(User initiator, User target)
 	{
-		if(initiator.getId()!=client.getId())
+		if(initiator.getId()!= target.getId())
 		{
 			throw new BusinessException(new NoRightException());
 		}
-
 		//удалить из группы
-
-
-
+		userRepo.delete(initiator);
+		userCache.delete(initiator.getId());
 	}
 }

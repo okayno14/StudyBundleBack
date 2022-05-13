@@ -258,7 +258,7 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 	}
 
 	@Override
-	public List<Bundle> delete(Course course, List<Group> groupList)
+	public List<Bundle> delete(List<Course> courseList, List<Group> groupList)
 	{
 		Transaction t = getOrBegin();
 		HQL=
@@ -278,9 +278,9 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 		"            u.group as g \n" +
 		"        where \n" +
 		"            g in (:group)  and \n" +
-		"            c.id = :course";
+		"            c in (:course)";
 		q = sessionFactory.getCurrentSession().createQuery(HQL);
-		q.setParameter("course", course.getId());
+		q.setParameter("course", courseList);
 		q.setParameter("group",groupList);
 		List<Bundle> res = q.getResultList();
 

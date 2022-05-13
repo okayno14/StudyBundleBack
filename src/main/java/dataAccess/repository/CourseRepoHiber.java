@@ -158,11 +158,16 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	}
 
 	@Override
-	public void delete(Course course)
+	public void delete(List<Course> courseList)
 	{
 		Transaction t       = getOrBegin();
-		Session     session = sessionFactory.getCurrentSession();
-		session.delete(course);
+		HQL = "delete from Course as c where c in (:course)";
+		q = sessionFactory.getCurrentSession().createQuery(HQL);
+		q.setParameter("course", courseList);
+		q.executeUpdate();
+
+		//Session     session = sessionFactory.getCurrentSession();
+		//session.delete(course);
 		t.commit();
 	}
 }

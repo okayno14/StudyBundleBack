@@ -104,12 +104,13 @@ public class BundleService implements IBundleService
 	}
 
 	@Override
-	public void groupMovedFromCourse(User initiator, Course course, List<Group> groupList)
+	public void groupMovedFromCourse(User initiator, List<Course> courseList, List<Group> groupList)
 	{
-		isInitiatorINCourseACL(initiator,course);
-
-		List<Bundle> bundleList = bundleRepo.delete(course, groupList);
-
+		for(Course c: courseList)
+		{
+			isInitiatorINCourseACL(initiator,c);
+		}
+		List<Bundle> bundleList = bundleRepo.delete(courseList, groupList);
 
 		for(Bundle b: bundleList)
 		{
@@ -225,9 +226,13 @@ public class BundleService implements IBundleService
 	}
 
 	@Override
-	public void delete(User initiator)
+	public void delete(User initiator, User target)
 	{
-		List<Bundle> bundleList =  bundleRepo.delete(initiator);
+		if(initiator.getId()!= target.getId())
+		{
+			throw new BusinessException(new NoRightException());
+		}
+		List<Bundle> bundleList =  bundleRepo.delete(target);
 		for(Bundle b: bundleList)
 		{
 			bundleCache.delete(b.getId());

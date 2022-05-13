@@ -16,6 +16,6 @@ public interface IBundleRepo
 	List<Bundle> get(Course course, BundleType bt, int num);
 	void delete(Bundle bundle);
 	//возвращает список удалённых бандлов
-	List<Bundle> delete(Course course, List<Group> groupList);
+	List<Bundle> delete(List<Course> courseList, List<Group> groupList);
 	List<Bundle> delete(User user);
 }

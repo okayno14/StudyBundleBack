@@ -8,6 +8,8 @@ import dataAccess.entity.User;
 import exception.Business.BusinessException;
 import exception.Controller.ControllerException;
 import exception.Controller.TokenNotFound;
+import exception.DataAccess.DataAccessException;
+import exception.DataAccess.ObjectNotFoundException;
 
 import java.util.*;
 
@@ -192,19 +194,31 @@ public class UserController implements IUserController
 	}
 
 	@Override
-	public void delete(User initiator, User client)
+	public void delete(User initiator, User target)
 	{
 		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
 		{
-			initiator=client;
+			initiator= target;
 		}
+
 		//удалить все бандлы
-		//удалить все курсы
-		controller.bundleController.delete(initiator);
+		controller.bundleController.delete(initiator, target);
+		try
+		{
+			//удалить все курсы
+			List<Course> courseList= controller.courseController.getByOwner(initiator);
+			controller.courseController.delete(initiator,courseList);
+		}
+		catch (DataAccessException e)
+		{
+			if(e.getCause().getClass()!= ObjectNotFoundException.class)
+			{
+				throw e;
+			}
+		}
 
 
-
-		service.delete(initiator,client);
+		service.delete(initiator, target);
 	}
 
 	@Override

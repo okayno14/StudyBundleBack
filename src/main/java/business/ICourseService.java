@@ -19,5 +19,6 @@ public interface ICourseService
 	void addGroup(User initiator, Course client, Group group);
 	void delGroup(User initiator, Course client, Group group);
 	void updateName(User initiator, Course client, String name);
-	void delete(User initiator, Course client);
+	//удаление списка курсов, но только при условии того, что инициатор является автором каждого из них
+	void delete(User initiator, List<Course> clientList);
 }

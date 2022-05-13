@@ -433,9 +433,11 @@ public class ServerFace
 				long   tokenExpires = client.getTokenExpires();
 
 				long   courseID     = Long.parseLong(req.params(":id"));
-
 				Course c = courseController.get(courseID);
-				courseController.delete(client,c);
+				LinkedList<Course> courseList = new LinkedList<>();
+				courseList.add(c);
+
+				courseController.delete(client,courseList);
 
 				return "f";
 			});
@@ -454,6 +456,7 @@ public class ServerFace
 
 					BundleType bt     = bundleTypeController.get(bundleTypeID);
 					Course     course = courseController.get(courseID);
+
 
 					try
 					{

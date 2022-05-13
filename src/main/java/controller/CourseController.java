@@ -2,6 +2,8 @@ package controller;
 
 import business.ICourseService;
 import dataAccess.entity.*;
+import exception.Business.BusinessException;
+import exception.Business.NoRightException;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.ObjectNotFoundException;
 
@@ -42,7 +44,7 @@ public class CourseController implements ICourseController
 	@Override
 	public List<Course> getByOwner(User owner)
 	{
-		return null;
+		return service.getByOwner(owner);
 	}
 
 	@Override
@@ -196,7 +198,9 @@ public class CourseController implements ICourseController
 		}
 		List<Group> groupList = new LinkedList<>();
 		groupList.add(group);
-		controller.bundleController.groupMovedFromCourse(initiator,client,groupList);
+		List<Course> courseList = new LinkedList<>();
+		courseList.add(client);
+		controller.bundleController.groupMovedFromCourse(initiator,courseList,groupList);
 		service.delGroup(initiator, client, group);
 	}
 
@@ -210,15 +214,40 @@ public class CourseController implements ICourseController
 	}
 
 	@Override
-	public void delete(User initiator, Course client)
+	public void delete(User initiator, List<Course> clientList)
 	{
 		//это делать может только автор
+		HashSet<User> authors = new HashSet<>();
+		HashSet<Group> groups = new HashSet<>();
+		for(Course c:clientList)
+		{
+			authors.add(c.getAuthor());
+			groups.addAll(c.getGroupes());
+		}
+
+		//составлен перечень пользователей откуда можно взять замену для инициатора
+		//поэтому можно заранее бросить исключение
+		if(!(initiator.getRole().getId()==controller.roleController.getAdmin().getId()))
+		{
+			//Если инициатор не является администратором, то тогда нужно проверить условие:
+			//является ли инициатор автором каждого из полученных курсов
+			if(authors.size()!=1 || authors.iterator().next().getId()!=initiator.getId())
+			{
+				throw new BusinessException(new NoRightException());
+			}
+		}
+
 		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
 		{
-			initiator = client.getAuthor();
+			initiator =authors.iterator().next();
 		}
-		List<Group> groupList = new LinkedList(client.getGroupes());
-		controller.bundleController.groupMovedFromCourse(initiator,client,groupList);
-		service.delete(initiator, client);
+
+		List<Group> groupList = new LinkedList(groups);
+		controller.bundleController.groupMovedFromCourse(initiator,clientList,groupList);
+
+		for(Course c: clientList)
+		{
+			service.delete(initiator, clientList);
+		}
 	}
 }

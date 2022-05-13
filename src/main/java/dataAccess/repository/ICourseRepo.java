@@ -14,5 +14,5 @@ public interface ICourseRepo
 	List<Course> getByOwner(User owner);
 	List<Course> getByStudent(User student);
 	List<Course> getByGroup(Group g);
-	void delete(Course course);
+	void delete(List<Course> courseList);
 }

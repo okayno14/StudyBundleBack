@@ -25,5 +25,5 @@ public interface IUserService
 	void resetPass(String passHash, long id);
 	void confirm(String email);
 	void activate(long id);
-	void delete(User initiator, User client);
+	void delete(User initiator, User target);
 }
