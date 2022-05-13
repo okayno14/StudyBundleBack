@@ -10,6 +10,7 @@ import exception.DataAccess.DataAccessException;
 import exception.DataAccess.ObjectNotFoundException;
 
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 public class CourseService implements ICourseService
@@ -90,7 +91,7 @@ public class CourseService implements ICourseService
 		{
 			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
-		isInitiatorInACL(initiator,client);
+		isInitiatorInACL(initiator, client);
 
 		for (Requirement req : client.getRequirementSet())
 		{
@@ -101,7 +102,7 @@ public class CourseService implements ICourseService
 		}
 
 		Requirement toSave = new Requirement(q, bt);
-		if(!reqCache.contains(toSave))
+		if (!reqCache.contains(toSave))
 		{
 			reqRepo.save(toSave);
 			reqCache.put(toSave);
@@ -109,19 +110,30 @@ public class CourseService implements ICourseService
 		else
 		{
 			Iterator<Requirement> iterator = reqCache.get().iterator();
-			Requirement obj = new Requirement();
+			Requirement           obj      = new Requirement();
 			while (iterator.hasNext() && !toSave.equals(obj))
 			{
-				obj=iterator.next();
+				obj = iterator.next();
 			}
-			toSave=obj;
+			toSave = obj;
 		}
 		client.addRequirement(toSave);
 		repo.save(client);
 	}
 
 	@Override
-	public void deleteRequirement(User initiator, Course client, BundleType bt, int q)
+	public Requirement getReq(long id)
+	{
+		Requirement res = reqCache.get(id);
+		if (res != null)
+		{
+			return res;
+		}
+		throw new DataAccessException(new ObjectNotFoundException());
+	}
+
+	@Override
+	public void deleteRequirement(User initiator, Course client, Requirement toDel)
 	{
 		if (client.getState() == CourseState.PUBLISHED)
 		{
@@ -129,29 +141,21 @@ public class CourseService implements ICourseService
 		}
 		isInitiatorInACL(initiator, client);
 
-		//посмотреть в базе количество ссылок на него
-		//если 1, то удалить старый объект из базы
-		//если больше, то отвязать от старого
-		Requirement           sample   = new Requirement(q, bt);
-		Iterator<Requirement> iterator = client.getRequirementSet().iterator();
-		Requirement           toDel      = new Requirement();
-		while (iterator.hasNext() && !sample.equals(toDel))
-		{
-			toDel = iterator.next();
-		}
-		if (!sample.equals(toDel))
+		if (!client.getRequirementSet().contains(toDel))
 		{
 			throw new DataAccessException(new ObjectNotFoundException());
 		}
-
-		long count = reqRepo.countReferences(toDel);
-
+		LinkedList<Requirement> toDelList = new LinkedList<>();
+		toDelList.add(toDel);
+		List<Requirement> res = reqRepo.deleteNotLinked(toDelList);
 		client.removeRequirement(toDel);
-		repo.save(client);
-		if (count == 1)
+		if (res.size() != 0)
 		{
 			reqCache.delete(toDel.getId());
-			reqRepo.delete(toDel);
+		}
+		else
+		{
+			repo.save(client);
 		}
 	}
 
@@ -209,6 +213,17 @@ public class CourseService implements ICourseService
 	public void delete(User initiator, Course client)
 	{
 		isInitiatorAUTHOR(initiator, client);
+
+		List<Requirement> requirementList = reqRepo
+				.deleteNotLinked(new LinkedList<>(client.getRequirementSet()));
+
+		for (Requirement req : requirementList)
+		{
+			reqCache.delete(req.getId());
+		}
+
+		cache.delete(client.getId());
+		repo.delete(client);
 	}
 
 	private void isInitiatorInACL(User initiator, Course client) throws BusinessException

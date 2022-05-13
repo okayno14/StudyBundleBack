@@ -75,7 +75,8 @@ public class Course
 	public Author getRights(User user) throws NoRightException
 	{
 		CourseACL obj = null;
-		if (!existsACE(user))
+		boolean flag = existsACE(user);
+		if (!flag)
 		{
 			throw new BusinessException(new NoRightException());
 		}
@@ -102,12 +103,8 @@ public class Course
 
 	public boolean existsACE(User user)
 	{
-		CourseACL obj = new CourseACL(this, user, Author.AUTHOR);
-		if (courseACL_Set.contains(obj))
-		{
-			return true;
-		}
-		return false;
+		CourseACL obj = new CourseACL(this, user, null);
+		return courseACL_Set.contains(obj);
 	}
 
 	public CourseACL getACE(User user) throws NoRightException

@@ -1,5 +1,6 @@
 package dataAccess.repository;
 
+import dataAccess.entity.Author;
 import dataAccess.entity.Course;
 import dataAccess.entity.Group;
 import dataAccess.entity.User;
@@ -41,6 +42,9 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 			if (course.getId() == -1L)
 			{
 				session.save(course);
+				User author = course.getAuthor();
+				course.getACL().clear();
+				course.addACE(author, Author.AUTHOR);
 				session.save(course.getAuthorACE());
 			}
 			else

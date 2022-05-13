@@ -107,17 +107,7 @@ public class BundleService implements IBundleService
 	public void groupMovedFromCourse(User initiator, Course course, List<Group> groupList)
 	{
 		isInitiatorINCourseACL(initiator,course);
-		LinkedList<Long> groupIDList = new LinkedList<>();
-		for(Group g:groupList)
-		{
-			groupIDList.add(g.getId());
-		}
-		List<Bundle> bundleList = bundleRepo.delete(course, groupIDList);
-		if (bundleList.size() == 0)
-		{
-			throw new BusinessException(
-					new DeletingImportantData("Запрещено удалять принятые работы"));
-		}
+		List<Bundle> bundleList = bundleRepo.delete(course, groupList);
 		for(Bundle b: bundleList)
 		{
 			bundleCache.delete(b.getId());

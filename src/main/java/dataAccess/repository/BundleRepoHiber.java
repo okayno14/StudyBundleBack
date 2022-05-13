@@ -1,6 +1,8 @@
 package dataAccess.repository;
 
 import dataAccess.entity.*;
+import exception.Business.BusinessException;
+import exception.Business.DeletingImportantData;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.ObjectNotFoundException;
 import org.hibernate.SessionFactory;
@@ -31,6 +33,9 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 		if (b.getId() == -1L)
 		{
 			sessionFactory.getCurrentSession().save(b);
+			User author = b.getAuthor();
+			b.getACL().clear();
+			b.addACE(author,Author.AUTHOR);
 			sessionFactory.getCurrentSession().save(b.getAuthorACE());
 		}
 		else
@@ -247,7 +252,7 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 	}
 
 	@Override
-	public List<Bundle> delete(Course course, List<Long> groupIDList)
+	public List<Bundle> delete(Course course, List<Group> groupList)
 	{
 		Transaction t = getOrBegin();
 		HQL=
@@ -266,19 +271,22 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 		"        inner join \n" +
 		"            u.group as g \n" +
 		"        where \n" +
-		"            b.state != 'ACCEPTED' and\n" +
-		"            g.id in (:group)  and \n" +
+		"            g in (:group)  and \n" +
 		"            c.id = :course";
 		q = sessionFactory.getCurrentSession().createQuery(HQL);
 		q.setParameter("course", course.getId());
-		q.setParameter("group",groupIDList);
+		q.setParameter("group",groupList);
 		List<Bundle> res = q.getResultList();
-		if(res.size()!=0)
+
+		for(Bundle b:res)
 		{
-			for(Bundle b:res)
+			if(b.getState().equals(BundleState.ACCEPTED))
 			{
-				sessionFactory.getCurrentSession().delete(b);
+				t.rollback();
+				throw new BusinessException(
+						new DeletingImportantData("Запрещено удалять принятые работы"));
 			}
+			sessionFactory.getCurrentSession().delete(b);
 		}
 		t.commit();
 		return  res;

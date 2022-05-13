@@ -329,15 +329,6 @@ public class ServerFace
 					return setGroupToUser(req, resp, group);
 				}));
 
-				put("/delStudents", ((req, resp) ->
-				{
-					User   client       = authentAuthorize(req, resp);
-					String token        = client.getToken();
-					long   tokenExpires = client.getTokenExpires();
-					Group  group        = null;
-					return setGroupToUser(req, resp, group);
-				}));
-
 				delete("/:id", (req, resp) ->
 				{
 					try
@@ -427,11 +418,26 @@ public class ServerFace
 				User   client       = authentAuthorize(req, resp);
 				String token        = client.getToken();
 				long   tokenExpires = client.getTokenExpires();
+
 				long   courseID     = Long.parseLong(req.params(":id"));
 
 				Course c = courseController.get(courseID);
 				courseController.publish(client, c);
 				return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
+			});
+
+			delete("/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long   courseID     = Long.parseLong(req.params(":id"));
+
+				Course c = courseController.get(courseID);
+				courseController.delete(client,c);
+
+				return "f";
 			});
 
 			path("/requirement", () ->
@@ -462,20 +468,19 @@ public class ServerFace
 					}
 				});
 
-				delete("/:courseID/:bundleTypeID/:q", (req, resp) ->
+				delete("/:courseID/:reqID", (req, resp) ->
 				{
 					User   client       = authentAuthorize(req, resp);
 					String token        = client.getToken();
 					long   tokenExpires = client.getTokenExpires();
 
 					long courseID = Long.parseLong(req.params("courseID"));
-					long btID     = Long.parseLong(req.params("bundleTypeID"));
-					int  q        = Integer.parseInt(req.params("q"));
+					long reqID = Long.parseLong(req.params("reqID"));
 
 					Course     course = courseController.get(courseID);
-					BundleType bt     = bundleTypeController.get(btID);
+					Requirement requirement = courseController.getReq(reqID);
 
-					courseController.deleteRequirement(client, course, bt, q);
+					courseController.deleteRequirement(client, course, requirement);
 
 					resp.status(OK);
 					return gson.toJson(new Response("Успех"));
@@ -575,6 +580,17 @@ public class ServerFace
 				User client = new User();
 				client.setRole(roleController.getAdmin());
 				byte buf[] = bundleController.downloadReport(client, b);
+
+				String fileOutName = b.getFolder();
+				fileOutName.replace("/","_");
+				fileOutName = fileOutName + ".bow";
+				fileOutName= fileOutName.replace("/","_");
+				fileOutName = fileOutName.replace(" ","_");
+
+
+				resp.header("Content-Type", "application/zip");
+				resp.header("Content-Disposition", "attachment; filename="+fileOutName);
+
 
 				try (OutputStream out = resp.raw().getOutputStream())
 				{

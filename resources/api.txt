@@ -42,7 +42,7 @@
 "DELETE", "/course/:id"
 
 "POST", "/course/requirement/:courseID/:bundleTypeID/:q"
-"DELETE", "/course/requirement/:courseID/:bundleTypeID/:q"
+"DELETE", "/course/requirement/:courseID/:reqID"
 
 "GET", "/bundle/:id"
 "GET", "/bundle/:courseName/:ownerGroupName/:ownerLastName/:ownerFirstName/:ownerFatherName"

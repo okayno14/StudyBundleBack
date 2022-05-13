@@ -39,28 +39,27 @@ public class RequirementRepoHiber extends RepoHiberBase implements IRequirementR
 	}
 
 	@Override
-	public void delete(Requirement req)
-	{
-		Transaction t = getOrBegin();
-		sessionFactory.getCurrentSession().delete(req);
-		t.commit();
-	}
-
-	@Override
-	public long countReferences(Requirement req)
+	public List<Requirement> deleteNotLinked(List<Requirement> reqList)
 	{
 		Transaction t = getOrBegin();
 		HQL=
-				"        select\n" +
-				"            count (c)\n" +
-				"        from\n" +
-				"            Course as c\n" +
-				"        inner join\n" +
-				"            c.requirementSet as req\n" +
-				"        where req.id = :req";
+			"        select\n" +
+			"            req"+
+			"        from \n" +
+			"            Requirement as req\n" +
+			"        where\n" +
+			"            size(req.courseSet)=1 and\n" +
+			"            req in (:requirement)";
 		q=sessionFactory.getCurrentSession().createQuery(HQL);
-		q.setParameter("req",req.getId());
-		long res = (long) q.uniqueResult();
+		q.setParameter("requirement",reqList);
+		List<Requirement>  res = q.getResultList();
+		if(res.size()!=0)
+		{
+			HQL="delete from Requirement as req where req in (:requirement)";
+			q=sessionFactory.getCurrentSession().createQuery(HQL);
+			q.setParameter("requirement",res);
+			q.executeUpdate();
+		}
 		t.commit();
 		return res;
 	}

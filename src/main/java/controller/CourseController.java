@@ -78,13 +78,19 @@ public class CourseController implements ICourseController
 	}
 
 	@Override
-	public void deleteRequirement(User initiator, Course client, BundleType bt, int q)
+	public Requirement getReq(long id)
+	{
+		return service.getReq(id);
+	}
+
+	@Override
+	public void deleteRequirement(User initiator, Course client, Requirement req)
 	{
 		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
 		{
 			initiator = client.getAuthor();
 		}
-		service.deleteRequirement(initiator, client,bt,q);
+		service.deleteRequirement(initiator, client, req);
 	}
 
 	@Override
@@ -211,5 +217,8 @@ public class CourseController implements ICourseController
 		{
 			initiator = client.getAuthor();
 		}
+		List<Group> groupList = new LinkedList(client.getGroupes());
+		controller.bundleController.groupMovedFromCourse(initiator,client,groupList);
+		service.delete(initiator, client);
 	}
 }

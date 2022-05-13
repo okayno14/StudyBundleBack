@@ -19,21 +19,33 @@
         where
             u.id in (:user) and
             c.id = :course
-
     </body>
 </query>
 <!--COURSE-->
 <!--REQUIREMENT-->
 <query>
-    <name="REQ_COUNT_REF"/>
+    <name="FILTER_REQ_1_LINK"/>
     <body>
         select
-            count (c)
+            req
         from
-            Course as c
+            Requirement req
         inner join
             c.requirementSet as req
-        where req.id = :req
+        where 
+            size(req.courseSet)=1 and
+            req in (:requirement)
+    </body>
+</query>
+
+<query>
+    <name="DELETE_REQ_BY_LIST"/>
+    <body>
+        delete 
+        from 
+            Requirement as req 
+        where 
+            req in (:requirement)
     </body>
 </query>
 
@@ -125,8 +137,7 @@
         inner join 
             u.group as g 
         where 
-            b.state != 'ACCEPTED' and
-            g.id in (:group)  and 
+            g in (:group)  and 
             c.id = :course
     </body>
 </query>
