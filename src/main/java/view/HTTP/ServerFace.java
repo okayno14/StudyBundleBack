@@ -494,9 +494,9 @@ public class ServerFace
 		{
 			post("/upload/:id", (req, resp) ->
 			{
-				//				User   client       = authentAuthorize(req, resp);
-				//				String token        = client.getToken();
-				//				long   tokenExpires = client.getTokenExpires();
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
 
 				long   bundleID = Long.parseLong(req.params("id"));
 				Bundle b        = bundleController.get(bundleID);
@@ -519,7 +519,7 @@ public class ServerFace
 				}
 				try
 				{
-					User client = new User();
+					//User client = new User();
 					client.setRole(roleController.getAdmin());
 					Bundle bestMatch = bundleController.uploadReport(client, b, buf);
 
@@ -529,14 +529,19 @@ public class ServerFace
 					{
 						message = "Отчёт успешно прошёл проверку";
 						data    = gson.toJsonTree(b);
+						bundleParser.defend(data.getAsJsonObject());
 					}
 					else if (b.getState() == BundleState.CANCELED)
 					{
 						message = "Отчёт недостаточно оригинален.\n";
-						Bundle arr[] = new Bundle[2];
-						arr[0] = b;
-						arr[1] = bestMatch;
-								 data = gson.toJsonTree(arr);
+						JsonObject bJSON= gson.toJsonTree(b).getAsJsonObject();
+						JsonObject bestMatchJSON = gson.toJsonTree(bestMatch).getAsJsonObject();
+						bundleParser.defend(bJSON);
+						bundleParser.defend(bestMatchJSON);
+						JsonArray arrJSON = new JsonArray();
+						arrJSON.add(bJSON);
+						arrJSON.add(bestMatchJSON);
+					 	data = arrJSON;
 					}
 					return gson.toJson(new Response(data, message));
 				}
