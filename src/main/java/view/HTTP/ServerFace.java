@@ -27,6 +27,7 @@ import view.HTTP.request.LoginReq;
 import javax.servlet.MultipartConfigElement;
 import java.io.*;
 import java.lang.reflect.Type;
+import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -62,6 +63,8 @@ public class ServerFace
 	private UserParser   userParser;
 	private BundleParser bundleParser;
 	private CourseParser courseParser;
+
+	private Translit translit = new Translit();
 
 	public ServerFace(ConfMain confMain, Gson gson, GsonBuilder gsonBuilder)
 	{
@@ -595,6 +598,7 @@ public class ServerFace
 				fileOutName= fileOutName.replace("/","_");
 				fileOutName = fileOutName.replace(" ","_");
 
+				fileOutName= translit.cyr2lat(fileOutName);
 
 				resp.header("Content-Type", "application/zip");
 				resp.header("Content-Disposition", "attachment; filename="+fileOutName);

@@ -25,6 +25,7 @@ public class main
 		Properties props = System.getProperties();
 		props.setProperty("org.jboss.logging.provider", "slf4j");
 		props.setProperty("org.apache.poi.util.POILogger","org.apache.poi.util.SLF4JLogger");
+		props.setProperty("file.encoding","UTF-8");
 
 		DOMConfigurator.configure("resources/Config/log4j.xml");
 
