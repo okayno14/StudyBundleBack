@@ -7,6 +7,7 @@ import dataAccess.entity.User;
 import dataAccess.repository.IGroupRepo;
 
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -99,14 +100,15 @@ public class GroupService implements IGroupService
 	@Override
 	public void delete(Group client)
 	{
+		//отвязать пользователей
+		LinkedList<User> users = new LinkedList<>(getUsers(client));
+		setGroupToUsers(users,null);
+		//удалить группу
 		long id = client.getId();
 		if (id != -1L)
 		{
-			if (cache.contains(id))
-			{
-				cache.delete(id);
-			}
 			repo.delete(client);
+			cache.delete(id);
 		}
 	}
 
