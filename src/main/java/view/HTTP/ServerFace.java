@@ -580,16 +580,14 @@ public class ServerFace
 
 			get("/download/:id", (req, resp) ->
 			{
-				//Закоментил, чтобы можно было заливать новые файлы с тестовой html-странички
-				//				User   client       = authentAuthorize(req, resp);
-				//				String token        = client.getToken();
-				//				long   tokenExpires = client.getTokenExpires();
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
 
 				long   bundleID = Long.parseLong(req.params("id"));
 				Bundle b        = bundleController.get(bundleID);
 
-				User client = new User();
-				client.setRole(roleController.getAdmin());
+
 				byte buf[] = bundleController.downloadReport(client, b);
 
 				String fileOutName = b.getFolder();

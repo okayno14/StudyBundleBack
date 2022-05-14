@@ -138,7 +138,7 @@
             u.group as g 
         where 
             g in (:group)  and 
-            c.id = :course
+            c in (course)
     </body>
 </query>
 

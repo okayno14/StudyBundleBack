@@ -109,7 +109,6 @@ INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('PUT', '/user/group/addStudents/:id');
-INSERT INTO "route" (method,urn) VALUES ('PUT', '/user/group/delStudents');
 INSERT INTO "route" (method,urn) VALUES ('DELETE', '/user/group/:id');
 
 INSERT INTO "route" (method,urn) VALUES ('GET', '/user/role');
