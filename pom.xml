@@ -71,6 +71,11 @@
             <artifactId>poi-ooxml</artifactId>
             <version>${poiVersion}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-scratchpad</artifactId>
+            <version>${poiVersion}</version>
+        </dependency>
         <!--JSON-парсер<!-->
         <dependency>
             <groupId>com.google.code.gson</groupId>

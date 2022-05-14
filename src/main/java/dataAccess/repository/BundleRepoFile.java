@@ -1,8 +1,9 @@
 package dataAccess.repository;
 
 import dataAccess.entity.Bundle;
-import exception.DataAccess.*;
+import dataAccess.repository.wordParser.WordParser;
 import exception.DataAccess.FileNotFoundException;
+import exception.DataAccess.*;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -17,11 +18,11 @@ import java.util.zip.ZipOutputStream;
 
 public class BundleRepoFile implements IBundleRepoFile
 {
-	private       WordParser wordParser = new WordParser();
+	private       WordParser wordParserReborn = new WordParser();
 	private       String     storage;
 	private       String     supportedFormats[];
 	private       int        zipFileSizeLimit;
-	private final Charset    charset    = Charset.forName("cp866");
+	private final Charset    charset          = Charset.forName("cp866");
 
 	public BundleRepoFile(String storage, String[] supportedFormats, int zipFileSizeLimit)
 	{
@@ -81,8 +82,10 @@ public class BundleRepoFile implements IBundleRepoFile
 		{
 			buf[i] = (byte) zIN.read();
 		}
-		ByteArrayInputStream doc  = new ByteArrayInputStream(buf);
-		String               text = wordParser.parseDoc(doc);
+		ByteArrayInputStream doc = new ByteArrayInputStream(buf);
+
+		String text = wordParserReborn.parseDoc(name, doc);
+
 		bundle.getReport().setFileNameAndMeta(name, text);
 		doc.reset();
 		FileOutputStream fOut       = new FileOutputStream(bundleDir + "/" + name);
@@ -254,7 +257,8 @@ public class BundleRepoFile implements IBundleRepoFile
 			throw new DataAccessException(new FileNotFoundException(bundle));
 		}
 		String name = storage + "/" + bundle.getFolder() + "/" + bundle.getReport().getFileName();
-		bundle.getReport().setFileNameAndMeta(name, wordParser.parseDoc(name));
+
+		bundle.getReport().setFileNameAndMeta(name, wordParserReborn.parseDoc(name));
 	}
 
 	@Override

@@ -47,11 +47,11 @@ public class Matrix
 
 	public void sortDesc(int column)
 	{
-		if(column>height || height==0)
+		if(column>=width || height==0)
 		{
-			quickSort(0,height-1,width-1);
+			return;
 		}
-
+		quickSort(0,height-1,width-1);
 	}
 
 	public Matrix getSubmatrix(int height)

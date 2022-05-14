@@ -11,6 +11,8 @@ import exception.Business.NoRightException;
 import exception.Business.NoSuchStateAction;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.FileNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -25,6 +27,8 @@ public class BundleService implements IBundleService
 
 	private final int   WINDOW       = 5;
 	private final float CRITICAL_RES = 0.75f;
+
+	private final static Logger logger = LoggerFactory.getLogger(BundleService.class);
 
 	public BundleService(IBundleRepoFile bundleRepoFile, IBundleRepo bundleRepo,
 						 IBundleCache bundleCache)
@@ -185,10 +189,12 @@ public class BundleService implements IBundleService
 		if (bestMatchScore <= CRITICAL_RES)
 		{
 			client.accept();
+			logger.trace("Бандл принят,  результат={}",bestMatchScore);
 		}
 		else
 		{
 			client.cancel();
+			logger.trace("Бандл отклонён,  результат={}",bestMatchScore);
 		}
 		bundleRepo.save(client);
 		return bestMatchBundle;

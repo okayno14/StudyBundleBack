@@ -525,8 +525,6 @@ public class ServerFace
 				}
 				try
 				{
-					//User client = new User();
-					client.setRole(roleController.getAdmin());
 					Bundle bestMatch = bundleController.uploadReport(client, b, buf);
 
 					String      message = "";
@@ -558,8 +556,8 @@ public class ServerFace
 						resp.status(INTERNAL_CRITICAL_SERVER_ERROR);
 						return "Ошибка чтения файлов анализа";
 					}
+					else throw e;
 				}
-				return null;
 			});
 
 			get("/:id", (req, resp) ->
@@ -656,18 +654,19 @@ public class ServerFace
 				resp.status(OBJECT_NOT_FOUND);
 				resp.body(gson.toJson(new Response("Объект с запрошенным id не найден")));
 			}
-			if (e.getCause().getClass() == ZipDamaged.class ||
-					e.getCause().getClass() == ZipFileSizeException.class ||
-					e.getCause().getClass() == FormatNotSupported.class)
-			{
-				resp.status(USER_DATA_NOT_VALID);
-				resp.body(gson.toJson(new Response(e.getMessage())));
-			}
 			if (e.getCause().getClass() == FileNotFoundException.class ||
 					e.getCause().getClass() == IOException.class)
 			{
 				resp.status(INTERNAL_CRITICAL_SERVER_ERROR);
 				resp.body(gson.toJson(new Response(e.getCause().getMessage())));
+			}
+//			if (e.getCause().getClass() == ZipDamaged.class ||
+//					e.getCause().getClass() == ZipFileSizeException.class ||
+//					e.getCause().getClass() == FormatNotSupported.class)
+			else
+			{
+				resp.status(USER_DATA_NOT_VALID);
+				resp.body(gson.toJson(new Response(e.getMessage())));
 			}
 		});
 

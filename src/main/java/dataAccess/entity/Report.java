@@ -91,11 +91,12 @@ public class Report implements Serializable, Similarity
 			HashSet<String> words = new HashSet<String>();
 			words.addAll(text);
 
+			wordCount = text.size();
 			for (Iterator<String> i = words.iterator(); i.hasNext(); )
 			{
 				String w   = i.next();
 				int    buf = wordCount(w);
-				wordCount += buf;
+				//wordCount += buf;
 				textVector.put(w, buf);
 			}
 			uniqueWords = textVector.keySet().size();

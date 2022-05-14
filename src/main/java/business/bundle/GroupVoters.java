@@ -53,6 +53,9 @@ public class GroupVoters
 			}
 			res[i] = numerator /
 					(float) (Math.sqrt((double) denominator1) * Math.sqrt((double) denominator2));
+			numerator=0;
+			denominator1=0;
+			denominator2=0;
 		}
 		return new Row(null, res);
 	}
