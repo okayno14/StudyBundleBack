@@ -23,6 +23,7 @@ import spark.Spark;
 import view.HTTP.request.CreateObjReq;
 import view.HTTP.request.IDReq;
 import view.HTTP.request.LoginReq;
+import view.LoggerBuilder;
 
 import javax.servlet.MultipartConfigElement;
 import java.io.*;
@@ -50,6 +51,8 @@ public class ServerFace
 	private static final int       SEMANTIC_ERROR                 = 422;
 	private static final int       OBJECT_NOT_FOUND               = 404;
 
+	private LoggerBuilder logBuilder;
+
 	private Controller            controller;
 	private IBundleController     bundleController;
 	private IBundleTypeController bundleTypeController;
@@ -66,8 +69,12 @@ public class ServerFace
 
 	private Translit translit = new Translit();
 
-	public ServerFace(ConfMain confMain, Gson gson, GsonBuilder gsonBuilder)
+	public ServerFace(ConfMain confMain, Gson gson, GsonBuilder gsonBuilder,
+					  LoggerBuilder logBuilder)
 	{
+		this.logBuilder = logBuilder;
+		logBuilder.build(confMain.getLogConf().getLog4jConfPath());
+
 		this.http_conf   = confMain.getHttp_conf();
 		zipFileSizeLimit = confMain.getDateAccessConf().getZipFileSizeLimit();
 
@@ -400,7 +407,7 @@ public class ServerFace
 				return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
 			});
 
-			put("/delGroup/:groupID/:id",(req,resp)->
+			put("/delGroup/:groupID/:id", (req, resp) ->
 			{
 				User   client       = authentAuthorize(req, resp);
 				String token        = client.getToken();
@@ -411,7 +418,7 @@ public class ServerFace
 				Group  g        = groupController.get(groupID);
 				Course c        = courseController.get(courseID);
 
-				courseController.delGroup(client,c,g);
+				courseController.delGroup(client, c, g);
 
 				return "f";
 			});
@@ -422,7 +429,7 @@ public class ServerFace
 				String token        = client.getToken();
 				long   tokenExpires = client.getTokenExpires();
 
-				long   courseID     = Long.parseLong(req.params(":id"));
+				long courseID = Long.parseLong(req.params(":id"));
 
 				Course c = courseController.get(courseID);
 				courseController.publish(client, c);
@@ -435,12 +442,12 @@ public class ServerFace
 				String token        = client.getToken();
 				long   tokenExpires = client.getTokenExpires();
 
-				long   courseID     = Long.parseLong(req.params(":id"));
-				Course c = courseController.get(courseID);
+				long               courseID   = Long.parseLong(req.params(":id"));
+				Course             c          = courseController.get(courseID);
 				LinkedList<Course> courseList = new LinkedList<>();
 				courseList.add(c);
 
-				courseController.delete(client,courseList);
+				courseController.delete(client, courseList);
 
 				return "f";
 			});
@@ -481,9 +488,9 @@ public class ServerFace
 					long   tokenExpires = client.getTokenExpires();
 
 					long courseID = Long.parseLong(req.params("courseID"));
-					long reqID = Long.parseLong(req.params("reqID"));
+					long reqID    = Long.parseLong(req.params("reqID"));
 
-					Course     course = courseController.get(courseID);
+					Course      course      = courseController.get(courseID);
 					Requirement requirement = courseController.getReq(reqID);
 
 					courseController.deleteRequirement(client, course, requirement);
@@ -538,14 +545,14 @@ public class ServerFace
 					else if (b.getState() == BundleState.CANCELED)
 					{
 						message = "Отчёт недостаточно оригинален.\n";
-						JsonObject bJSON= gson.toJsonTree(b).getAsJsonObject();
+						JsonObject bJSON         = gson.toJsonTree(b).getAsJsonObject();
 						JsonObject bestMatchJSON = gson.toJsonTree(bestMatch).getAsJsonObject();
 						bundleParser.defend(bJSON);
 						bundleParser.defend(bestMatchJSON);
 						JsonArray arrJSON = new JsonArray();
 						arrJSON.add(bJSON);
 						arrJSON.add(bestMatchJSON);
-					 	data = arrJSON;
+						data = arrJSON;
 					}
 					return gson.toJson(new Response(data, message));
 				}
@@ -556,7 +563,10 @@ public class ServerFace
 						resp.status(INTERNAL_CRITICAL_SERVER_ERROR);
 						return "Ошибка чтения файлов анализа";
 					}
-					else throw e;
+					else
+					{
+						throw e;
+					}
 				}
 			});
 
@@ -589,15 +599,15 @@ public class ServerFace
 				byte buf[] = bundleController.downloadReport(client, b);
 
 				String fileOutName = b.getFolder();
-				fileOutName.replace("/","_");
+				fileOutName.replace("/", "_");
 				fileOutName = fileOutName + ".bow";
-				fileOutName= fileOutName.replace("/","_");
-				fileOutName = fileOutName.replace(" ","_");
+				fileOutName = fileOutName.replace("/", "_");
+				fileOutName = fileOutName.replace(" ", "_");
 
-				fileOutName= translit.cyr2lat(fileOutName);
+				fileOutName = translit.cyr2lat(fileOutName);
 
 				resp.header("Content-Type", "application/zip");
-				resp.header("Content-Disposition", "attachment; filename="+fileOutName);
+				resp.header("Content-Disposition", "attachment; filename=" + fileOutName);
 
 
 				try (OutputStream out = resp.raw().getOutputStream())
@@ -617,25 +627,25 @@ public class ServerFace
 				long   bundleID = Long.parseLong(req.params("id"));
 				Bundle bundle   = bundleController.get(bundleID);
 
-				bundleController.cancel(client,bundle);
+				bundleController.cancel(client, bundle);
 
 				resp.status(OK);
-				return gson.toJson(new Response(gson.toJsonTree(bundle),"Успешно"));
+				return gson.toJson(new Response(gson.toJsonTree(bundle), "Успешно"));
 			});
 
-			delete("/:id",(req,resp)->
+			delete("/:id", (req, resp) ->
 			{
 				User   client       = authentAuthorize(req, resp);
 				String token        = client.getToken();
 				long   tokenExpires = client.getTokenExpires();
 
-				long bundleID = Long.parseLong(req.params("id"));
-				Bundle bundle = bundleController.get(bundleID);
+				long   bundleID = Long.parseLong(req.params("id"));
+				Bundle bundle   = bundleController.get(bundleID);
 
 				bundleController.emptify(client, bundle);
 
 				resp.status(OK);
-				return gson.toJson(new Response(gson.toJsonTree(bundle),"Успешно"));
+				return gson.toJson(new Response(gson.toJsonTree(bundle), "Успешно"));
 			});
 
 		});
@@ -660,9 +670,9 @@ public class ServerFace
 				resp.status(INTERNAL_CRITICAL_SERVER_ERROR);
 				resp.body(gson.toJson(new Response(e.getCause().getMessage())));
 			}
-//			if (e.getCause().getClass() == ZipDamaged.class ||
-//					e.getCause().getClass() == ZipFileSizeException.class ||
-//					e.getCause().getClass() == FormatNotSupported.class)
+			//			if (e.getCause().getClass() == ZipDamaged.class ||
+			//					e.getCause().getClass() == ZipFileSizeException.class ||
+			//					e.getCause().getClass() == FormatNotSupported.class)
 			else
 			{
 				resp.status(USER_DATA_NOT_VALID);

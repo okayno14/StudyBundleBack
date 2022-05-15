@@ -4,6 +4,7 @@ import com.google.gson.*;
 import configuration.ConfMain;
 import configuration.DateAccessConf;
 import configuration.HTTP_Conf;
+import configuration.LogConf;
 
 import java.lang.reflect.Type;
 
@@ -25,15 +26,18 @@ public class ConfMainParser implements JsonSerializer<ConfMain>, JsonDeserialize
 								JsonDeserializationContext deserializationContext)
 			throws JsonParseException
 	{
-		JsonObject json     = jsonElement.getAsJsonObject();
+		JsonObject json = jsonElement.getAsJsonObject();
 
 		HTTP_Conf http_conf = deserializationContext
-				.deserialize(json.getAsJsonObject("HTTP_Conf"), HTTP_Conf.class);
+				.deserialize(json.get("HTTP_Conf"), HTTP_Conf.class);
 		DateAccessConf dateAccessConf = deserializationContext
-				.deserialize(json.getAsJsonObject("DataAccessConf"), DateAccessConf.class);
+				.deserialize(json.get("DataAccessConf"), DateAccessConf.class);
+		LogConf logConf = deserializationContext.deserialize(json.get("LogConf"), LogConf.class);
+
 		String resourcesPath = json.get("resourcesPath").getAsString();
 
-		ConfMain confMain = new ConfMain(http_conf, dateAccessConf, resourcesPath);
+
+		ConfMain confMain = new ConfMain(http_conf, dateAccessConf, logConf, resourcesPath);
 		confMain.makeSubConfigs();
 
 		return confMain;
