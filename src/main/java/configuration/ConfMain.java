@@ -1,48 +1,22 @@
 package configuration;
 
-import com.google.gson.*;
+import com.google.gson.annotations.Expose;
 
-import java.lang.reflect.Type;
-
-public class ConfMain implements JsonSerializer<ConfMain>, JsonDeserializer<ConfMain>
+public class ConfMain
 {
-	private HTTP_Conf      http_conf      = null;
-	private DateAccessConf dateAccessConf = null;
+	@Expose
+	private HTTP_Conf             http_conf;
+	@Expose
+	private DateAccessConf        dateAccessConf;
 	private BusinessConfiguration businessConfiguration = new BusinessConfiguration();
-	private Gson           gson;
+	@Expose
+	private String                resourcesPath         = "resources";
 
-	public ConfMain(Gson gson)
-	{
-		this.gson = gson;
-	}
-
-	public ConfMain(HTTP_Conf http_conf, DateAccessConf dateAccessConf)
+	public ConfMain(HTTP_Conf http_conf, DateAccessConf dateAccessConf, String resourcesPath)
 	{
 		this.http_conf      = http_conf;
 		this.dateAccessConf = dateAccessConf;
-	}
-
-	@Override
-	public JsonElement serialize(ConfMain confMain, Type type,
-								 JsonSerializationContext jsonSerializationContext)
-	{
-		JsonObject json = new JsonObject();
-		json.addProperty("HTTP_Conf", gson.toJson(http_conf));
-		json.addProperty("DataAccessConf", gson.toJson(dateAccessConf));
-
-		return json;
-	}
-
-	@Override
-	public ConfMain deserialize(JsonElement jsonElement, Type type,
-								JsonDeserializationContext jsonDeserializationContext)
-			throws JsonParseException
-	{
-		JsonObject json = jsonElement.getAsJsonObject();
-		http_conf = gson.fromJson(json.getAsJsonObject("HTTP_Conf"), HTTP_Conf.class);
-		dateAccessConf = gson.fromJson(json.getAsJsonObject("DataAccessConf"),DateAccessConf.class);
-
-		return this;
+		this.resourcesPath  = resourcesPath;
 	}
 
 	public HTTP_Conf getHttp_conf()
@@ -58,5 +32,10 @@ public class ConfMain implements JsonSerializer<ConfMain>, JsonDeserializer<Conf
 	public BusinessConfiguration getBusinessConfiguration()
 	{
 		return businessConfiguration;
+	}
+
+	public void makeSubConfigs()
+	{
+		dateAccessConf.hibernateConf = resourcesPath+"/"+dateAccessConf.hibernateConf;
 	}
 }

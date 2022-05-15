@@ -1,3 +1,4 @@
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import configuration.ConfMain;
@@ -36,13 +37,12 @@ public class main
 			gsonBuilder.setPrettyPrinting();
 			gsonBuilder.registerTypeAdapter(DateAccessConf.class, new DateAccessConfJSONParser());
 			gsonBuilder.registerTypeAdapter(HTTP_Conf.class, new HTTP_ConfJSONParser());
+			gsonBuilder.registerTypeAdapter(ConfMain.class,new ConfMainParser());
 			gsonBuilder.excludeFieldsWithoutExposeAnnotation();
 
-			ConfMain confMain = new ConfMain(gsonBuilder.create());
-			gsonBuilder.registerTypeAdapter(ConfMain.class, confMain);
-			confMain = gsonBuilder.create().fromJson(fileReader, confMain.getClass());
+			Gson gson = gsonBuilder.create();
 
-
+			ConfMain confMain = gson.fromJson(fileReader, ConfMain.class);
 
 			ServerFace serverFace = new ServerFace(confMain, gsonBuilder.create(), gsonBuilder);
 		}

@@ -12,8 +12,6 @@ public class HTTP_ConfJSONParser implements JsonSerializer<HTTP_Conf>, JsonDeser
 								 JsonSerializationContext jsonSerializationContext)
 	{
 		JsonObject json = new JsonObject();
-
-		json.addProperty("Port", http_conf.getPort());
 		return json;
 	}
 
@@ -24,8 +22,6 @@ public class HTTP_ConfJSONParser implements JsonSerializer<HTTP_Conf>, JsonDeser
 			throws JsonParseException
 	{
 		JsonObject json = jsonElement.getAsJsonObject();
-
-
 		return new HTTP_Conf(json.get("Port").getAsInt());
 	}
 }
