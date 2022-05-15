@@ -27,7 +27,8 @@ public class Controller
 		groupController      = new GroupController(this, core.getGroupService());
 		roleController       = new RoleController(this, core.getRoleService());
 		userController       = new UserController(this, core.getUserService(),
-												  core.getUserValidationService());
+												  core.getUserValidationService(),
+												  confMain.getBusinessConfiguration());
 
 		//ТЕСТЫ
 	}

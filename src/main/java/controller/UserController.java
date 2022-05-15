@@ -2,6 +2,7 @@ package controller;
 
 import business.IUserService;
 import business.UserValidationService;
+import configuration.BusinessConfiguration;
 import dataAccess.entity.Course;
 import dataAccess.entity.Role;
 import dataAccess.entity.User;
@@ -18,7 +19,7 @@ public class UserController implements IUserController
 	private Controller            controller;
 	private IUserService          service;
 	private UserValidationService userValidationService;
-	private Authoriser            authoriser = new Authoriser();
+	private Authoriser            authoriser;
 
 	private Role GUEST = null;
 	private Role ADMIN = null;
@@ -27,7 +28,8 @@ public class UserController implements IUserController
 
 
 	public UserController(Controller controller, IUserService userService,
-						  UserValidationService userValidationService)
+						  UserValidationService userValidationService,
+						  BusinessConfiguration businessConf)
 	{
 		this.controller            = controller;
 		this.service               = userService;
@@ -35,6 +37,9 @@ public class UserController implements IUserController
 
 		GUEST = controller.roleController.getGuest();
 		ADMIN = controller.roleController.getAdmin();
+
+		authoriser = new Authoriser(businessConf.getTOKEN_LENGTH(),
+									businessConf.getAUTHENTICATION_TIME());
 	}
 
 	@Override
@@ -196,9 +201,9 @@ public class UserController implements IUserController
 	@Override
 	public void delete(User initiator, User target)
 	{
-		if(initiator.getRole().getId()==controller.roleController.getAdmin().getId())
+		if (initiator.getRole().getId() == controller.roleController.getAdmin().getId())
 		{
-			initiator= target;
+			initiator = target;
 		}
 
 		//удалить все бандлы
@@ -206,12 +211,12 @@ public class UserController implements IUserController
 		try
 		{
 			//удалить все курсы
-			List<Course> courseList= controller.courseController.getByOwner(initiator);
-			controller.courseController.delete(initiator,courseList);
+			List<Course> courseList = controller.courseController.getByOwner(initiator);
+			controller.courseController.delete(initiator, courseList);
 		}
 		catch (DataAccessException e)
 		{
-			if(e.getCause().getClass()!= ObjectNotFoundException.class)
+			if (e.getCause().getClass() != ObjectNotFoundException.class)
 			{
 				throw e;
 			}

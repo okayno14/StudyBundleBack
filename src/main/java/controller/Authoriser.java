@@ -4,9 +4,15 @@ import java.util.*;
 
 public class Authoriser
 {
-	private       Map<String, Long> tokens             = new HashMap<>();
-	private final int               tokenLength        = 10;
-	private final long              authenticationTime = 5L * 60 * 1000;
+	private       Map<String, Long> tokens = new HashMap<>();
+	private final int               tokenLength;
+	private final long              authenticationTime;
+
+	public Authoriser(int tokenLength, long authenticationTime)
+	{
+		this.tokenLength        = tokenLength;
+		this.authenticationTime = authenticationTime;
+	}
 
 	private char getNumber()
 	{
@@ -36,7 +42,7 @@ public class Authoriser
 				tokenText.append(getNumber());
 			}
 		} while (tokens.containsKey(tokenText.toString()));
-		tokens.put(tokenText.toString(),System.currentTimeMillis()+authenticationTime);
+		tokens.put(tokenText.toString(), System.currentTimeMillis() + authenticationTime);
 		return tokenText.toString();
 	}
 
@@ -48,7 +54,7 @@ public class Authoriser
 	public long timeLeft(String tokenText)
 	{
 		Long res = tokens.get(tokenText);
-		if(res==null)
+		if (res == null)
 		{
 			return 0L;
 		}
