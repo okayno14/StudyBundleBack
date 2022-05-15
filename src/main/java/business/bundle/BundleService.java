@@ -6,7 +6,6 @@ import dataAccess.entity.*;
 import dataAccess.repository.IBundleRepo;
 import dataAccess.repository.IBundleRepoFile;
 import exception.Business.BusinessException;
-import exception.Business.DeletingImportantData;
 import exception.Business.NoRightException;
 import exception.Business.NoSuchStateAction;
 import exception.DataAccess.DataAccessException;
@@ -25,18 +24,22 @@ public class BundleService implements IBundleService
 
 	private GroupVoters groupVoters = new GroupVoters(null);
 
-	private final int   WINDOW       = 5;
-	private final float CRITICAL_RES = 0.75f;
+	private final int   WINDOW;
+	private final float WORD_ANALYSIS_CRITICAL_VAL;
 
 	private final static Logger logger = LoggerFactory.getLogger(BundleService.class);
 
 	public BundleService(IBundleRepoFile bundleRepoFile, IBundleRepo bundleRepo,
-						 IBundleCache bundleCache)
+						 IBundleCache bundleCache, int WINDOW, float WORD_ANALYSIS_CRITICAL_VAL)
 	{
 		this.bundleRepoFile = bundleRepoFile;
 		this.bundleRepo     = bundleRepo;
 		this.bundleCache    = bundleCache;
+
+		this.WINDOW                     = WINDOW;
+		this.WORD_ANALYSIS_CRITICAL_VAL = WORD_ANALYSIS_CRITICAL_VAL;
 	}
+
 
 	@Override
 	public void add(List<Bundle> bundles)
@@ -186,7 +189,7 @@ public class BundleService implements IBundleService
 
 		bestMatchBundle = (Bundle) res.getRows()[0].getObj();
 		float bestMatchScore = res.getRows()[0].getCortege()[methodsQuantity - 1];
-		if (bestMatchScore <= CRITICAL_RES)
+		if (bestMatchScore <= WORD_ANALYSIS_CRITICAL_VAL)
 		{
 			client.accept();
 			logger.trace("Бандл принят,  результат={}",bestMatchScore);

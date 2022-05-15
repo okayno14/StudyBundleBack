@@ -81,19 +81,21 @@ public class Core
 		cacheController.setUserCache(userCache);
 
 		//сборка сервисов
+		BusinessConfiguration businessConf = confMain.getBusinessConfiguration();
+
 		IBundleRepoFile bundleRepoFile = new BundleRepoFile(dateAccessConf.getStoragePath(),
 															dateAccessConf.getSupportedFormats(),
 															dateAccessConf.getZipFileSizeLimit());
 		bundleService     = new BundleService(bundleRepoFile, new BundleRepoHiber(sessionFactory),
-											   bundleCache);
+											  bundleCache, businessConf.getMETA_ANALYSIS_WINDOW(),
+											  businessConf.getWORD_ANALYSIS_CRITICAL_VAL());
 		bundleTypeService = new BundleTypeService(new BundleTypeRepoHiber(sessionFactory),
 												  bundleTypeCache);
 		courseService     = new CourseService(new CourseRepoHiber(sessionFactory), courseCache,
 											  new RequirementRepoHiber(sessionFactory), reqCache);
 		groupService      = new GroupService(new GroupRepoHiber(sessionFactory), groupCache);
 		roleService       = new RoleService(new RoleRepoHiber(sessionFactory), roleCache,
-											confMain.getBusinessConfiguration()
-													 .getReservedRoleId());
+											businessConf.getReservedRoleId());
 		userService       = new UserService(new UserRepoHiber(sessionFactory), userCache);
 	}
 
