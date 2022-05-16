@@ -62,12 +62,19 @@ public class Main
 				File mainFolder = new File(
 						Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
 				confMainJSON = getConfMainJSON(mainFolder, -1, maxDepth, confName);
+
+				System.out.println("No confPath in arg. Trying get confPath in jar location");
+				System.out.print("Root of search is: ");
 				System.out.println(mainFolder.getAbsolutePath());
+
 				if (confMainJSON == null)
 				{
 					mainFolder   = new File(props.getProperty("user.dir"));
 					confMainJSON = getConfMainJSON(mainFolder, -1, maxDepth,
 												   confName);
+
+					System.out.println("No confPath in jar location. Trying get confPath in user.d");
+					System.out.print("Root of search is: ");
 					System.out.println(mainFolder.getAbsolutePath());
 				}
 
@@ -76,6 +83,7 @@ public class Main
 			{
 				confMainJSON = new File(arg[0]);
 			}
+			System.out.print("Finded confPath is: ");
 			System.out.println(confMainJSON.getAbsolutePath());
 			try (BufferedReader fileReader = new BufferedReader(new FileReader(confMainJSON)))
 			{
