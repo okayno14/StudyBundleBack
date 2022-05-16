@@ -53,6 +53,8 @@ public class UserController implements IUserController
 	{
 		Iterator<User> i     = userList.iterator();
 		int            count = 0;
+		List<Role> roleList= controller.roleController.get();
+
 		while (i.hasNext())
 		{
 			try
@@ -63,6 +65,23 @@ public class UserController implements IUserController
 				{
 					continue;
 				}
+				long roleID = client.getRole().getId();
+				Role role = null;
+
+				Iterator<Role> roleIterator = roleList.iterator();
+				Role toCompare = roleIterator.next();
+
+				while(!role.equals(toCompare) && roleIterator.hasNext())
+				{
+					toCompare = roleIterator.next();
+				}
+
+				if(role==null)
+				{
+					throw new BusinessException(null);
+				}
+
+				client.setRole(toCompare);
 				service.add(client);
 			}
 			catch (BusinessException e)
