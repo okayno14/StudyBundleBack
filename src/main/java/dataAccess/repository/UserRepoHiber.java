@@ -50,6 +50,7 @@ public class UserRepoHiber extends RepoHiberBase implements IUserRepo
 		catch (PersistenceException ee)
 		{
 			t.rollback();
+			user.setId(-1L);
 			if (ee.getCause() instanceof ConstraintViolationException)
 			{
 				throw new DataAccessException(

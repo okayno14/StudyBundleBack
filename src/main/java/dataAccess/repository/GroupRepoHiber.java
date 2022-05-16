@@ -49,6 +49,7 @@ public class GroupRepoHiber extends RepoHiberBase implements IGroupRepo
 		catch (PersistenceException e)
 		{
 			t.rollback();
+			group.setId(-1L);
 			if (e.getCause() instanceof ConstraintViolationException)
 			{
 				throw new DataAccessException(

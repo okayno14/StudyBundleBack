@@ -35,9 +35,9 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	@Override
 	public void  save(Course course)
 	{
+		Transaction t       = getOrBegin();
 		try
 		{
-			Transaction t       = getOrBegin();
 			Session     session = sessionFactory.getCurrentSession();
 			if (course.getId() == -1L)
 			{
@@ -55,6 +55,8 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 		}
 		catch (PersistenceException e)
 		{
+			t.rollback();
+			course.setId(-1L);
 			if (e.getCause() instanceof ConstraintViolationException)
 			{
 				throw new DataAccessException(
