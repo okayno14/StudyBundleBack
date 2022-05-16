@@ -354,8 +354,7 @@ public class ServerFace
 					{
 						User  client = authentAuthorize(req, resp);
 						long  id     = Long.parseLong(req.params("id"));
-						Group toDel  = new Group();
-						toDel.setId(id);
+						Group toDel  = groupController.get(id);
 						groupController.delete(toDel);
 						resp.status(OK);
 						return gson.toJson(new Response("Успех"));

@@ -66,7 +66,8 @@ public class UserController implements IUserController
 					continue;
 				}
 				long roleID = client.getRole().getId();
-				Role role = null;
+				Role role = new Role();
+				role.setId(roleID);
 
 				Iterator<Role> roleIterator = roleList.iterator();
 				Role toCompare = roleIterator.next();
@@ -75,13 +76,12 @@ public class UserController implements IUserController
 				{
 					toCompare = roleIterator.next();
 				}
-
-				if(role==null)
+				if(!role.equals(toCompare))
 				{
 					throw new BusinessException(null);
 				}
-
-				client.setRole(toCompare);
+				role=toCompare;
+				client.setRole(role);
 				service.add(client);
 			}
 			catch (BusinessException e)
