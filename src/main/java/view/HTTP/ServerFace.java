@@ -168,7 +168,7 @@ public class ServerFace
 					{
 						flag = flag && roleRoute_urn.contains(reqParam);
 					}
-					flag = flag && roleRoute_urn.contains(reqName.toString());
+					flag = flag && roleRoute_urn.contains(reqName.toString().toLowerCase());
 				}
 
 				if(roleRoute.getMethod().toString().equals(any))
