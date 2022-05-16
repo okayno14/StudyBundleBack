@@ -113,13 +113,13 @@ public class BundleService implements IBundleService
 	@Override
 	public void groupMovedFromCourse(User initiator, List<Course> courseList, List<Group> groupList)
 	{
-		for(Course c: courseList)
+		for (Course c : courseList)
 		{
-			isInitiatorINCourseACL(initiator,c);
+			isInitiatorINCourseACL(initiator, c);
 		}
 		List<Bundle> bundleList = bundleRepo.delete(courseList, groupList);
 
-		for(Bundle b: bundleList)
+		for (Bundle b : bundleList)
 		{
 			bundleCache.delete(b.getId());
 		}
@@ -132,7 +132,7 @@ public class BundleService implements IBundleService
 		{
 			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
-		isInitiatorInACL_OR_CourseAUTHOR(initiator, client);
+		isInitiatorInBundleACL_OR_InCourseACL(initiator, client);
 
 		return bundleRepoFile.get(client);
 	}
@@ -144,7 +144,7 @@ public class BundleService implements IBundleService
 		{
 			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
 		}
-		isInitiatorInACL(initiator, client);
+		isInitiatorInBundleACL_OR_InCourseACL(initiator, client);
 		bundleRepoFile.save(client, document);
 		Bundle bestMatchBundle = new Bundle();
 		//написать алгоритм сверки
@@ -192,12 +192,12 @@ public class BundleService implements IBundleService
 		if (bestMatchScore <= WORD_ANALYSIS_CRITICAL_VAL)
 		{
 			client.accept();
-			logger.trace("Бандл принят,  результат={}",bestMatchScore);
+			logger.trace("Бандл принят,  результат={}", bestMatchScore);
 		}
 		else
 		{
 			client.cancel();
-			logger.trace("Бандл отклонён,  результат={}",bestMatchScore);
+			logger.trace("Бандл отклонён,  результат={}", bestMatchScore);
 		}
 		bundleRepo.save(client);
 		return bestMatchBundle;
@@ -237,12 +237,12 @@ public class BundleService implements IBundleService
 	@Override
 	public void delete(User initiator, User target)
 	{
-		if(initiator.getId()!= target.getId())
+		if (initiator.getId() != target.getId())
 		{
 			throw new BusinessException(new NoRightException());
 		}
-		List<Bundle> bundleList =  bundleRepo.delete(target);
-		for(Bundle b: bundleList)
+		List<Bundle> bundleList = bundleRepo.delete(target);
+		for (Bundle b : bundleList)
 		{
 			bundleCache.delete(b.getId());
 		}
@@ -267,13 +267,16 @@ public class BundleService implements IBundleService
 		client.getRights(initiator);
 	}
 
-	private void isInitiatorInACL_OR_CourseAUTHOR(User initiator, Bundle client)
+	private void isInitiatorInBundleACL_OR_InCourseACL(User initiator, Bundle client)
 			throws BusinessException
 	{
-		User courseAuthor = client.getCourse().getAuthor();
-		if (!initiator.equals(courseAuthor) && !client.existsACE(initiator))
+		try
 		{
-			throw new BusinessException(new NoRightException());
+			isInitiatorInACL(initiator,client);
+		}
+		catch (BusinessException e)
+		{
+			isInitiatorINCourseACL(initiator,client.getCourse());
 		}
 	}
 }
