@@ -163,13 +163,16 @@ public class CourseRepoHiber extends RepoHiberBase implements ICourseRepo
 	public void delete(List<Course> courseList)
 	{
 		Transaction t       = getOrBegin();
+		HQL = "delete from CourseACL as cACL where cACL.course in (:course)";
+		q = sessionFactory.getCurrentSession().createQuery(HQL);
+		q.setParameter("course", courseList);
+		q.executeUpdate();
+
 		HQL = "delete from Course as c where c in (:course)";
 		q = sessionFactory.getCurrentSession().createQuery(HQL);
 		q.setParameter("course", courseList);
 		q.executeUpdate();
 
-		//Session     session = sessionFactory.getCurrentSession();
-		//session.delete(course);
 		t.commit();
 	}
 }
