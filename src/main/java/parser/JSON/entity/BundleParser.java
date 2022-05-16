@@ -19,7 +19,6 @@ public class BundleParser implements JsonSerializer<Bundle>
 								 JsonSerializationContext jsonSerializationContext)
 	{
 		JsonObject jsonObject = new JsonObject();
-		jsonObject.addProperty("courseID",bundle.getCourse().getId());
 		return jsonObject;
 	}
 
@@ -29,5 +28,10 @@ public class BundleParser implements JsonSerializer<Bundle>
 		{
 			bundleACLParser.defend(bACE.getAsJsonObject());
 		}
+	}
+
+	public void filter(JsonObject jsonObject, Bundle source)
+	{
+		jsonObject.addProperty("courseID",source.getCourse().getId());
 	}
 }

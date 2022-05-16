@@ -205,6 +205,15 @@ public class ServerFace
 		return gson.toJson(new Response("Успех"));
 	}
 
+	private JsonObject parseWithFilterAndDefence(Bundle bundle)
+	{
+		JsonObject jsonObject = gson.toJsonTree(bundle,Bundle.class).getAsJsonObject();
+		bundleParser.defend(jsonObject);
+		bundleParser.filter(jsonObject,bundle);
+		return jsonObject;
+	}
+
+
 	public void endpoints()
 	{
 		//Настрока CORS
@@ -539,19 +548,14 @@ public class ServerFace
 					if (b.getState() == BundleState.ACCEPTED)
 					{
 						message = "Отчёт успешно прошёл проверку";
-						data    = gson.toJsonTree(b);
-						bundleParser.defend(data.getAsJsonObject());
+						data    = parseWithFilterAndDefence(b);
 					}
 					else if (b.getState() == BundleState.CANCELED)
 					{
 						message = "Отчёт недостаточно оригинален.\n";
-						JsonObject bJSON         = gson.toJsonTree(b).getAsJsonObject();
-						JsonObject bestMatchJSON = gson.toJsonTree(bestMatch).getAsJsonObject();
-						bundleParser.defend(bJSON);
-						bundleParser.defend(bestMatchJSON);
 						JsonArray arrJSON = new JsonArray();
-						arrJSON.add(bJSON);
-						arrJSON.add(bestMatchJSON);
+						arrJSON.add(parseWithFilterAndDefence(b));
+						arrJSON.add(parseWithFilterAndDefence(bestMatch));
 						data = arrJSON;
 					}
 					return gson.toJson(new Response(data, message));
@@ -580,8 +584,8 @@ public class ServerFace
 
 				Bundle res = bundleController.get(bundleID);
 
-				JsonObject bundleJSON = gson.toJsonTree(res).getAsJsonObject();
-				bundleParser.defend(bundleJSON);
+				JsonObject bundleJSON = parseWithFilterAndDefence(res);
+
 				resp.status(OK);
 				return gson.toJson(new Response(bundleJSON, "Успех"));
 			});
@@ -628,9 +632,10 @@ public class ServerFace
 				Bundle bundle   = bundleController.get(bundleID);
 
 				bundleController.cancel(client, bundle);
+				JsonObject jsonObject = parseWithFilterAndDefence(bundle);
 
 				resp.status(OK);
-				return gson.toJson(new Response(gson.toJsonTree(bundle), "Успешно"));
+				return gson.toJson(new Response(jsonObject, "Успешно"));
 			});
 
 			delete("/:id", (req, resp) ->
@@ -644,8 +649,10 @@ public class ServerFace
 
 				bundleController.emptify(client, bundle);
 
+				JsonObject jsonObject = parseWithFilterAndDefence(bundle);
+
 				resp.status(OK);
-				return gson.toJson(new Response(gson.toJsonTree(bundle), "Успешно"));
+				return gson.toJson(new Response(jsonObject, "Успешно"));
 			});
 
 		});
