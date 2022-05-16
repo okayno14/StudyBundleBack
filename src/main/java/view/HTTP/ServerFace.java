@@ -130,54 +130,87 @@ public class ServerFace
 			{
 				halt(NO_RIGHT_FOR_OPERATION, "У пользователя нет права на это действие");
 			}
-			Route route = client.getRole().getRouteList().get(0);
-			if (route.getMethod().toString().equals(any) && route.getUrn().equals(any))
+			Route firstRoleRoute = client.getRole().getRouteList().get(0);
+			if (firstRoleRoute.getMethod().toString().equals(any) && firstRoleRoute.getUrn().equals(any))
 			{
 				return client;
 			}
 
-			Set<String> params  = req.params().keySet();
-			String      urn     = req.uri();
-			Pattern     pattern = Pattern.compile("/[a-zA-z0-9]+");
-			Matcher     matcher = pattern.matcher(urn);
+			Set<String>  reqParams = req.params().keySet();
+			String       req_URN    = req.uri();
+			StringBuffer reqName   = new StringBuffer();
 
-			List<String> parts = new LinkedList<>();
+			Pattern      pattern = Pattern.compile("/[a-zA-z0-9]+");
+			Matcher      matcher = pattern.matcher(req_URN);
+			List<String> parts   = new LinkedList<>();
 			while (matcher.find())
 			{
 				parts.add(matcher.group());
 			}
-			StringBuffer     name = new StringBuffer();
 			Iterator<String> iter = parts.iterator();
-			for (int i = 0; i < parts.size() - params.size() && iter.hasNext(); i++)
+			for (int i = 0; i < parts.size() - reqParams.size() && iter.hasNext(); i++)
 			{
-				name.append(iter.next());
+				reqName.append(iter.next());
 			}
 
-			Iterator<Route> routeIterator = client.getRole().getRouteList().iterator();
-			while (routeIterator.hasNext())
+			for(Route roleRoute:client.getRole().getRouteList())
 			{
-				route = routeIterator.next();
-
+				String roleRoute_urn = roleRoute.getUrn().toLowerCase();
 				boolean flag = true;
 
-				if (!route.getUrn().equals(any))
+				if(roleRoute_urn.equalsIgnoreCase(any))
 				{
-					iter = params.iterator();
-					while (iter.hasNext())
+					flag=flag&&true;
+				}
+				else
+				{
+					for (String reqParam : reqParams)
 					{
-						flag = flag && route.getUrn().contains(iter.next());
+						flag = flag && roleRoute_urn.contains(reqParam);
 					}
-					flag = flag && route.getUrn().contains(name.toString());
+					flag = flag && roleRoute_urn.contains(reqName.toString());
 				}
-				if (!route.getMethod().toString().equals(any))
+
+				if(roleRoute.getMethod().toString().equals(any))
 				{
-					flag = flag && route.getMethod().toString().equals(req.requestMethod());
+					flag=flag&&true;
 				}
+				else
+				{
+					flag = flag && roleRoute.getMethod().toString().equals(req.requestMethod());
+				}
+
 				if (flag)
 				{
 					return client;
 				}
 			}
+
+//			Iterator<Route> routeIterator = client.getRole().getRouteList().iterator();
+//			while (routeIterator.hasNext())
+//			{
+//				route = routeIterator.next();
+//				//String route_urn = route.getUrn().toLowerCase();
+//				boolean flag = true;
+//
+//				if (!route.getUrn().equals(any))
+//				{
+//					for (String param : ReqParams)
+//					{
+//						flag = flag && route.getUrn().contains(param);
+//					}
+//
+//					flag = flag && route.getUrn().contains(ReqName.toString());
+//				}
+//				if (!route.getMethod().toString().equals(any))
+//				{
+//					flag = flag && route.getMethod().toString().equals(req.requestMethod());
+//				}
+//				if (flag)
+//				{
+//					return client;
+//				}
+//			}
 			halt(NO_RIGHT_FOR_OPERATION, "У пользователя нет права на это действие");
 		}
 		catch (ControllerException e)
@@ -207,9 +240,9 @@ public class ServerFace
 
 	private JsonObject parseWithFilterAndDefence(Bundle bundle)
 	{
-		JsonObject jsonObject = gson.toJsonTree(bundle,Bundle.class).getAsJsonObject();
+		JsonObject jsonObject = gson.toJsonTree(bundle, Bundle.class).getAsJsonObject();
 		bundleParser.defend(jsonObject);
-		bundleParser.filter(jsonObject,bundle);
+		bundleParser.filter(jsonObject, bundle);
 		return jsonObject;
 	}
 
