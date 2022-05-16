@@ -5,6 +5,7 @@ import com.google.gson.annotations.Expose;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 public class Requirement implements Serializable
@@ -12,7 +13,7 @@ public class Requirement implements Serializable
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
 	@Expose
-	private long       id = -1;
+	private long       id = -1L;
 	@Expose
 	private int        quantity;
 	@ManyToOne
@@ -20,6 +21,10 @@ public class Requirement implements Serializable
 				referencedColumnName = "id")
 	@Expose
 	private BundleType bundleType;
+
+	@ManyToMany(fetch = FetchType.LAZY,
+				mappedBy = "requirementSet")
+	private Set<Course> courseSet;
 
 	public Requirement()
 	{

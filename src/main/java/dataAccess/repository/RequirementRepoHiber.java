@@ -23,14 +23,7 @@ public class RequirementRepoHiber extends RepoHiberBase implements IRequirementR
 	public void save(Requirement req)
 	{
 		Transaction t = getOrBegin();
-		if (req.getId() != -1L)
-		{
-			sessionFactory.getCurrentSession().merge(req);
-		}
-		else
-		{
-			sessionFactory.getCurrentSession().save(req);
-		}
+		sessionFactory.getCurrentSession().saveOrUpdate(req);
 		t.commit();
 	}
 
@@ -46,20 +39,28 @@ public class RequirementRepoHiber extends RepoHiberBase implements IRequirementR
 	}
 
 	@Override
-	public void delete(Requirement req)
+	public List<Requirement> deleteNotLinked(List<Requirement> reqList)
 	{
 		Transaction t = getOrBegin();
-		sessionFactory.getCurrentSession().delete(req);
-		t.commit();
-	}
-
-	@Override
-	public long countReferences(Requirement req)
-	{
-		Transaction t = getOrBegin();
-		HQL="select count (c) from Course as c where c.requirement.id = :id";
+		HQL=
+			"        select\n" +
+			"            req"+
+			"        from \n" +
+			"            Requirement as req\n" +
+			"        where\n" +
+			"            size(req.courseSet)=1 and\n" +
+			"            req in (:requirement)";
 		q=sessionFactory.getCurrentSession().createQuery(HQL);
-		q.setParameter("id",req.getId());
-		return (long) q.uniqueResult();
+		q.setParameter("requirement",reqList);
+		List<Requirement>  res = q.getResultList();
+		if(res.size()!=0)
+		{
+			HQL="delete from Requirement as req where req in (:requirement)";
+			q=sessionFactory.getCurrentSession().createQuery(HQL);
+			q.setParameter("requirement",res);
+			q.executeUpdate();
+		}
+		t.commit();
+		return res;
 	}
 }

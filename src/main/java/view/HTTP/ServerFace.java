@@ -6,9 +6,15 @@ import configuration.ConfMain;
 import configuration.HTTP_Conf;
 import controller.*;
 import dataAccess.entity.*;
+import exception.Business.BusinessException;
+import exception.Business.DeletingImportantData;
+import exception.Business.NoRightException;
+import exception.Business.NoSuchStateAction;
 import exception.Controller.ControllerException;
 import exception.Controller.TokenNotFound;
 import exception.DataAccess.DataAccessException;
+import exception.DataAccess.FileNotFoundException;
+import exception.DataAccess.ObjectNotFoundException;
 import parser.JSON.CreateObjReqParser;
 import parser.JSON.LoginReqParser;
 import parser.JSON.ResponseParser;
@@ -16,10 +22,12 @@ import parser.JSON.entity.*;
 import spark.Request;
 import spark.Spark;
 import view.HTTP.request.CreateObjReq;
+import view.HTTP.request.IDReq;
 import view.HTTP.request.LoginReq;
+import view.LoggerBuilder;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import javax.servlet.MultipartConfigElement;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -32,14 +40,20 @@ import static spark.Spark.*;
 
 public class ServerFace
 {
-	private Controller controller;
+	private              HTTP_Conf http_conf;
+	private final        int       zipFileSizeLimit;
+	private final        String    any                            = "ANY";
+	private static final int       OK                             = 200;
+	private static final int       NO_RIGHT_FOR_OPERATION         = 403;
+	private static final int       AUTHENTICATION_ERROR           = 401;
+	private static final int       USER_DATA_NOT_VALID            = 400;
+	private static final int       INTERNAL_CRITICAL_SERVER_ERROR = 500;
+	private static final int       SEMANTIC_ERROR                 = 422;
+	private static final int       OBJECT_NOT_FOUND               = 404;
 
-	private HTTP_Conf   http_conf;
-	private GsonBuilder gsonBuilder;
-	private Gson        gson;
+	private LoggerBuilder logBuilder;
 
-	private UserParser userParser;
-
+	private Controller            controller;
 	private IBundleController     bundleController;
 	private IBundleTypeController bundleTypeController;
 	private ICourseController     courseController;
@@ -47,19 +61,28 @@ public class ServerFace
 	private IUserController       userController;
 	private IRoleController       roleController;
 
-	private final String any = "ANY";
+	private GsonBuilder  gsonBuilder;
+	private Gson         gson;
+	private UserParser   userParser;
+	private BundleParser bundleParser;
+	private CourseParser courseParser;
 
-	public ServerFace(HTTP_Conf http_conf, ConfMain confMain, Gson gson, GsonBuilder gsonBuilder)
+	private Translit translit = new Translit();
+
+	public ServerFace(ConfMain confMain, Gson gson, GsonBuilder gsonBuilder,
+					  LoggerBuilder logBuilder)
 	{
-		this.http_conf   = http_conf;
-		this.gson        = gson;
-		this.gsonBuilder = gsonBuilder;
+		this.logBuilder = logBuilder;
+		logBuilder.build(confMain.getLogConf().getLog4jConfPath());
+
+		this.http_conf   = confMain.getHttp_conf();
+		zipFileSizeLimit = confMain.getDateAccessConf().getZipFileSizeLimit();
+
 		//применяем параметры конфигурации для сервера
 		Spark.port(http_conf.getPort());
 
 		//строим контроллер
-		controller = new Controller(confMain);
-
+		controller           = new Controller(confMain);
 		bundleController     = controller.getBundleController();
 		bundleTypeController = controller.getBundleTypeController();
 		courseController     = controller.getCourseController();
@@ -67,8 +90,9 @@ public class ServerFace
 		userController       = controller.getUserController();
 		roleController       = controller.getRoleController();
 
-
 		//регистрация парсеров JSON для серверных записей
+		this.gson        = gson;
+		this.gsonBuilder = gsonBuilder;
 		gsonBuilder.registerTypeAdapter(Response.class, new ResponseParser(gsonBuilder.create()));
 		gsonBuilder.registerTypeAdapter(LoginReq.class, new LoginReqParser());
 		gsonBuilder.registerTypeAdapter(CreateObjReqParser.class, new CreateObjReqParser());
@@ -81,14 +105,22 @@ public class ServerFace
 		gsonBuilder.registerTypeAdapter(Group.class, groupParser);
 		gsonBuilder.registerTypeAdapter(BundleType.class, new BundleTypeParser());
 		gsonBuilder.registerTypeAdapter(Requirement.class, new RequirementParser(gson));
-		gsonBuilder.registerTypeAdapter(CourseACL.class, new CourseACL_Parser(gson));
-		gsonBuilder.registerTypeAdapter(Course.class, new CourseParser(gson));
+		CourseACL_Parser courseACL_parser = new CourseACL_Parser(gson, userParser);
+		gsonBuilder.registerTypeAdapter(CourseACL.class, courseACL_parser);
+		courseParser = new CourseParser(gson, courseACL_parser);
+		gsonBuilder.registerTypeAdapter(Course.class, courseParser);
+		BundleACLParser bundleACLParser = new BundleACLParser(gson, userParser);
+		gsonBuilder.registerTypeAdapter(BundleACL.class, bundleACLParser);
+		bundleParser = new BundleParser(bundleACLParser);
+		gsonBuilder.registerTypeAdapter(Bundle.class, bundleParser);
+
 
 		//стартуем сервер
 		endpoints();
 	}
 
-	private User initClient(Request req, spark.Response resp)
+	//Аутентификация и авторизация клиента
+	private User authentAuthorize(Request req, spark.Response resp)
 	{
 		try
 		{
@@ -96,70 +128,103 @@ public class ServerFace
 			//если пользователь персистентен и не подтвердил почту, то ему нельзя работать в системе
 			if (!client.isEmailState() && client.getId() != -1)
 			{
-				halt(401, "У пользователя нет права на это действие");
+				halt(NO_RIGHT_FOR_OPERATION, "У пользователя нет права на это действие");
 			}
-			Route route = client.getRole().getRouteList().get(0);
-			if (route.getMethod().toString().equals(any) && route.getUrn().equals(any))
+			Route firstRoleRoute = client.getRole().getRouteList().get(0);
+			if (firstRoleRoute.getMethod().toString().equals(any) && firstRoleRoute.getUrn().equals(any))
 			{
 				return client;
 			}
 
-			Set<String> params  = req.params().keySet();
-			String      urn     = req.uri();
-			Pattern     pattern = Pattern.compile("/[a-zA-z0-9]+");
-			Matcher     matcher = pattern.matcher(urn);
+			Set<String>  reqParams = req.params().keySet();
+			String       req_URN    = req.uri();
+			StringBuffer reqName   = new StringBuffer();
 
-			List<String> parts = new LinkedList<>();
+			Pattern      pattern = Pattern.compile("/[a-zA-z0-9]+");
+			Matcher      matcher = pattern.matcher(req_URN);
+			List<String> parts   = new LinkedList<>();
 			while (matcher.find())
 			{
 				parts.add(matcher.group());
 			}
-			StringBuffer     name = new StringBuffer();
 			Iterator<String> iter = parts.iterator();
-			for (int i = 0; i < parts.size() - params.size() && iter.hasNext(); i++)
+			for (int i = 0; i < parts.size() - reqParams.size() && iter.hasNext(); i++)
 			{
-				name.append(iter.next());
+				reqName.append(iter.next());
 			}
 
-			Iterator<Route> routeIterator = client.getRole().getRouteList().iterator();
-			while (routeIterator.hasNext())
+			for(Route roleRoute:client.getRole().getRouteList())
 			{
-				route = routeIterator.next();
-
+				String roleRoute_urn = roleRoute.getUrn().toLowerCase();
 				boolean flag = true;
 
-				if (!route.getUrn().equals(any))
+				if(roleRoute_urn.equalsIgnoreCase(any))
 				{
-					iter = params.iterator();
-					while (iter.hasNext())
+					flag=flag&&true;
+				}
+				else
+				{
+					for (String reqParam : reqParams)
 					{
-						flag = flag && route.getUrn().contains(iter.next());
+						flag = flag && roleRoute_urn.contains(reqParam);
 					}
-					flag = flag && route.getUrn().contains(name.toString());
+					flag = flag && roleRoute_urn.contains(reqName.toString().toLowerCase());
 				}
-				if (!route.getMethod().toString().equals(any))
+
+				if(roleRoute.getMethod().toString().equals(any))
 				{
-					flag = flag && route.getMethod().toString().equals(req.requestMethod());
+					flag=flag&&true;
 				}
+				else
+				{
+					flag = flag && roleRoute.getMethod().toString().equals(req.requestMethod());
+				}
+
 				if (flag)
 				{
 					return client;
 				}
 			}
-			halt(401, "У пользователя нет права на это действие");
+			halt(NO_RIGHT_FOR_OPERATION, "У пользователя нет права на это действие");
 		}
 		catch (ControllerException e)
 		{
 			if (e.getCause() instanceof TokenNotFound)
 			{
-				halt(401, "Закончился срок аренды токена");
+				halt(AUTHENTICATION_ERROR, "Закончился срок аренды токена");
 			}
 		}
 		return null;
 	}
 
+	private String setGroupToUser(Request req, spark.Response resp, Group group)
+	{
+		IDReq idReq = gson.fromJson(req.body(), IDReq.class);
+		if (group != null)
+		{
+			groupController.addUsers(group, idReq.getArr());
+		}
+		else
+		{
+			groupController.deleteUsers(idReq.getArr());
+		}
+		resp.status(OK);
+		return gson.toJson(new Response("Успех"));
+	}
+
+	private JsonObject parseWithFilterAndDefence(Bundle bundle)
+	{
+		JsonObject jsonObject = gson.toJsonTree(bundle, Bundle.class).getAsJsonObject();
+		bundleParser.defend(jsonObject);
+		bundleParser.filter(jsonObject, bundle);
+		return jsonObject;
+	}
+
+
 	public void endpoints()
 	{
+		//Настрока CORS
+		//Если сессии не было или токен удалён, то сгенерировать гостя
 		before("/*", (req, resp) ->
 		{
 			//CORS
@@ -169,31 +234,13 @@ public class ServerFace
 						"Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin,");
 			resp.header("Access-Control-Allow-Credentials", "true");
 
-			//Получение токена сессии и проверка прав токена на метод API
-			try
+			//Если сессия новая, то создаём её и уинициируем значение токена
+			User client = null;
+			if (req.session().isNew() || !req.session().attributes().contains("token"))
 			{
-				//Поиск по токену пользователя в сессии
-				User client;
-
-				if (req.session().isNew() || !req.session().attributes().contains("token"))
-				{
-					req.session(true);
-					client = userController.getGuestUser();
-					req.session().attribute("token", client.getToken());
-				}
-				else
-				{
-
-				}
-				//Проверка роли пользователя из сессии из запрошенного им метода
-			}
-			catch (ControllerException e)
-			{
-				if (e.getCause() instanceof TokenNotFound)
-				{
-					//добавить обработку
-					System.out.println("токена нет");
-				}
+				req.session(true);
+				client = userController.getGuestUser();
+				req.session().attribute("token", client.getToken());
 			}
 		});
 
@@ -213,87 +260,115 @@ public class ServerFace
 			return "OK";
 		});
 
-		post("/user", ((req, resp) ->
-		{
-			User       client = initClient(req, resp);
-			Type       t      = new TypeToken<List<User>>(){}.getType();
-			List<User> data   = gson.fromJson(req.body(), t);
-			userController.add(data);
-			JsonArray      jsonArray = new JsonArray();
-			Iterator<User> iterator  = data.iterator();
-			while (iterator.hasNext())
-			{
-				JsonObject jsonObject = gson.toJsonTree(iterator.next(), User.class)
-											.getAsJsonObject();
-				userParser.defendData(jsonObject);
-				jsonArray.add(jsonObject);
-			}
-			resp.status(200);
-			return gson.toJson(new Response(jsonArray));
-		}));
-
 		path("/user", () ->
 		{
+			post("/", ((req, resp) ->
+			{
+				User client = authentAuthorize(req, resp);
+				Type t = new TypeToken<List<User>>()
+				{
+				}.getType();
+				List<User> data = gson.fromJson(req.body(), t);
+				userController.add(data);
+				JsonArray      jsonArray = new JsonArray();
+				Iterator<User> iterator  = data.iterator();
+				while (iterator.hasNext())
+				{
+					JsonObject jsonObject = gson.toJsonTree(iterator.next(), User.class)
+												.getAsJsonObject();
+					userParser.defendData(jsonObject);
+					jsonArray.add(jsonObject);
+				}
+				resp.status(OK);
+				return gson.toJson(new Response(jsonArray));
+			}));
+
 			put("/login", (req, resp) ->
 			{
-				User     client   = initClient(req, resp);
-				String   token    = req.session().attribute("token");
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
 				LoginReq loginReq = gson.fromJson(req.body(), LoginReq.class);
-				if (userController.login(token, loginReq.getEmail(), loginReq.getPass()))
+				if (userController
+						.login(token, tokenExpires, loginReq.getEmail(), loginReq.getPass()))
 				{
-					resp.status(200);
+					resp.status(OK);
 					JsonElement data = gson.toJsonTree(userController.getByToken(token));
 					return gson.toJson(new Response(data, "Успешно"));
 				}
-				resp.status(401);
+				resp.status(AUTHENTICATION_ERROR);
 				return gson.toJson(new Response(
 						"У пользователя уже есть токен. Или данные не введены корректно"));
 			});
 
 			put("/logout", (req, resp) ->
 			{
-				User client = initClient(req, resp);
-				userController.logout(client.getToken());
+				User   client = authentAuthorize(req, resp);
+				String token  = client.getToken();
+				userController.logout(token);
 				req.session().removeAttribute("token");
 				return gson.toJson(new Response("Успешно"));
+			});
+
+			//Добавить
+			delete("/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+				long   id           = Long.parseLong(req.params("id"));
+				User   toDel        = userController.get(id);
+				userController.delete(client, toDel);
+
+				//можем не найти по id toDel
+				return "Empty";
 			});
 
 			path("/group", () ->
 			{
 				post("/:name", ((req, resp) ->
 				{
-					User   client = initClient(req, resp);
+					User   client = authentAuthorize(req, resp);
 					String name   = req.params("name");
 					Group  group  = new Group(name);
 					try
 					{
 						groupController.add(group);
-						resp.status(200);
+						resp.status(OK);
 						return gson.toJson(new Response(gson.toJsonTree(group), "Успех"));
 					}
 					catch (DataAccessException e)
 					{
-						resp.status(422);
+						resp.status(SEMANTIC_ERROR);
 						return gson.toJson(new Response(e.getCause().getMessage()));
 					}
 
+				}));
+
+				put("/addStudents/:id", ((req, resp) ->
+				{
+					User   client       = authentAuthorize(req, resp);
+					String token        = client.getToken();
+					long   tokenExpires = client.getTokenExpires();
+					Group  group        = groupController.get(Long.parseLong(req.params("id")));
+					return setGroupToUser(req, resp, group);
 				}));
 
 				delete("/:id", (req, resp) ->
 				{
 					try
 					{
-						User  client = initClient(req, resp);
+						User  client = authentAuthorize(req, resp);
 						long  id     = Long.parseLong(req.params("id"));
-						Group toDel  = new Group();
-						toDel.setId(id);
+						Group toDel  = groupController.get(id);
 						groupController.delete(toDel);
-						resp.status(200);
+						resp.status(OK);
 						return gson.toJson(new Response("Успех"));
 					}
 					catch (DataAccessException e)
 					{
-						resp.status(404);
+						resp.status(OBJECT_NOT_FOUND);
 						return gson.toJson(new Response(
 								"Объект не найден\n " + e.getCause().getMessage()));
 					}
@@ -301,40 +376,343 @@ public class ServerFace
 			});
 		});
 
-		delete("/user", (req, resp) ->
+		path("/course", () ->
 		{
-			User       client = initClient(req, resp);
-
-			return "Empty";
-		});
-
-		post("/course", (req, resp) ->
-		{
-			User client = initClient(req, resp);
-			try
+			post("/", (req, resp) ->
 			{
+				User client = authentAuthorize(req, resp);
+
 				CreateObjReq createObjReq = gson.fromJson(req.body(), CreateObjReq.class);
 				Course c = new Course(createObjReq.getName(),
 									  userController.get(createObjReq.getId()));
 				courseController.add(c);
-				resp.status(200);
+				resp.status(OK);
 				return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
-			}
-			catch (DataAccessException e)
+			});
+
+			get("/:id", (req, resp) ->
 			{
-				resp.status(404);
-				return "По указанному id пользователь не найден";
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long courseID = Long.parseLong(req.params("id"));
+
+				Course res = courseController.get(courseID);
+
+				JsonObject resJSON = gson.toJsonTree(res).getAsJsonObject();
+				courseParser.filterGroupStudents(resJSON);
+				courseParser.defend(resJSON);
+				return gson.toJson(new Response(resJSON));
+			});
+
+			put("/addGroup/:groupID/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long   groupID  = Long.parseLong(req.params(":groupID"));
+				long   courseID = Long.parseLong(req.params(":id"));
+				Group  g        = groupController.get(groupID);
+				Course c        = courseController.get(courseID);
+
+				courseController.addGroup(client, c, g);
+
+				return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
+			});
+
+			put("/delGroup/:groupID/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long   groupID  = Long.parseLong(req.params(":groupID"));
+				long   courseID = Long.parseLong(req.params(":id"));
+				Group  g        = groupController.get(groupID);
+				Course c        = courseController.get(courseID);
+
+				courseController.delGroup(client, c, g);
+
+				return "f";
+			});
+
+			put("/publish/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long courseID = Long.parseLong(req.params(":id"));
+
+				Course c = courseController.get(courseID);
+				courseController.publish(client, c);
+				return gson.toJson(new Response(gson.toJsonTree(c), "Успех"));
+			});
+
+			delete("/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long               courseID   = Long.parseLong(req.params(":id"));
+				Course             c          = courseController.get(courseID);
+				LinkedList<Course> courseList = new LinkedList<>();
+				courseList.add(c);
+
+				courseController.delete(client, courseList);
+
+				return "f";
+			});
+
+			path("/requirement", () ->
+			{
+				post("/:courseID/:bundleTypeID/:q", (req, resp) ->
+				{
+					User   client       = authentAuthorize(req, resp);
+					String token        = client.getToken();
+					long   tokenExpires = client.getTokenExpires();
+
+					long courseID     = Long.parseLong(req.params("courseID"));
+					long bundleTypeID = Long.parseLong(req.params("bundleTypeID"));
+					int  q            = Integer.parseInt(req.params("q"));
+
+					BundleType bt     = bundleTypeController.get(bundleTypeID);
+					Course     course = courseController.get(courseID);
+
+
+					try
+					{
+						courseController.addRequirement(client, course, bt, q);
+						resp.status(OK);
+						return gson.toJson(new Response(gson.toJsonTree(course), "Успех"));
+					}
+					catch (BusinessException e)
+					{
+						resp.status(SEMANTIC_ERROR);
+						return gson.toJson(new Response(e.getCause().getMessage()));
+					}
+				});
+
+				delete("/:courseID/:reqID", (req, resp) ->
+				{
+					User   client       = authentAuthorize(req, resp);
+					String token        = client.getToken();
+					long   tokenExpires = client.getTokenExpires();
+
+					long courseID = Long.parseLong(req.params("courseID"));
+					long reqID    = Long.parseLong(req.params("reqID"));
+
+					Course      course      = courseController.get(courseID);
+					Requirement requirement = courseController.getReq(reqID);
+
+					courseController.deleteRequirement(client, course, requirement);
+
+					resp.status(OK);
+					return gson.toJson(new Response("Успех"));
+				});
+			});
+
+
+		});
+
+		path("/bundle", () ->
+		{
+			post("/upload/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long   bundleID = Long.parseLong(req.params("id"));
+				Bundle b        = bundleController.get(bundleID);
+
+				req.attribute("org.eclipse.jetty.multipartConfig",
+							  new MultipartConfigElement("/temp"));
+				byte buf[] = new byte[0];
+				try (InputStream is = req.raw().getPart("uploaded_bundle").getInputStream())
+				{
+					if (is.available() <= zipFileSizeLimit)
+					{
+						buf = new byte[is.available()];
+						is.read(buf);
+					}
+				}
+				catch (IOException e)
+				{
+					resp.status(USER_DATA_NOT_VALID);
+					return "Ошибка при чтении архива";
+				}
+				try
+				{
+					Bundle bestMatch = bundleController.uploadReport(client, b, buf);
+
+					String      message = "";
+					JsonElement data    = null;
+					if (b.getState() == BundleState.ACCEPTED)
+					{
+						message = "Отчёт успешно прошёл проверку";
+						data    = parseWithFilterAndDefence(b);
+					}
+					else if (b.getState() == BundleState.CANCELED)
+					{
+						message = "Отчёт недостаточно оригинален.\n";
+						JsonArray arrJSON = new JsonArray();
+						arrJSON.add(parseWithFilterAndDefence(b));
+						arrJSON.add(parseWithFilterAndDefence(bestMatch));
+						data = arrJSON;
+					}
+					return gson.toJson(new Response(data, message));
+				}
+				catch (DataAccessException e)
+				{
+					if (e.getCause().getClass() == FileNotFoundException.class)
+					{
+						resp.status(INTERNAL_CRITICAL_SERVER_ERROR);
+						return "Ошибка чтения файлов анализа";
+					}
+					else
+					{
+						throw e;
+					}
+				}
+			});
+
+			get("/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long bundleID = Long.parseLong(req.params("id"));
+
+				Bundle res = bundleController.get(bundleID);
+
+				JsonObject bundleJSON = parseWithFilterAndDefence(res);
+
+				resp.status(OK);
+				return gson.toJson(new Response(bundleJSON, "Успех"));
+			});
+
+			get("/download/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long   bundleID = Long.parseLong(req.params("id"));
+				Bundle b        = bundleController.get(bundleID);
+
+
+				byte buf[] = bundleController.downloadReport(client, b);
+
+				String fileOutName = b.getFolder();
+				fileOutName.replace("/", "_");
+				fileOutName = fileOutName + ".bow";
+				fileOutName = fileOutName.replace("/", "_");
+				fileOutName = fileOutName.replace(" ", "_");
+
+				fileOutName = translit.cyr2lat(fileOutName);
+
+				resp.header("Content-Type", "application/zip");
+				resp.header("Content-Disposition", "attachment; filename=" + fileOutName);
+
+
+				try (OutputStream out = resp.raw().getOutputStream())
+				{
+					out.write(buf);
+				}
+
+				return resp.raw();
+			});
+
+			put("/cancel/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long   bundleID = Long.parseLong(req.params("id"));
+				Bundle bundle   = bundleController.get(bundleID);
+
+				bundleController.cancel(client, bundle);
+				JsonObject jsonObject = parseWithFilterAndDefence(bundle);
+
+				resp.status(OK);
+				return gson.toJson(new Response(jsonObject, "Успешно"));
+			});
+
+			delete("/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long   bundleID = Long.parseLong(req.params("id"));
+				Bundle bundle   = bundleController.get(bundleID);
+
+				bundleController.emptify(client, bundle);
+
+				JsonObject jsonObject = parseWithFilterAndDefence(bundle);
+
+				resp.status(OK);
+				return gson.toJson(new Response(jsonObject, "Успешно"));
+			});
+
+		});
+
+
+		exception(NumberFormatException.class, (e, req, resp) ->
+		{
+			resp.status(USER_DATA_NOT_VALID);
+			resp.body(gson.toJson(new Response("Неправильный формат ID")));
+		});
+
+		exception(DataAccessException.class, (e, req, resp) ->
+		{
+			if (e.getCause().getClass() == ObjectNotFoundException.class)
+			{
+				resp.status(OBJECT_NOT_FOUND);
+				resp.body(gson.toJson(new Response("Объект с запрошенным id не найден")));
+			}
+			if (e.getCause().getClass() == FileNotFoundException.class ||
+					e.getCause().getClass() == IOException.class)
+			{
+				resp.status(INTERNAL_CRITICAL_SERVER_ERROR);
+				resp.body(gson.toJson(new Response(e.getCause().getMessage())));
+			}
+			//			if (e.getCause().getClass() == ZipDamaged.class ||
+			//					e.getCause().getClass() == ZipFileSizeException.class ||
+			//					e.getCause().getClass() == FormatNotSupported.class)
+			else
+			{
+				resp.status(USER_DATA_NOT_VALID);
+				resp.body(gson.toJson(new Response(e.getMessage())));
+			}
+		});
+
+		exception(BusinessException.class, (e, req, resp) ->
+		{
+			if (e.getCause().getClass() == NoSuchStateAction.class ||
+					e.getCause().getClass() == NoRightException.class ||
+					e.getCause().getClass() == DeletingImportantData.class)
+			{
+				resp.status(NO_RIGHT_FOR_OPERATION);
+				resp.body(gson.toJson(new Response(e.getMessage())));
 			}
 		});
 
 		//Если ничего не получилось найти, то швыряем стак трэйс в клиентский код
 		exception(Exception.class, (e, req, resp) ->
 		{
-			resp.status(500);
+			resp.status(INTERNAL_CRITICAL_SERVER_ERROR);
 			StringWriter sw = new StringWriter();
 			PrintWriter  pw = new PrintWriter(sw);
 			e.printStackTrace(pw);
 			resp.body(gson.toJson(new Response(sw.toString())));
 		});
+
 	}
 }

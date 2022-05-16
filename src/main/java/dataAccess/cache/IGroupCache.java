@@ -8,6 +8,7 @@ public interface IGroupCache
 	boolean isEmpty();
 	Group get(long id);
 	void put(Group group);
+	void putWithUsers(Group group);
 	void delete(long id);
 	void clean();
 }

@@ -2,37 +2,44 @@ package controller;
 
 import business.IUserService;
 import business.UserValidationService;
+import configuration.BusinessConfiguration;
+import dataAccess.entity.Course;
 import dataAccess.entity.Role;
 import dataAccess.entity.User;
 import exception.Business.BusinessException;
 import exception.Controller.ControllerException;
 import exception.Controller.TokenNotFound;
 import exception.DataAccess.DataAccessException;
-import exception.DataAccess.NotUniqueException;
-import exception.DataAccess.NotValidException;
+import exception.DataAccess.ObjectNotFoundException;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class UserController implements IUserController
 {
 	private Controller            controller;
 	private IUserService          service;
 	private UserValidationService userValidationService;
-	private Authoriser            authoriser = new Authoriser();
+	private Authoriser            authoriser;
 
-	private Role              guest    = null;
+	private Role GUEST = null;
+	private Role ADMIN = null;
+
 	private Map<String, User> guestMap = new HashMap<>();
 
 
 	public UserController(Controller controller, IUserService userService,
-						  UserValidationService userValidationService)
+						  UserValidationService userValidationService,
+						  BusinessConfiguration businessConf)
 	{
 		this.controller            = controller;
 		this.service               = userService;
 		this.userValidationService = userValidationService;
+
+		GUEST = controller.roleController.getGuest();
+		ADMIN = controller.roleController.getAdmin();
+
+		authoriser = new Authoriser(businessConf.getTOKEN_LENGTH(),
+									businessConf.getAUTHENTICATION_TIME());
 	}
 
 	@Override
@@ -44,18 +51,37 @@ public class UserController implements IUserController
 	@Override
 	public void add(List<User> userList)
 	{
-		Iterator<User> i   = userList.iterator();
-		int count=0;
+		Iterator<User> i     = userList.iterator();
+		int            count = 0;
+		List<Role> roleList= controller.roleController.get();
+
 		while (i.hasNext())
 		{
 			try
 			{
 				count++;
 				User client = i.next();
-				if(!userValidationService.check(client))
+				if (!userValidationService.check(client))
 				{
 					continue;
 				}
+				long roleID = client.getRole().getId();
+				Role role = new Role();
+				role.setId(roleID);
+
+				Iterator<Role> roleIterator = roleList.iterator();
+				Role toCompare = roleIterator.next();
+
+				while(!role.equals(toCompare) && roleIterator.hasNext())
+				{
+					toCompare = roleIterator.next();
+				}
+				if(!role.equals(toCompare))
+				{
+					throw new BusinessException(null);
+				}
+				role=toCompare;
+				client.setRole(role);
 				service.add(client);
 			}
 			catch (BusinessException e)
@@ -66,10 +92,13 @@ public class UserController implements IUserController
 	}
 
 	@Override
-	public boolean login(String token, String email, String pass)
+	public boolean login(String token, long tokenExpires, String email, String pass)
 	{
-
-		if (service.login(token, email, pass))
+		//Если токен, полученный на вход валидный и не сгорел,
+		//то попробуем поискать пользователя по полученным входным данным
+		if (authoriser.existsToken(token) &&
+				authoriser.timeLeft(token) > System.currentTimeMillis() &&
+				service.login(token, tokenExpires, email, pass))
 		{
 			guestMap.remove(token);
 			return true;
@@ -92,13 +121,11 @@ public class UserController implements IUserController
 	@Override
 	public User getGuestUser()
 	{
-		if (guest == null)
-		{
-			guest = controller.roleController.getGuest();
-		}
 		User user = new User();
-		user.setRole(guest);
-		user.setToken(authoriser.genToken());
+		user.setRole(GUEST);
+		String token = authoriser.genToken();
+		user.setToken(token);
+		user.setTokenExpires(authoriser.timeLeft(token));
 		guestMap.put(user.getToken(), user);
 		return user;
 	}
@@ -140,6 +167,12 @@ public class UserController implements IUserController
 	public List<User> getByCourse(User fio, String courseName)
 	{
 		return null;
+	}
+
+	@Override
+	public Set<User> filter(List<User> userList, Course c)
+	{
+		return service.filter(userList, c);
 	}
 
 	@Override
@@ -185,9 +218,31 @@ public class UserController implements IUserController
 	}
 
 	@Override
-	public void delete(User client)
+	public void delete(User initiator, User target)
 	{
+		if (initiator.getRole().getId() == controller.roleController.getAdmin().getId())
+		{
+			initiator = target;
+		}
 
+		//удалить все бандлы
+		controller.bundleController.delete(initiator, target);
+		try
+		{
+			//удалить все курсы
+			List<Course> courseList = controller.courseController.getByOwner(initiator);
+			controller.courseController.delete(initiator, courseList);
+		}
+		catch (DataAccessException e)
+		{
+			if (e.getCause().getClass() != ObjectNotFoundException.class)
+			{
+				throw e;
+			}
+		}
+
+
+		service.delete(initiator, target);
 	}
 
 	@Override

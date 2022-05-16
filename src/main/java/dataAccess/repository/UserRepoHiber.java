@@ -1,5 +1,6 @@
 package dataAccess.repository;
 
+import dataAccess.entity.Course;
 import dataAccess.entity.User;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.NotUniqueException;
@@ -9,7 +10,10 @@ import org.hibernate.Transaction;
 import org.hibernate.exception.ConstraintViolationException;
 
 import javax.persistence.PersistenceException;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class UserRepoHiber extends RepoHiberBase implements IUserRepo
 {
@@ -46,6 +50,7 @@ public class UserRepoHiber extends RepoHiberBase implements IUserRepo
 		catch (PersistenceException ee)
 		{
 			t.rollback();
+			user.setId(-1L);
 			if (ee.getCause() instanceof ConstraintViolationException)
 			{
 				throw new DataAccessException(
@@ -164,6 +169,40 @@ public class UserRepoHiber extends RepoHiberBase implements IUserRepo
 		}
 
 		throw new DataAccessException(new ObjectNotFoundException());
+	}
+
+	@Override
+	public Set<User> filter(List<User> userList, Course c)
+	{
+		Transaction t = getOrBegin();
+		HQL=
+			"        select distinct \n" +
+			"            u\n" +
+			"        from\n" +
+			"            User as u\n" +
+			"        left outer join\n" +
+			"            BundleACL as bACL \n" +
+			"        with\n" +
+			"        bACL.user.id = u.id\n" +
+			"        inner join\n" +
+			"            bACL.bundle as b\n" +
+			"        inner join\n" +
+			"            b.course as c \n" +
+			"        where\n" +
+			"            u.id in (:user) and\n" +
+			"            c.id = :course";
+		q = sessionFactory.getCurrentSession().createQuery(HQL);
+		List<Long>userIDList = new LinkedList<>();
+		for(User u:userList)
+		{
+			userIDList.add(u.getId());
+		}
+		q.setParameter("user",userIDList);
+		q.setParameter("course", c.getId());
+		List<User> resultList = q.getResultList();
+		t.commit();
+		HashSet<User> res = new HashSet<>(resultList);
+		return res;
 	}
 
 	@Override

@@ -21,14 +21,14 @@ INSERT INTO "role" ("name") VALUES ('Гость');
 
 --Первый админ
 INSERT INTO "user" ("email","email_state","pass","lastname","firstname","fathername","id_role") 
-VALUES ('admin@host.ru',0,'password','Администратор','Администратор','Администратор',9);
+VALUES ('admin@host.ru',1,'password','Администратор','Администратор','Администратор',9);
 
 --Пути
 INSERT INTO "route" (method,urn) VALUES ('ANY', 'ANY');
 INSERT INTO role_route VALUES (9,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('POST', '/user');
-INSERT INTO role_route VALUES (9,(select max(id) from "route"));
+INSERT INTO "route" (method,urn) VALUES ('POST', '/user/');
+--INSERT INTO role_route VALUES (9,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('POST', '/user/:groupID');
 
@@ -109,14 +109,13 @@ INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('PUT', '/user/group/addStudents/:id');
-INSERT INTO "route" (method,urn) VALUES ('PUT', '/user/group/delStudents/:id');
 INSERT INTO "route" (method,urn) VALUES ('DELETE', '/user/group/:id');
 
 INSERT INTO "route" (method,urn) VALUES ('GET', '/user/role');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('POST', '/course');
+INSERT INTO "route" (method,urn) VALUES ('POST', '/course/');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('GET', '/course/:id');
@@ -147,19 +146,22 @@ INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO "route" (method,urn) VALUES ('PUT', '/course/delGroup/:groupID/:id');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('PUT', '/course/:id');
+INSERT INTO "route" (method,urn) VALUES ('PUT', '/course/:id/:name');
+INSERT INTO role_route VALUES (10,(select max(id) from "route"));
+
+INSERT INTO "route" (method,urn) VALUES ('PUT', '/course/publish/:id');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('DELETE', '/course/:id');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('POST', '/course/requirement/:courseID/:bundleTypeID');
+INSERT INTO "route" (method,urn) VALUES ('POST', '/course/requirement/:courseID/:bundleTypeID/:q');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('PUT', '/course/requirement/:courseID/:bundleTypeID');
+INSERT INTO "route" (method,urn) VALUES ('PUT', '/course/requirement/:courseID/:bundleTypeID/:q');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('DELETE', '/course/requirement/:courseID/:bundleTypeID');
+INSERT INTO "route" (method,urn) VALUES ('DELETE', '/course/requirement/:courseID/:bundleTypeID/:q');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('GET', '/bundle/:id');
@@ -173,11 +175,12 @@ INSERT INTO "route" (method,urn) VALUES ('GET', '/bundle/:courseID/:ownerID');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('PUT', '/bundle/download/:id');
+INSERT INTO "route" (method,urn) VALUES ('GET', '/bundle/download/:id');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('PUT', '/bundle/upload/:id');
+INSERT INTO "route" (method,urn) VALUES ('POST', '/bundle/upload/:id');
+INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('PUT', '/bundle/addCoAuthor/:id/:coAuthorID');
@@ -186,7 +189,7 @@ INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 INSERT INTO "route" (method,urn) VALUES ('PUT', '/bundle/delCoAuthor/:id/:coAuthorID');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES('PUT', '/decline/:id');
+INSERT INTO "route" (method,urn) VALUES('PUT', '/bundle/cancel/:id');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 
 INSERT INTO "route" (method,urn) VALUES ('DELETE', '/bundle/:id');

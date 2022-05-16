@@ -1,6 +1,7 @@
 package dataAccess.repository;
 
 import dataAccess.entity.Course;
+import dataAccess.entity.Group;
 import dataAccess.entity.User;
 
 import java.util.List;
@@ -12,5 +13,6 @@ public interface ICourseRepo
 	List<Course> get(User owner, String name);
 	List<Course> getByOwner(User owner);
 	List<Course> getByStudent(User student);
-	void delete(Course course);
+	List<Course> getByGroup(Group g);
+	void delete(List<Course> courseList);
 }

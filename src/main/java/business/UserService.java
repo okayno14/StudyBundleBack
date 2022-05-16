@@ -1,15 +1,18 @@
 package business;
 
 import dataAccess.cache.IUserCache;
+import dataAccess.entity.Course;
 import dataAccess.entity.Role;
 import dataAccess.entity.User;
 import dataAccess.repository.IUserRepo;
 import exception.Business.AuthenticationException;
 import exception.Business.BusinessException;
+import exception.Business.NoRightException;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.ObjectNotFoundException;
 
 import java.util.List;
+import java.util.Set;
 
 public class UserService implements IUserService
 {
@@ -50,12 +53,16 @@ public class UserService implements IUserService
 	}
 
 	@Override
-	public boolean login(String token, String email, String pass)
+	public boolean login(String token, long tokenExpires, String email, String pass)
 	{
 		User user = null;
 		try
 		{
 			user = userCache.getByEmail(email);
+			if(!user.getPass().equals(pass))
+			{
+				user=null;
+			}
 		}
 		catch (DataAccessException e)
 		{
@@ -73,6 +80,7 @@ public class UserService implements IUserService
 			if (user != null && user.getToken() == null)
 			{
 				user.setToken(token);
+				user.setTokenExpires(tokenExpires);
 				userCache.authenticate(user.getId());
 				return true;
 			}
@@ -87,6 +95,7 @@ public class UserService implements IUserService
 		{
 			User user=userCache.get(token);
 			user.setToken(null);
+			user.setTokenExpires(0L);
 			userCache.delete(token);
 		}
 	}
@@ -138,6 +147,12 @@ public class UserService implements IUserService
 	}
 
 	@Override
+	public Set<User> filter(List<User> userList, Course c)
+	{
+		return userRepo.filter(userList,c);
+	}
+
+	@Override
 	public void updateFIO(User client, User fio)
 	{
 
@@ -180,8 +195,14 @@ public class UserService implements IUserService
 	}
 
 	@Override
-	public void delete(User client)
+	public void delete(User initiator, User target)
 	{
-
+		if(initiator.getId()!= target.getId())
+		{
+			throw new BusinessException(new NoRightException());
+		}
+		//удалить из группы
+		userRepo.delete(initiator);
+		userCache.delete(initiator.getId());
 	}
 }

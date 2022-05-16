@@ -40,6 +40,13 @@ public class GroupCache implements IGroupCache
 	}
 
 	@Override
+	public void putWithUsers(Group group)
+	{
+		put(group);
+		cacheController.fetched(group);
+	}
+
+	@Override
 	public void delete(long id)
 	{
 		cache.remove(id);

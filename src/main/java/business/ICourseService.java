@@ -1,9 +1,6 @@
 package business;
 
-import dataAccess.entity.BundleType;
-import dataAccess.entity.Course;
-import dataAccess.entity.Group;
-import dataAccess.entity.User;
+import dataAccess.entity.*;
 
 import java.util.List;
 
@@ -14,11 +11,14 @@ public interface ICourseService
 	List<Course> get(User owner, String name);
 	List<Course> getByOwner(User owner);
 	List<Course> getByStudent(User student);
-	void addRequirement(BundleType bt, int q);
-	void updateRequirement(BundleType bt, int q);
-	void deleteRequirement(BundleType bt, int q);
-	void subscribe(Group group);
-	void unsubscribe(Group group);
-	void updateName(Course client, String name);
-	void delete(Course client);
+	List<Course> getByGroup(Group g);
+	void addRequirement(User initiator, Course client, BundleType bt, int q);
+	Requirement getReq(long id);
+	void deleteRequirement(User initiator, Course client, Requirement req);
+	void publish(User initiator, Course client);
+	void addGroup(User initiator, Course client, Group group);
+	void delGroup(User initiator, Course client, Group group);
+	void updateName(User initiator, Course client, String name);
+	//удаление списка курсов, но только при условии того, что инициатор является автором каждого из них
+	void delete(User initiator, List<Course> clientList);
 }

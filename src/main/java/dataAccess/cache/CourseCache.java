@@ -1,8 +1,11 @@
 package dataAccess.cache;
 
 import dataAccess.entity.Course;
+import dataAccess.entity.Requirement;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class CourseCache implements ICourseCache

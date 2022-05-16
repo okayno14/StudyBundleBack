@@ -1,5 +1,6 @@
 package dataAccess.entity;
 
+import com.google.gson.annotations.Expose;
 import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
@@ -20,10 +21,12 @@ public class BundleACL implements Serializable
 	private Bundle bundle;
 	@ManyToOne
 	@MapsId("userID")
+	@Expose
 	private User user;
 	@Enumerated(EnumType.STRING)
 	@Column(name = "rights")
 	@Type(type = "pgsql_enum")
+	@Expose
 	private Author rights;
 
 	public BundleACL(){}

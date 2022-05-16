@@ -6,12 +6,14 @@ import dataAccess.entity.Group;
 import dataAccess.entity.User;
 import dataAccess.repository.IGroupRepo;
 
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
 public class GroupService implements IGroupService
 {
-	private IGroupRepo repo;
+	private IGroupRepo  repo;
 	private IGroupCache cache;
 
 	public GroupService(IGroupRepo repo, IGroupCache cache)
@@ -30,7 +32,14 @@ public class GroupService implements IGroupService
 	@Override
 	public Group get(long id)
 	{
-		return null;
+		Group res = cache.get(id);
+		if (res != null)
+		{
+			return res;
+		}
+		res = repo.get(id);
+		cache.put(res);
+		return res;
 	}
 
 	@Override
@@ -45,35 +54,61 @@ public class GroupService implements IGroupService
 		return null;
 	}
 
-	@Override
-	public void addUsers(List<User> users)
+	private void setGroupToUsers(List<User> users, Group newGroup)
 	{
+		Iterator<User> userIterator = users.iterator();
+		while (userIterator.hasNext())
+		{
+			User  user     = userIterator.next();
+			Group curGroup = user.getGroup();
+			if (curGroup != null && repo.isStudentsFetched(curGroup))
+			{
+				curGroup.removeStudent(user);
+			}
+			user.setGroup(newGroup);
+			if (newGroup != null && repo.isStudentsFetched(newGroup))
+			{
+				newGroup.addStudent(user);
+			}
+		}
+		repo.save(users);
+	}
 
+	@Override
+	public void addUsers(Group client, List<User> users)
+	{
+		setGroupToUsers(users, client);
 	}
 
 	@Override
 	public Set<User> getUsers(Group client)
 	{
-		return null;
+		if (!repo.isStudentsFetched(client))
+		{
+			repo.fetchStudents(client);
+			cache.putWithUsers(client);
+		}
+		return client.getStudents();
 	}
 
 	@Override
 	public void deleteUsers(List<User> users)
 	{
-
+		setGroupToUsers(users, null);
 	}
 
 	@Override
 	public void delete(Group client)
 	{
+		//отвязать пользователей
+		LinkedList<User> users = new LinkedList<>(getUsers(client));
+		setGroupToUsers(users,null);
+		//удалить группу
 		long id = client.getId();
-		if(id!=-1L)
+		if (id != -1L)
 		{
-			if(cache.contains(id))
-			{
-				cache.delete(id);
-			}
 			repo.delete(client);
+			cache.delete(id);
 		}
 	}
 

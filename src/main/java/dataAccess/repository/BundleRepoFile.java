@@ -1,13 +1,12 @@
 package dataAccess.repository;
 
 import dataAccess.entity.Bundle;
-import exception.DataAccess.DataAccessException;
+import dataAccess.repository.wordParser.WordParser;
 import exception.DataAccess.FileNotFoundException;
-import exception.DataAccess.FormatNotSupported;
-import exception.DataAccess.WordParserException;
-import exception.DataAccess.ZipFileSizeException;
+import exception.DataAccess.*;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,10 +18,11 @@ import java.util.zip.ZipOutputStream;
 
 public class BundleRepoFile implements IBundleRepoFile
 {
-	private WordParser wordParser = new WordParser();
-	private String     storage;
-	private String     supportedFormats[];
-	private int        zipFileSizeLimit;
+	private       WordParser wordParserReborn = new WordParser();
+	private       String     storage;
+	private       String     supportedFormats[];
+	private       int        zipFileSizeLimit;
+	private final Charset    charset          = Charset.forName("cp866");
 
 	public BundleRepoFile(String storage, String[] supportedFormats, int zipFileSizeLimit)
 	{
@@ -83,7 +83,10 @@ public class BundleRepoFile implements IBundleRepoFile
 			buf[i] = (byte) zIN.read();
 		}
 		ByteArrayInputStream doc = new ByteArrayInputStream(buf);
-		bundle.getReport().setFileName(name, wordParser.parseDoc(doc));
+
+		String text = wordParserReborn.parseDoc(name, doc);
+
+		bundle.getReport().setFileNameAndMeta(name, text);
 		doc.reset();
 		FileOutputStream fOut       = new FileOutputStream(bundleDir + "/" + name);
 		int              readed     = 0;
@@ -148,9 +151,9 @@ public class BundleRepoFile implements IBundleRepoFile
 	{
 		if (array.length > zipFileSizeLimit)
 		{
-			throw new ZipFileSizeException(array.length, zipFileSizeLimit);
+			throw new DataAccessException(new ZipFileSizeException(array.length, zipFileSizeLimit));
 		}
-		try (ZipInputStream zIN = new ZipInputStream(new ByteArrayInputStream(array)))
+		try (ZipInputStream zIN = new ZipInputStream(new ByteArrayInputStream(array), charset))
 		{
 			String bundleDir = storage + "/" + bundle.getFolder();
 			checkBundleDir(bundleDir);
@@ -172,22 +175,26 @@ public class BundleRepoFile implements IBundleRepoFile
 		{
 			throw new DataAccessException(e);
 		}
+		catch (IllegalArgumentException ee)
+		{
+			throw new DataAccessException(new ZipDamaged());
+		}
 	}
 
-	private void zipFolderFromStorage(String root, File zipDir, ZipOutputStream out)
+	private void zipFolderFromStorage(String root, File node, ZipOutputStream out)
 			throws IOException
 	{
 		//Заход в глубь дерева
-		File content[] = zipDir.listFiles();
-		if (content != null)
+		File children[] = node.listFiles();
+		if (children != null)
 		{
-			for (int i = 0; i < content.length; i++)
+			for (int i = 0; i < children.length; i++)
 			{
-				zipFolderFromStorage(root, content[i], out);
+				zipFolderFromStorage(root, children[i], out);
 			}
 		}
 		//зашли в узел
-		String absName = zipDir.getAbsolutePath();
+		String absName = node.getAbsolutePath();
 		absName = absName.replace("\\", "/");
 		String relName = absName.replace(root, "");
 		//если вершина дерева
@@ -198,14 +205,14 @@ public class BundleRepoFile implements IBundleRepoFile
 			return;
 		}
 		//если вершина поддерева
-		if (zipDir.isDirectory())
+		if (node.isDirectory())
 		{
 			out.putNextEntry(new ZipEntry(relName + "/"));
 			out.closeEntry();
 			return;
 		}
 		//если лист (файл)
-		try (BufferedInputStream file = new BufferedInputStream(new FileInputStream(zipDir)))
+		try (BufferedInputStream file = new BufferedInputStream(new FileInputStream(node)))
 		{
 			out.putNextEntry(new ZipEntry(relName));
 			int c = 0;
@@ -223,15 +230,17 @@ public class BundleRepoFile implements IBundleRepoFile
 	@Override
 	public byte[] get(Bundle bundle)
 	{
-		if (bundle.getReport().getFileName() == null)
+		String bundleDir = storage + "/" + bundle.getFolder() + "/";
+		String reportDir = bundleDir + bundle.getReport().getFileName();
+		if (bundle.getReport().getFileName() == null || !new File(reportDir).exists())
 		{
 			throw new DataAccessException(new FileNotFoundException(bundle));
 		}
+
 		try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 			 ZipOutputStream out = new ZipOutputStream(byteArrayOutputStream))
 		{
-			zipFolderFromStorage(storage + "/" + bundle.getFolder() + "/",
-								 new File(storage + "/" + bundle.getFolder()), out);
+			zipFolderFromStorage(bundleDir, new File(bundleDir), out);
 			return byteArrayOutputStream.toByteArray();
 		}
 		catch (IOException e)
@@ -241,23 +250,90 @@ public class BundleRepoFile implements IBundleRepoFile
 	}
 
 	@Override
-	public void fillReport(Bundle bundle)
+	public void fillTextVector(Bundle bundle)
 	{
-		String name = bundle.getReport().getFileName();
-		if (name == null)
+		if (bundle.getReport().getFileName() == null)
 		{
 			throw new DataAccessException(new FileNotFoundException(bundle));
 		}
-		bundle.getReport().setFileName(name, wordParser.parseDoc(name));
+		String name = storage + "/" + bundle.getFolder() + "/" + bundle.getReport().getFileName();
+
+		bundle.getReport().setFileNameAndMeta(name, wordParserReborn.parseDoc(name));
 	}
 
 	@Override
-	public void fillReport(List<Bundle> bundleList)
+	public void fillTextVector(List<Bundle> bundleList)
 	{
 		Iterator<Bundle> iterator = bundleList.iterator();
 		while (iterator.hasNext())
 		{
-			fillReport(iterator.next());
+			try
+			{
+				fillTextVector(iterator.next());
+			}
+			catch (DataAccessException e)
+			{
+				//логирование
+			}
+		}
+	}
+
+	private Path changeGroup(Path oldPath, String OLD_GROUP, String NEW_GROUP)
+	{
+		String str = oldPath.toString();
+		str = str.replaceFirst(OLD_GROUP, NEW_GROUP);
+		return Paths.get(str);
+	}
+
+
+	private void moveBundleRec(File oldBundleNode, String OLD_GROUP, String NEW_GROUP)
+			throws IOException
+	{
+		File children[] = oldBundleNode.listFiles();
+		//цикл обхода
+		if (children != null)
+		{
+			for (File child : children)
+			{
+				if (child.isDirectory())
+				{
+					Path destination = changeGroup(child.toPath(), OLD_GROUP, NEW_GROUP);
+					Files.createDirectory(destination);
+				}
+				moveBundleRec(child, OLD_GROUP, NEW_GROUP);
+			}
+		}
+		//обработка
+		if (oldBundleNode.isDirectory())
+		{
+			return;
+		}
+		Path source      = Paths.get(oldBundleNode.getPath());
+		Path destination = changeGroup(source, OLD_GROUP, NEW_GROUP);
+		Files.move(source, destination);
+	}
+
+	@Override
+	public void moveGroupChanged(Bundle client, String destinationFolder)
+	{
+		StringBuffer buffer    = new StringBuffer(client.getFolder());
+		int          b         = buffer.indexOf("/");
+		final String OLD_GROUP = buffer.substring(0, b);
+		buffer = new StringBuffer(destinationFolder);
+		b      = buffer.indexOf("/");
+		final String NEW_GROUP = buffer.substring(0, b);
+
+		File oldFolder = new File(storage + "/" + client.getFolder());
+		try
+		{
+			checkBundleDir(storage + "/" + destinationFolder);
+			moveBundleRec(oldFolder, OLD_GROUP, NEW_GROUP);
+			delete(client);
+			client.setFolder(destinationFolder);
+		}
+		catch (IOException e)
+		{
+			throw new DataAccessException(e);
 		}
 	}
 
@@ -269,15 +345,12 @@ public class BundleRepoFile implements IBundleRepoFile
 		{
 			throw new DataAccessException(new FileNotFoundException(bundle));
 		}
-		boolean flag=false;
-		for (File node = toDel.getParentFile();flag==false && !node.getPath().replace("\\", "/").equals(storage);
+		File root = new File(storage);
+		for (File node = toDel.getParentFile();
+			 !node.equals(root) && node.listFiles().length == 0 && node != null;
 			 node = node.getParentFile())
 		{
-			if (node.listFiles().length == 0 && node.exists())
-			{
-				node.delete();
-				flag=true;
-			}
+			node.delete();
 		}
 	}
 }

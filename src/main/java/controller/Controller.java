@@ -1,14 +1,11 @@
 package controller;
 
 import configuration.ConfMain;
-import dataAccess.entity.User;
 import model.Core;
 
 
 public class Controller
 {
-	private User client;
-
 	IBundleController     bundleController;
 	IBundleTypeController bundleTypeController;
 	ICourseController     courseController;
@@ -24,13 +21,14 @@ public class Controller
 		Core core = new Core(confMain);
 
 		//После сборки ядра собираем микроконтроллеры
-		bundleController     = new BundleController(this, core.getiBundleService());
-		bundleTypeController = new BundleTypeController(this, core.getiBundleTypeService());
-		courseController     = new CourseController(this, core.getiCourseService());
-		groupController      = new GroupController(this, core.getiGroupService());
-		roleController       = new RoleController(this, core.getiRoleService());
-		userController       = new UserController(this, core.getiUserService(),
-												  core.getUserValidationService());
+		bundleController     = new BundleController(this, core.getBundleService());
+		bundleTypeController = new BundleTypeController(this, core.getBundleTypeService());
+		courseController     = new CourseController(this, core.getCourseService());
+		groupController      = new GroupController(this, core.getGroupService());
+		roleController       = new RoleController(this, core.getRoleService());
+		userController       = new UserController(this, core.getUserService(),
+												  core.getUserValidationService(),
+												  confMain.getBusinessConfiguration());
 
 		//ТЕСТЫ
 	}
@@ -63,15 +61,5 @@ public class Controller
 	public IUserController getUserController()
 	{
 		return userController;
-	}
-
-	public User getClient()
-	{
-		return client;
-	}
-
-	public void setClient(User client)
-	{
-		this.client = client;
 	}
 }

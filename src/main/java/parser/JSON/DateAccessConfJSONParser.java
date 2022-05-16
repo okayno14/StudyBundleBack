@@ -12,11 +12,8 @@ public class DateAccessConfJSONParser implements JsonSerializer<DateAccessConf>,
 								 JsonSerializationContext jsonSerializationContext)
 	{
 		JsonObject json = new JsonObject();
-		json.addProperty("HibernateConf",dateAccess.getHibernateConf());
-		json.addProperty("StoragePath",dateAccess.getStoragePath());
 		return json;
 	}
-
 
 	@Override
 	public DateAccessConf deserialize(JsonElement jsonElement, Type type,

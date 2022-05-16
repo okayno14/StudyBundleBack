@@ -1,6 +1,9 @@
 package dataAccess.cache;
 
 import dataAccess.entity.Course;
+import dataAccess.entity.Requirement;
+
+import java.util.List;
 
 public interface ICourseCache
 {

@@ -68,6 +68,7 @@ public class BundleTypeRepoHiber extends RepoHiberBase implements IBundleTypeRep
 		catch (PersistenceException ee)
 		{
 			t.rollback();
+			bundleType.setId(-1L);
 			if (ee.getCause() instanceof ConstraintViolationException)
 			{
 				throw new DataAccessException(

@@ -9,6 +9,5 @@ public interface IRequirementRepo
 {
 	void save(Requirement req);
 	List<Requirement> get();
-	void delete(Requirement req);
-	long countReferences(Requirement req);
+	List<Requirement> deleteNotLinked(List<Requirement> reqList);
 }
