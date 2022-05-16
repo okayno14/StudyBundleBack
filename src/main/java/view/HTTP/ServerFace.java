@@ -185,32 +185,6 @@ public class ServerFace
 					return client;
 				}
 			}
-
-//			Iterator<Route> routeIterator = client.getRole().getRouteList().iterator();
-//			while (routeIterator.hasNext())
-//			{
-//				route = routeIterator.next();
-//				//String route_urn = route.getUrn().toLowerCase();
-//				boolean flag = true;
-//
-//				if (!route.getUrn().equals(any))
-//				{
-//					for (String param : ReqParams)
-//					{
-//						flag = flag && route.getUrn().contains(param);
-//					}
-//
-//					flag = flag && route.getUrn().contains(ReqName.toString());
-//				}
-//				if (!route.getMethod().toString().equals(any))
-//				{
-//					flag = flag && route.getMethod().toString().equals(req.requestMethod());
-//				}
-//				if (flag)
-//				{
-//					return client;
-//				}
-//			}
 			halt(NO_RIGHT_FOR_OPERATION, "У пользователя нет права на это действие");
 		}
 		catch (ControllerException e)
