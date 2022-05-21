@@ -285,7 +285,7 @@ public class ServerFace
 
 			put("/login", (req, resp) ->
 			{
-				//ацтентифицировались как гость
+				//аутентифицировались как гость
 				User   client       = authentAuthorize(req, resp);
 				String token        = client.getToken();
 				long   tokenExpires = client.getTokenExpires();
@@ -298,6 +298,8 @@ public class ServerFace
 					client       = userController.getByToken(req.session().attribute("token"));
 					if(!client.isEmailState())
 					{
+						userController.logout(token);
+						req.session().removeAttribute("token");
 						halt(NO_RIGHT_FOR_OPERATION, "У пользователя нет права на это действие");
 					}
 					resp.status(OK);
