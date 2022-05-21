@@ -159,6 +159,7 @@ public class BundleService implements IBundleService
 		{
 			client.accept();
 			bundleRepo.save(client);
+			logger.trace("Бандл id = {} принят,  работа была загружена первой", client.getId());
 			return bestMatchBundle;
 		}
 
@@ -192,12 +193,14 @@ public class BundleService implements IBundleService
 		if (bestMatchScore <= WORD_ANALYSIS_CRITICAL_VAL)
 		{
 			client.accept();
-			logger.trace("Бандл принят,  результат={}", bestMatchScore);
+			logger.trace("Бандл id = {} принят,  результат={}, максимальное сходство с id={}",
+						 client.getId(), bestMatchScore, bestMatchBundle.getId());
 		}
 		else
 		{
 			client.cancel();
-			logger.trace("Бандл отклонён,  результат={}", bestMatchScore);
+			logger.trace("Бандл id = {} отклонён,  результат={}, максимальное сходство с id={}",
+						 client.getId(), bestMatchScore, bestMatchBundle.getId());
 		}
 		bundleRepo.save(client);
 		return bestMatchBundle;
@@ -272,11 +275,11 @@ public class BundleService implements IBundleService
 	{
 		try
 		{
-			isInitiatorInACL(initiator,client);
+			isInitiatorInACL(initiator, client);
 		}
 		catch (BusinessException e)
 		{
-			isInitiatorINCourseACL(initiator,client.getCourse());
+			isInitiatorINCourseACL(initiator, client.getCourse());
 		}
 	}
 }
