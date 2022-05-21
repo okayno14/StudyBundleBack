@@ -69,11 +69,13 @@ INSERT INTO role_route VALUES (12,(select max(id) from "route"));
 INSERT INTO "route" (method,urn) VALUES ('PUT', '/user/confirm/:email');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
+INSERT INTO role_route VALUES (12,(select max(id) from "route"));
 
 
 INSERT INTO "route" (method,urn) VALUES ('PUT', '/user/activate/:id');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
+INSERT INTO role_route VALUES (12,(select max(id) from "route"));
 
 
 INSERT INTO "route" (method,urn) VALUES ('PUT', '/user/fio/:id');

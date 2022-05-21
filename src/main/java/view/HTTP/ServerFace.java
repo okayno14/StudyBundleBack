@@ -285,6 +285,7 @@ public class ServerFace
 
 			put("/login", (req, resp) ->
 			{
+				//аутентифицировались как гость
 				User   client       = authentAuthorize(req, resp);
 				String token        = client.getToken();
 				long   tokenExpires = client.getTokenExpires();
@@ -293,6 +294,14 @@ public class ServerFace
 				if (userController
 						.login(token, tokenExpires, loginReq.getEmail(), loginReq.getPass()))
 				{
+					//проверим, что у пользователя активированная УЗ
+					client       = userController.getByToken(req.session().attribute("token"));
+					if(!client.isEmailState())
+					{
+						userController.logout(token);
+						req.session().removeAttribute("token");
+						halt(NO_RIGHT_FOR_OPERATION, "У пользователя нет права на это действие");
+					}
 					resp.status(OK);
 					JsonElement data = gson.toJsonTree(userController.getByToken(token));
 					return gson.toJson(new Response(data, "Успешно"));
