@@ -3,6 +3,7 @@ package dataAccess.repository.wordParser;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.FormatNotSupported;
 import exception.DataAccess.WordParserException;
+import org.apache.poi.openxml4j.util.ZipSecureFile;
 
 import java.io.InputStream;
 import java.util.HashMap;
@@ -16,6 +17,9 @@ public class WordParser implements WordParserState
 
 	public WordParser()
 	{
+		//отключаем защиту от ZIP-бомб
+		ZipSecureFile.setMinInflateRatio(0);
+
 		//пихаем все реализации в Mapper
 		WordParserState wordParserState = new WordParserDOC();
 		stateMap.put(wordParserState.getFormat(),wordParserState);

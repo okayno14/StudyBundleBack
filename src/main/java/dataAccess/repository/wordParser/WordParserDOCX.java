@@ -1,6 +1,5 @@
 package dataAccess.repository.wordParser;
 
-import exception.DataAccess.WordParserException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
