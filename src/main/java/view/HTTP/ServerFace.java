@@ -80,6 +80,7 @@ public class ServerFace
 
 		//применяем параметры конфигурации для сервера
 		Spark.port(http_conf.getPort());
+		Spark.externalStaticFileLocation("resources/Web");
 
 		//строим контроллер
 		controller           = new Controller(confMain);
@@ -259,6 +260,7 @@ public class ServerFace
 			}
 			return "OK";
 		});
+
 
 		path("/user", () ->
 		{
