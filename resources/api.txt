@@ -18,9 +18,8 @@
 
 "POST", "/user/group/:name"
 "GET", "/user/group/:id"
-"GET", "/user/group/:courseID"
-"GET", "/user/group/:name"
-"GET", "/user/group/:studentID"
+"GET", "/user/group/course/:courseID"
+"GET", "/user/group/name/:name"
 "GET", "/user/group/students/:id"
 "PUT", "/user/group/addStudents/:id"
 "PUT", "/user/group/delStudents"
