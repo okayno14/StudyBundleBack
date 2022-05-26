@@ -417,6 +417,27 @@ public class ServerFace
 				return gson.toJson(new Response(resJSON));
 			});
 
+			get("/owner/:ownerID",(req, resp)->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long ownerID = Long.parseLong(req.params("ownerID"));
+
+				User owner = client;
+
+				if(ownerID!=client.getId())
+				{
+					owner = userController.get(ownerID);
+				}
+
+				List<Course> res =  courseController.getByOwner(owner);
+
+				resp.status(OK);
+				return gson.toJson(new Response(gson.toJsonTree(res)));
+			});
+
 			put("/addGroup/:groupID/:id", (req, resp) ->
 			{
 				User   client       = authentAuthorize(req, resp);
