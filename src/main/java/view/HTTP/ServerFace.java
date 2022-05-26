@@ -525,8 +525,6 @@ public class ServerFace
 					return gson.toJson(new Response("Успех"));
 				});
 			});
-
-
 		});
 
 		path("/bundle", () ->

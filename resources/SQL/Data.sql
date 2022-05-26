@@ -124,15 +124,15 @@ INSERT INTO "route" (method,urn) VALUES ('GET', '/course/:id');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('GET', '/course/:ownerID/:name');
+INSERT INTO "route" (method,urn) VALUES ('GET', '/course/owner/name/:ownerID/:name');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('GET', '/course/:ownerID');
+INSERT INTO "route" (method,urn) VALUES ('GET', '/course/owner/:ownerID');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('GET', '/course/:groupID');
+INSERT INTO "route" (method,urn) VALUES ('GET', '/course/group/:groupID');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 

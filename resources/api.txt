@@ -30,9 +30,9 @@
 
 "POST", "/course/"
 "GET", "/course/:id"
-"GET", "/course/:ownerID/:name"
-"GET", "/course/:ownerID"
-"GET", "/course/:groupID"
+"GET", "/course/owner/name/:ownerID/:name"
+"GET", "/course/owner/:ownerID"
+"GET", "/course/group/:groupID"
 "PUT", "/course/addCoAuthor/:id/:coAuthorID"
 "PUT", "/course/delCoAuthor/:id/:coAuthorID"
 "PUT", "/course/addGroup/:groupID/:id"
