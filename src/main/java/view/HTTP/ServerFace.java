@@ -414,6 +414,8 @@ public class ServerFace
 				JsonObject resJSON = gson.toJsonTree(res).getAsJsonObject();
 				courseParser.filterGroupStudents(resJSON);
 				courseParser.defend(resJSON);
+
+				resp.status(OK);
 				return gson.toJson(new Response(resJSON));
 			});
 
@@ -433,9 +435,16 @@ public class ServerFace
 				}
 
 				List<Course> res =  courseController.getByOwner(owner);
+				JsonArray jsonArr= gson.toJsonTree(res).getAsJsonArray();
+				for(JsonElement json:jsonArr)
+				{
+					JsonObject resJSON = json.getAsJsonObject();
+					courseParser.filterGroupStudents(resJSON);
+					courseParser.defend(resJSON);
+				}
 
 				resp.status(OK);
-				return gson.toJson(new Response(gson.toJsonTree(res)));
+				return gson.toJson(new Response(jsonArr));
 			});
 
 			put("/addGroup/:groupID/:id", (req, resp) ->
