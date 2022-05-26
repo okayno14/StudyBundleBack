@@ -40,15 +40,15 @@ INSERT INTO "route" (method,urn) VALUES ('GET', '/user/email/:email/');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('GET', '/user/:lastName/:firstName/:fatherName/:roleID');
+INSERT INTO "route" (method,urn) VALUES ('GET', '/user/fio/role/:lastName/:firstName/:fatherName/:roleID');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('GET', '/user/:lastName/:firstName/:fatherName/:courseName');
+INSERT INTO "route" (method,urn) VALUES ('GET', '/user/fio/courseName/:lastName/:firstName/:fatherName/:courseName');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
-INSERT INTO "route" (method,urn) VALUES ('GET', '/user/:lastName/:firstName/:fatherName/:groupName');
+INSERT INTO "route" (method,urn) VALUES ('GET', '/user/fio/groupName/:lastName/:firstName/:fatherName/:groupName');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
