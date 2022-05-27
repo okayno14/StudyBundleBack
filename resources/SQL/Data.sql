@@ -36,6 +36,11 @@ INSERT INTO "route" (method,urn) VALUES ('GET', '/user/:id/');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));
 
+INSERT INTO "route" (method,urn) VALUES ('GET', '/user/me');
+INSERT INTO role_route VALUES (10,(select max(id) from "route"));
+INSERT INTO role_route VALUES (11,(select max(id) from "route"));
+INSERT INTO role_route VALUES (12,(select max(id) from "route"));
+
 INSERT INTO "route" (method,urn) VALUES ('GET', '/user/email/:email/');
 INSERT INTO role_route VALUES (10,(select max(id) from "route"));
 INSERT INTO role_route VALUES (11,(select max(id) from "route"));

@@ -317,6 +317,13 @@ public class ServerFace
 						"У пользователя уже есть токен. Или данные не введены корректно"));
 			});
 
+			get("/me",(req,resp)->
+			{
+				User   client       = authentAuthorize(req, resp);
+				resp.status(OK);
+				return gson.toJson(new Response(gson.toJsonTree(client),"Успешно"));
+			});
+
 			put("/logout", (req, resp) ->
 			{
 				User   client = authentAuthorize(req, resp);

@@ -1,6 +1,7 @@
 "POST", "/user/"
 "POST", "/user/:groupID"
 "GET", "/user/:id"
+"GET", "user/me"
 "GET", "/user/email/:email"
 "GET", "/user/fio/role/:lastName/:firstName/:fatherName/:roleID"
 "GET", "/user/fio/courseName/:lastName/:firstName/:fatherName/:courseName"
