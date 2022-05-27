@@ -120,6 +120,18 @@ public class ServerFace
 		endpoints();
 	}
 
+	private void preAuthentication(Request req, spark.Response resp)
+	{
+		//Если сессия новая, то создаём её и унифициируем значение токена
+		User client = null;
+		if (req.session().isNew() || !req.session().attributes().contains("token"))
+		{
+			req.session(true);
+			client = userController.getGuestUser();
+			req.session().attribute("token", client.getToken());
+		}
+	}
+
 	//Аутентификация и авторизация клиента
 	private User authentAuthorize(Request req, spark.Response resp)
 	{
@@ -234,15 +246,6 @@ public class ServerFace
 			resp.header("Access-Control-Allow-Headers",
 						"Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin,");
 			resp.header("Access-Control-Allow-Credentials", "true");
-
-			//Если сессия новая, то создаём её и уинициируем значение токена
-			User client = null;
-			if (req.session().isNew() || !req.session().attributes().contains("token"))
-			{
-				req.session(true);
-				client = userController.getGuestUser();
-				req.session().attribute("token", client.getToken());
-			}
 		});
 
 		//CORS
@@ -260,7 +263,6 @@ public class ServerFace
 			}
 			return "OK";
 		});
-
 
 		path("/user", () ->
 		{
@@ -287,6 +289,8 @@ public class ServerFace
 
 			put("/login", (req, resp) ->
 			{
+				preAuthentication(req, resp);
+
 				//аутентифицировались как гость
 				User   client       = authentAuthorize(req, resp);
 				String token        = client.getToken();
