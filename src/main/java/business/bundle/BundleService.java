@@ -85,7 +85,15 @@ public class BundleService implements IBundleService
 	@Override
 	public List<Bundle> get(Course course, User author)
 	{
-		return null;
+		List<Bundle> res = bundleRepo.get(course,author);
+		for (Bundle b : res)
+		{
+			if (!bundleCache.contains(b.getId()))
+			{
+				bundleCache.put(b);
+			}
+		}
+		return res;
 	}
 
 	@Override

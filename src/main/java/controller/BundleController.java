@@ -41,7 +41,7 @@ public class BundleController implements IBundleController
 	@Override
 	public List<Bundle> get(Course course, User author)
 	{
-		return null;
+		return bundleService.get(course,author);
 	}
 
 	@Override

@@ -691,6 +691,30 @@ public class ServerFace
 				return gson.toJson(new Response(bundleJSON, "Успех"));
 			});
 
+			get("/:courseID/:ownerID",(req,resp)->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long courseID = Long.parseLong(req.params("courseID"));
+				long ownerID = Long.parseLong(req.params("ownerID"));
+
+				Course c = courseController.get(courseID);
+				User owner = userController.get(ownerID);
+				List<Bundle> res = bundleController.get(c,owner);
+
+				JsonArray jsonArray = new JsonArray();
+
+				for(Bundle bundle: res)
+				{
+					jsonArray.add(parseWithFilterAndDefence(bundle));
+				}
+
+				resp.status(OK);
+				return gson.toJson(new Response(jsonArray));
+			});
+
 			get("/download/:id", (req, resp) ->
 			{
 				User   client       = authentAuthorize(req, resp);
