@@ -368,6 +368,29 @@ public class ServerFace
 
 				}));
 
+				get("/students/:id", (req,resp)->
+				{
+					User   client       = authentAuthorize(req, resp);
+					String token        = client.getToken();
+					long   tokenExpires = client.getTokenExpires();
+
+					long groupID = Long.parseLong(req.params("id"));
+					Group group = groupController.get(groupID);
+
+					Set<User> res = groupController.getUsers(group);
+
+					JsonArray jsonArray = new JsonArray();
+					for(User user:res)
+					{
+						JsonObject jsonObject = gson.toJsonTree(user).getAsJsonObject();
+						userParser.defendData(jsonObject);
+						jsonArray.add(jsonObject);
+					}
+
+					resp.status(OK);
+					return gson.toJson(new Response(jsonArray));
+				});
+
 				put("/addStudents/:id", ((req, resp) ->
 				{
 					User   client       = authentAuthorize(req, resp);
