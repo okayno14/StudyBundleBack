@@ -1,4 +1,4 @@
-package view.HTTP;
+package view.HTTP.response;
 
 import com.google.gson.JsonElement;
 import com.google.gson.annotations.Expose;

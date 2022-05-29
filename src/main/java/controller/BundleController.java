@@ -118,6 +118,16 @@ public class BundleController implements IBundleController
 	}
 
 	@Override
+	public void accept(User initiator, Bundle client)
+	{
+		if (initiator.getRole().getId() == controller.roleController.getAdmin().getId())
+		{
+			initiator = client.getCourse().getAuthor();
+		}
+		bundleService.accept(initiator, client);
+	}
+
+	@Override
 	public void cancel(User initiator, Bundle client)
 	{
 		if (initiator.getRole().getId() == controller.roleController.getAdmin().getId())

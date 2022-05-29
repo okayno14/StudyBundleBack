@@ -198,11 +198,13 @@ public class BundleService implements IBundleService
 
 		bestMatchBundle = (Bundle) res.getRows()[0].getObj();
 		float bestMatchScore = res.getRows()[0].getCortege()[methodsQuantity - 1];
+		bestMatchBundle.setOriginality(bestMatchScore);
 		if (bestMatchScore <= WORD_ANALYSIS_CRITICAL_VAL)
 		{
 			client.accept();
 			logger.trace("Бандл id = {} принят,  результат={}, максимальное сходство с id={}",
 						 client.getId(), bestMatchScore, bestMatchBundle.getId());
+
 		}
 		else
 		{
@@ -212,7 +214,19 @@ public class BundleService implements IBundleService
 		}
 		bundleRepo.save(client);
 		return bestMatchBundle;
+	}
 
+	@Override
+	public void accept(User initiator, Bundle client)
+	{
+		if (client.getState() != BundleState.CANCELED)
+		{
+			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
+		}
+		//может только автор курса
+		isInitiatorINCourseACL(initiator, client.getCourse());
+		client.accept();
+		bundleRepo.save(client);
 	}
 
 	@Override

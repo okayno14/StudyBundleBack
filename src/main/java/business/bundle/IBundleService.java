@@ -21,6 +21,7 @@ public interface IBundleService
 	void groupMovedFromCourse(User initiator, List<Course> courseList, List<Group> groupList);
 	byte[] downloadReport(User initiator, Bundle client);
 	Bundle uploadReport(User initiator, Bundle client, byte document[]);
+	void accept(User initiator, Bundle client);
 	void cancel(User initiator, Bundle client);
 	void emptify(User initiator, Bundle client);
 	//вызывается только в контексте удаления аккаунта

@@ -52,6 +52,8 @@ public class Bundle implements Serializable, Similarity
 			   mappedBy = "bundle")
 	@Expose
 	private Set<BundleACL> bundleACLSet = new HashSet<BundleACL>();
+	@Transient
+	private float originality;
 
 	public Bundle()
 	{
@@ -295,5 +297,13 @@ public class Bundle implements Serializable, Similarity
 		this.course = course;
 	}
 
+	public float getOriginality()
+	{
+		return originality;
+	}
 
+	public void setOriginality(float originality)
+	{
+		this.originality = originality;
+	}
 }

@@ -24,6 +24,8 @@ import spark.Spark;
 import view.HTTP.request.CreateObjReq;
 import view.HTTP.request.IDReq;
 import view.HTTP.request.LoginReq;
+import view.HTTP.response.Response;
+import view.HTTP.response.data.BundleAnalysisResult;
 import view.LoggerBuilder;
 
 import javax.servlet.MultipartConfigElement;
@@ -644,22 +646,13 @@ public class ServerFace
 				{
 					Bundle bestMatch = bundleController.uploadReport(client, b, buf);
 
-					String      message = "";
-					JsonElement data    = null;
-					if (b.getState() == BundleState.ACCEPTED)
-					{
-						message = "Отчёт успешно прошёл проверку";
-						data    = parseWithFilterAndDefence(b);
-					}
-					else if (b.getState() == BundleState.CANCELED)
-					{
-						message = "Отчёт недостаточно оригинален.\n";
-						JsonArray arrJSON = new JsonArray();
-						arrJSON.add(parseWithFilterAndDefence(b));
-						arrJSON.add(parseWithFilterAndDefence(bestMatch));
-						data = arrJSON;
-					}
-					return gson.toJson(new Response(data, message));
+					BundleAnalysisResult bundleAnalysisResult = new BundleAnalysisResult();
+					bundleAnalysisResult.setBundle(parseWithFilterAndDefence(b));
+					bundleAnalysisResult.setBestMatch(parseWithFilterAndDefence(bestMatch));
+					bundleAnalysisResult.setPercent(bestMatch.getOriginality());
+
+					resp.status(OK);
+					return gson.toJson(new Response(gson.toJsonTree(bundleAnalysisResult)));
 				}
 				catch (DataAccessException e)
 				{
@@ -745,6 +738,22 @@ public class ServerFace
 				}
 
 				return resp.raw();
+			});
+
+			put("/accept/:id",(req, resp)->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long   bundleID = Long.parseLong(req.params("id"));
+				Bundle bundle   = bundleController.get(bundleID);
+
+				bundleController.accept(client, bundle);
+				JsonObject jsonObject = parseWithFilterAndDefence(bundle);
+
+				resp.status(OK);
+				return gson.toJson(new Response(jsonObject, "Успешно"));
 			});
 
 			put("/cancel/:id", (req, resp) ->
