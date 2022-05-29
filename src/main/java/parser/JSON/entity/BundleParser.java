@@ -32,6 +32,9 @@ public class BundleParser implements JsonSerializer<Bundle>
 
 	public void filter(JsonObject jsonObject, Bundle source)
 	{
-		jsonObject.addProperty("courseID",source.getCourse().getId());
+		if(source.getCourse()!=null)
+		{
+			jsonObject.addProperty("courseID", source.getCourse().getId());
+		}
 	}
 }

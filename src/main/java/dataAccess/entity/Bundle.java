@@ -53,7 +53,7 @@ public class Bundle implements Serializable, Similarity
 	@Expose
 	private Set<BundleACL> bundleACLSet = new HashSet<BundleACL>();
 	@Transient
-	private float originality;
+	private float originality = 1.0f;
 
 	public Bundle()
 	{
