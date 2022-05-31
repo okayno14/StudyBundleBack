@@ -248,6 +248,7 @@ public class ServerFace
 			resp.header("Access-Control-Allow-Headers",
 						"Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin,");
 			resp.header("Access-Control-Allow-Credentials", "true");
+			resp.header("Access-Control-Expose-Headers","true");
 		});
 
 		//CORS
@@ -668,6 +669,39 @@ public class ServerFace
 				}
 			});
 
+			get("/download/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long   bundleID = Long.parseLong(req.params("id"));
+				Bundle b        = bundleController.get(bundleID);
+
+
+				byte buf[] = bundleController.downloadReport(client, b);
+
+				String fileOutName = b.getFolder();
+				fileOutName.replace("/", "_");
+				fileOutName = fileOutName + ".bow";
+				fileOutName = fileOutName.replace("/", "_");
+				fileOutName = fileOutName.replace(" ", "_");
+
+				fileOutName = translit.cyr2lat(fileOutName);
+
+				resp.header("Content-Type", "application/zip");
+				resp.header("Content-Disposition", "attachment; filename=" + fileOutName);
+
+
+				try (OutputStream out = resp.raw().getOutputStream())
+				{
+					out.write(buf);
+				}
+
+				return resp.raw();
+			});
+
+
 			get("/:id", (req, resp) ->
 			{
 				User   client       = authentAuthorize(req, resp);
@@ -708,37 +742,7 @@ public class ServerFace
 				return gson.toJson(new Response(jsonArray));
 			});
 
-			get("/download/:id", (req, resp) ->
-			{
-				User   client       = authentAuthorize(req, resp);
-				String token        = client.getToken();
-				long   tokenExpires = client.getTokenExpires();
 
-				long   bundleID = Long.parseLong(req.params("id"));
-				Bundle b        = bundleController.get(bundleID);
-
-
-				byte buf[] = bundleController.downloadReport(client, b);
-
-				String fileOutName = b.getFolder();
-				fileOutName.replace("/", "_");
-				fileOutName = fileOutName + ".bow";
-				fileOutName = fileOutName.replace("/", "_");
-				fileOutName = fileOutName.replace(" ", "_");
-
-				fileOutName = translit.cyr2lat(fileOutName);
-
-				resp.header("Content-Type", "application/zip");
-				resp.header("Content-Disposition", "attachment; filename=" + fileOutName);
-
-
-				try (OutputStream out = resp.raw().getOutputStream())
-				{
-					out.write(buf);
-				}
-
-				return resp.raw();
-			});
 
 			put("/accept/:id",(req, resp)->
 			{

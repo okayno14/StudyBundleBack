@@ -157,6 +157,7 @@ public class BundleService implements IBundleService
 		Bundle bestMatchBundle = new Bundle();
 		//написать алгоритм сверки
 		List<Bundle> bundleList = null;
+		float bestMatchScore=0.0F;
 		try
 		{
 			bundleList = bundleRepo
@@ -197,7 +198,7 @@ public class BundleService implements IBundleService
 		res.sortDesc(methodsQuantity - 1);
 
 		bestMatchBundle = (Bundle) res.getRows()[0].getObj();
-		float bestMatchScore = res.getRows()[0].getCortege()[methodsQuantity - 1];
+		bestMatchScore = res.getRows()[0].getCortege()[methodsQuantity - 1];
 		bestMatchBundle.setOriginality(bestMatchScore);
 		if (bestMatchScore <= WORD_ANALYSIS_CRITICAL_VAL)
 		{
