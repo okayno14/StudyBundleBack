@@ -199,7 +199,7 @@ public class BundleService implements IBundleService
 
 		bestMatchBundle = (Bundle) res.getRows()[0].getObj();
 		bestMatchScore = res.getRows()[0].getCortege()[methodsQuantity - 1];
-		bestMatchBundle.setSimScore(bestMatchScore);
+		client.setSimScore(bestMatchScore);
 		if (bestMatchScore <= WORD_ANALYSIS_CRITICAL_VAL)
 		{
 			client.accept();
