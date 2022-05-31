@@ -650,7 +650,7 @@ public class ServerFace
 					BundleAnalysisResult bundleAnalysisResult = new BundleAnalysisResult();
 					bundleAnalysisResult.setBundle(parseWithFilterAndDefence(b));
 					bundleAnalysisResult.setBestMatch(parseWithFilterAndDefence(bestMatch));
-					bundleAnalysisResult.setPercent(bestMatch.getOriginality());
+					bundleAnalysisResult.setPercent(b.getSimScore());
 
 					resp.status(OK);
 					return gson.toJson(new Response(gson.toJsonTree(bundleAnalysisResult)));
