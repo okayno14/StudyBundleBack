@@ -1,6 +1,5 @@
 package dataAccess.repository.wordParser;
 
-import exception.DataAccess.WordParserException;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.extractor.WordExtractor;
 
@@ -8,7 +7,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class WordParserDOC implements WordParserState
+public class WordParserDOC implements WordParserStrategy
 {
 
 	public WordParserDOC()

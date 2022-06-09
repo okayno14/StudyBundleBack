@@ -48,4 +48,9 @@ public class ConfMain
 	{
 		return logConf;
 	}
+
+	public void setResourcesPath(String resourcesPath)
+	{
+		this.resourcesPath = resourcesPath;
+	}
 }

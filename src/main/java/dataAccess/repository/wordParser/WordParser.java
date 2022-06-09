@@ -10,10 +10,10 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class WordParser implements WordParserState
+public class WordParser implements WordParserStrategy
 {
-	private HashMap<String, WordParserState> stateMap = new HashMap<>();
-	private final Pattern pattern = Pattern.compile(".[a-z]+$");
+	private HashMap<String, WordParserStrategy> stratMap = new HashMap<>();
+	private final Pattern                       pattern  = Pattern.compile(".[a-z]+$");
 
 	public WordParser()
 	{
@@ -21,28 +21,28 @@ public class WordParser implements WordParserState
 		ZipSecureFile.setMinInflateRatio(0);
 
 		//пихаем все реализации в Mapper
-		WordParserState wordParserState = new WordParserDOC();
-		stateMap.put(wordParserState.getFormat(),wordParserState);
+		WordParserStrategy wordParserStrategy = new WordParserDOC();
+		stratMap.put(wordParserStrategy.getFormat(), wordParserStrategy);
 
-		wordParserState=new WordParserDOCX();
-		stateMap.put(wordParserState.getFormat(),wordParserState);
+		wordParserStrategy =new WordParserDOCX();
+		stratMap.put(wordParserStrategy.getFormat(), wordParserStrategy);
 	}
 
 
 	@Override
 	public String parseDoc(String name, InputStream file)
 	{
-		String format = extractFormat(name);
-		WordParserState wordParserState = stateMap.get(format);
+		String             format             = extractFormat(name);
+		WordParserStrategy wordParserStrategy = stratMap.get(format);
 
-		if(wordParserState==null)
+		if(wordParserStrategy ==null)
 		{
 			throw new DataAccessException(new FormatNotSupported(format));
 		}
 
 		try
 		{
-			return wordParserState.parseDoc(name, file);
+			return wordParserStrategy.parseDoc(name, file);
 		}
 		catch (Exception ex)
 		{
@@ -54,17 +54,17 @@ public class WordParser implements WordParserState
 	@Override
 	public String parseDoc(String fileName)
 	{
-		String format = extractFormat(fileName);
-		WordParserState wordParserState = stateMap.get(format);
+		String             format             = extractFormat(fileName);
+		WordParserStrategy wordParserStrategy = stratMap.get(format);
 
-		if(wordParserState==null)
+		if(wordParserStrategy ==null)
 		{
 			throw new DataAccessException(new FormatNotSupported(format));
 		}
 
 		try
 		{
-			return wordParserState.parseDoc(fileName);
+			return wordParserStrategy.parseDoc(fileName);
 		}
 		catch (Exception ex)
 		{

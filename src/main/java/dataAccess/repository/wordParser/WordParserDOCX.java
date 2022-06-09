@@ -9,7 +9,7 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class WordParserDOCX implements WordParserState
+public class WordParserDOCX implements WordParserStrategy
 {
 	private XWPFDocument           docxFile;
 	private XWPFWordExtractor      extractor;
