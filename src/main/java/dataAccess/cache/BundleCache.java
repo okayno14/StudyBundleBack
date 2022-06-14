@@ -1,8 +1,11 @@
 package dataAccess.cache;
 
+import business.bundle.BundlePredicate;
 import dataAccess.entity.Bundle;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public class BundleCache implements IBundleCache
@@ -50,5 +53,20 @@ public class BundleCache implements IBundleCache
 	public void clean()
 	{
 		cache.clear();
+	}
+
+	@Override
+	public List<Bundle> filter(BundlePredicate bundlePredicate, Bundle sample)
+	{
+		List<Bundle> bundles = new LinkedList<>(cache.values());
+		List<Bundle> res = new LinkedList<>();
+		for(Bundle b: bundles)
+		{
+			if(bundlePredicate.check(sample,b))
+			{
+				res.add(b);
+			}
+		}
+		return res;
 	}
 }

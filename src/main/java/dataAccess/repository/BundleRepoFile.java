@@ -86,7 +86,7 @@ public class BundleRepoFile implements IBundleRepoFile
 
 		String text = wordParserReborn.parseDoc(name, doc);
 
-		bundle.getReport().setFileNameAndMeta(name, text);
+		bundle.getReport().setMeta(text);
 		doc.reset();
 		FileOutputStream fOut       = new FileOutputStream(bundleDir + "/" + name);
 		int              readed     = 0;
@@ -262,7 +262,7 @@ public class BundleRepoFile implements IBundleRepoFile
 		}
 		String name = storage + "/" + bundle.getFolder() + "/" + bundle.getReport().getFileName();
 
-		bundle.getReport().setFileNameAndMeta(name, wordParserReborn.parseDoc(name));
+		bundle.getReport().setMeta(wordParserReborn.parseDoc(name));
 	}
 
 	@Override

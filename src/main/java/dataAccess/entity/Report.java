@@ -146,9 +146,8 @@ public class Report implements Serializable, Similarity
 		return fileName;
 	}
 
-	public void setFileNameAndMeta(String fileName, String textStr)
+	public void setMeta(String textStr)
 	{
-		this.fileName = fileName;
 		fillMetricAndTextVec(textStr);
 	}
 

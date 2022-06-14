@@ -53,6 +53,7 @@ public class GroupVoters
 			}
 			res[i] = numerator /
 					(float) (Math.sqrt((double) denominator1) * Math.sqrt((double) denominator2));
+			res[i] = Math.abs(res[i]);
 			numerator=0;
 			denominator1=0;
 			denominator2=0;
@@ -106,7 +107,6 @@ public class GroupVoters
 
 		return pearsonBase(aRanked, rowsRanked);
 	}
-
 
 	public Matrix verdict(Matrix m)
 	{
