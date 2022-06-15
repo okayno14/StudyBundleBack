@@ -77,14 +77,14 @@ public class UserService implements IUserService
 		}
 		finally
 		{
-			if (user != null && user.getToken() == null)
+			if(user==null || user.getToken() != null || user.isEmailState() == false)
 			{
-				user.setToken(token);
-				user.setTokenExpires(tokenExpires);
-				userCache.authenticate(user.getId());
-				return true;
+				return false;
 			}
-			return false;
+			user.setToken(token);
+			user.setTokenExpires(tokenExpires);
+			userCache.authenticate(user.getId());
+			return true;
 		}
 	}
 

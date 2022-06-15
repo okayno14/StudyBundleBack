@@ -139,7 +139,7 @@ public class UserController implements IUserController
 	@Override
 	public User get(String email)
 	{
-		return null;
+		return service.get(email);
 	}
 
 	@Override

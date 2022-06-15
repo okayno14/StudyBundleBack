@@ -38,7 +38,6 @@ public class MailAgent
 
 		session = Session.getInstance(props, authenticator);
 		session.setDebug(true);
-		sayHello();
 	}
 
 	public void sayHello() throws MessagingException

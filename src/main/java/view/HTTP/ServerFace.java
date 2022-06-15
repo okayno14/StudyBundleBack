@@ -56,7 +56,7 @@ public class ServerFace
 	private static final int       OBJECT_NOT_FOUND               = 404;
 
 	private LoggerBuilder logBuilder;
-	private MailAgent mailAgent;
+	private MailAgent     mailAgent;
 
 	private Controller            controller;
 	private IBundleController     bundleController;
@@ -130,8 +130,11 @@ public class ServerFace
 	private void preAuthentication(Request req, spark.Response resp)
 	{
 		//Если сессия новая, то создаём её и унифициируем значение токена
-		User client = null;
-		if (req.session().isNew() || !req.session().attributes().contains("token"))
+		User    client          = null;
+		boolean isNew           = req.session().isNew();
+		String  sessID          = req.session().id();
+		boolean NoTokenInCookie = !req.session().attributes().contains("token");
+		if (isNew || NoTokenInCookie)
 		{
 			req.session(true);
 			client = userController.getGuestUser();
@@ -151,13 +154,14 @@ public class ServerFace
 				halt(NO_RIGHT_FOR_OPERATION, "У пользователя нет права на это действие");
 			}
 			Route firstRoleRoute = client.getRole().getRouteList().get(0);
-			if (firstRoleRoute.getMethod().toString().equals(any) && firstRoleRoute.getUrn().equals(any))
+			if (firstRoleRoute.getMethod().toString().equals(any) &&
+					firstRoleRoute.getUrn().equals(any))
 			{
 				return client;
 			}
 
 			Set<String>  reqParams = req.params().keySet();
-			String       req_URN    = req.uri();
+			String       req_URN   = req.uri();
 			StringBuffer reqName   = new StringBuffer();
 
 			Pattern      pattern = Pattern.compile("/[a-zA-z0-9]+");
@@ -173,14 +177,14 @@ public class ServerFace
 				reqName.append(iter.next());
 			}
 
-			for(Route roleRoute:client.getRole().getRouteList())
+			for (Route roleRoute : client.getRole().getRouteList())
 			{
-				String roleRoute_urn = roleRoute.getUrn().toLowerCase();
-				boolean flag = true;
+				String  roleRoute_urn = roleRoute.getUrn().toLowerCase();
+				boolean flag          = true;
 
-				if(roleRoute_urn.equalsIgnoreCase(any))
+				if (roleRoute_urn.equalsIgnoreCase(any))
 				{
-					flag=flag&&true;
+					flag = flag && true;
 				}
 				else
 				{
@@ -191,9 +195,9 @@ public class ServerFace
 					flag = flag && roleRoute_urn.contains(reqName.toString().toLowerCase());
 				}
 
-				if(roleRoute.getMethod().toString().equals(any))
+				if (roleRoute.getMethod().toString().equals(any))
 				{
-					flag=flag&&true;
+					flag = flag && true;
 				}
 				else
 				{
@@ -253,7 +257,12 @@ public class ServerFace
 			resp.header("Access-Control-Allow-Headers",
 						"Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin,");
 			resp.header("Access-Control-Allow-Credentials", "true");
-			resp.header("Access-Control-Expose-Headers","true");
+			resp.header("Access-Control-Expose-Headers", "true");
+
+			if (!req.requestMethod().equals("OPTIONS"))
+			{
+				preAuthentication(req, resp);
+			}
 		});
 
 		//CORS
@@ -297,39 +306,30 @@ public class ServerFace
 
 			put("/login", (req, resp) ->
 			{
-				preAuthentication(req, resp);
-
 				//аутентифицировались как гость
 				User   client       = authentAuthorize(req, resp);
 				String token        = client.getToken();
 				long   tokenExpires = client.getTokenExpires();
 
 				LoginReq loginReq = gson.fromJson(req.body(), LoginReq.class);
-				if (userController
-						.login(token, tokenExpires, loginReq.getEmail(), loginReq.getPass()))
+				if (userController.login(token, tokenExpires, loginReq.getEmail(),
+										 loginReq.getPass()))
 				{
-					//проверим, что у пользователя активированная УЗ
-					client       = userController.getByToken(req.session().attribute("token"));
-					if(!client.isEmailState())
-					{
-						userController.logout(token);
-						req.session().removeAttribute("token");
-						halt(NO_RIGHT_FOR_OPERATION, "У пользователя нет права на это действие");
-					}
 					resp.status(OK);
 					JsonElement data = gson.toJsonTree(userController.getByToken(token));
 					return gson.toJson(new Response(data, "Успешно"));
 				}
-				resp.status(AUTHENTICATION_ERROR);
-				return gson.toJson(new Response(
-						"У пользователя уже есть токен. Или данные не введены корректно"));
+				halt(AUTHENTICATION_ERROR,
+					 "Неверные данные УЗ или " + "найденный пользователь аутентифицирован или " +
+							 "у найденного пользователя неактивирована УЗ");
+				return "";
 			});
 
-			get("/me",(req,resp)->
+			get("/me", (req, resp) ->
 			{
-				User   client       = authentAuthorize(req, resp);
+				User client = authentAuthorize(req, resp);
 				resp.status(OK);
-				return gson.toJson(new Response(gson.toJsonTree(client),"Успешно"));
+				return gson.toJson(new Response(gson.toJsonTree(client), "Успешно"));
 			});
 
 			put("/logout", (req, resp) ->
@@ -339,6 +339,21 @@ public class ServerFace
 				userController.logout(token);
 				req.session().removeAttribute("token");
 				return gson.toJson(new Response("Успешно"));
+			});
+
+			put("/confirm/:email", (req, resp) ->
+			{
+				//preAuthentication(req, resp);
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				String email           = req.params("email");
+				User   user            = userController.get(email);
+				String activateRequest = "/user/activate/" + user.getId();
+
+				mailAgent.sendConfirmMail(activateRequest, user.getEmail());
+				return "ff";
 			});
 
 			//Добавить
@@ -376,19 +391,19 @@ public class ServerFace
 
 				}));
 
-				get("/students/:id", (req,resp)->
+				get("/students/:id", (req, resp) ->
 				{
 					User   client       = authentAuthorize(req, resp);
 					String token        = client.getToken();
 					long   tokenExpires = client.getTokenExpires();
 
-					long groupID = Long.parseLong(req.params("id"));
-					Group group = groupController.get(groupID);
+					long  groupID = Long.parseLong(req.params("id"));
+					Group group   = groupController.get(groupID);
 
 					Set<User> res = groupController.getUsers(group);
 
 					JsonArray jsonArray = new JsonArray();
-					for(User user:res)
+					for (User user : res)
 					{
 						JsonObject jsonObject = gson.toJsonTree(user).getAsJsonObject();
 						userParser.defendData(jsonObject);
@@ -422,8 +437,8 @@ public class ServerFace
 					catch (DataAccessException e)
 					{
 						resp.status(OBJECT_NOT_FOUND);
-						return gson.toJson(new Response(
-								"Объект не найден\n " + e.getCause().getMessage()));
+						return gson.toJson(
+								new Response("Объект не найден\n " + e.getCause().getMessage()));
 					}
 				});
 			});
@@ -461,7 +476,7 @@ public class ServerFace
 				return gson.toJson(new Response(resJSON));
 			});
 
-			get("/owner/:ownerID",(req, resp)->
+			get("/owner/:ownerID", (req, resp) ->
 			{
 				User   client       = authentAuthorize(req, resp);
 				String token        = client.getToken();
@@ -471,14 +486,14 @@ public class ServerFace
 
 				User owner = client;
 
-				if(ownerID!=client.getId())
+				if (ownerID != client.getId())
 				{
 					owner = userController.get(ownerID);
 				}
 
-				List<Course> res =  courseController.getByOwner(owner);
-				JsonArray jsonArr= gson.toJsonTree(res).getAsJsonArray();
-				for(JsonElement json:jsonArr)
+				List<Course> res     = courseController.getByOwner(owner);
+				JsonArray    jsonArr = gson.toJsonTree(res).getAsJsonArray();
+				for (JsonElement json : jsonArr)
 				{
 					JsonObject resJSON = json.getAsJsonObject();
 					courseParser.filterGroupStudents(resJSON);
@@ -489,18 +504,18 @@ public class ServerFace
 				return gson.toJson(new Response(jsonArr));
 			});
 
-			get("/group/:groupID", (req,resp)->
+			get("/group/:groupID", (req, resp) ->
 			{
 				User   client       = authentAuthorize(req, resp);
 				String token        = client.getToken();
 				long   tokenExpires = client.getTokenExpires();
 
-				long groupID = Long.parseLong(req.params("groupID"));
-				Group g = groupController.get(groupID);
+				long  groupID = Long.parseLong(req.params("groupID"));
+				Group g       = groupController.get(groupID);
 
-				List<Course> res = courseController.getByGroup(g);
-				JsonArray jsonArr= gson.toJsonTree(res).getAsJsonArray();
-				for(JsonElement json:jsonArr)
+				List<Course> res     = courseController.getByGroup(g);
+				JsonArray    jsonArr = gson.toJsonTree(res).getAsJsonArray();
+				for (JsonElement json : jsonArr)
 				{
 					JsonObject resJSON = json.getAsJsonObject();
 					courseParser.filterGroupStudents(resJSON);
@@ -723,22 +738,22 @@ public class ServerFace
 				return gson.toJson(new Response(bundleJSON, "Успех"));
 			});
 
-			get("/:courseID/:ownerID",(req,resp)->
+			get("/:courseID/:ownerID", (req, resp) ->
 			{
 				User   client       = authentAuthorize(req, resp);
 				String token        = client.getToken();
 				long   tokenExpires = client.getTokenExpires();
 
 				long courseID = Long.parseLong(req.params("courseID"));
-				long ownerID = Long.parseLong(req.params("ownerID"));
+				long ownerID  = Long.parseLong(req.params("ownerID"));
 
-				Course c = courseController.get(courseID);
-				User owner = userController.get(ownerID);
-				List<Bundle> res = bundleController.get(c,owner);
+				Course       c     = courseController.get(courseID);
+				User         owner = userController.get(ownerID);
+				List<Bundle> res   = bundleController.get(c, owner);
 
 				JsonArray jsonArray = new JsonArray();
 
-				for(Bundle bundle: res)
+				for (Bundle bundle : res)
 				{
 					jsonArray.add(parseWithFilterAndDefence(bundle));
 				}
@@ -748,8 +763,7 @@ public class ServerFace
 			});
 
 
-
-			put("/accept/:id",(req, resp)->
+			put("/accept/:id", (req, resp) ->
 			{
 				User   client       = authentAuthorize(req, resp);
 				String token        = client.getToken();
