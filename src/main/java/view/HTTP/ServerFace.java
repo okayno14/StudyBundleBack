@@ -343,7 +343,6 @@ public class ServerFace
 
 			put("/confirm/:email", (req, resp) ->
 			{
-				//preAuthentication(req, resp);
 				User   client       = authentAuthorize(req, resp);
 				String token        = client.getToken();
 				long   tokenExpires = client.getTokenExpires();
@@ -356,6 +355,20 @@ public class ServerFace
 				}
 				String activateRequest = req.host() + "/user/activate/" + user.getId();
 				mailAgent.sendConfirmMail(activateRequest, user.getEmail());
+				resp.status(OK);
+				return "";
+			});
+
+			get("/activate/:id",(req,resp)->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				Long id = Long.parseLong(req.params("id"));
+				User user = userController.get(id);
+
+				userController.activate(user);
 				resp.status(OK);
 				return "";
 			});

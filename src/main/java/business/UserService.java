@@ -8,6 +8,7 @@ import dataAccess.repository.IUserRepo;
 import exception.Business.AuthenticationException;
 import exception.Business.BusinessException;
 import exception.Business.NoRightException;
+import exception.Business.NoSuchStateAction;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.ObjectNotFoundException;
 
@@ -189,9 +190,14 @@ public class UserService implements IUserService
 	}
 
 	@Override
-	public void activate(long id)
+	public void activate(User client)
 	{
-
+		if(client.isEmailState())
+		{
+			throw new NoSuchStateAction("activated");
+		}
+		client.setEmailState(true);
+		userRepo.save(client);
 	}
 
 	@Override

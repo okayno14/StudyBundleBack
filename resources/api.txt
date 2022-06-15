@@ -11,7 +11,7 @@
 "PUT", "/user/forgotPass/:email"
 "PUT", "/user/resetPass/:passHash/:id"
 "PUT", "/user/confirm/:email"
-"PUT", "/user/activate/:id"
+"GET", "/user/activate/:id"
 "PUT", "/user/fio/:id"
 "PUT", "/user/pass/:id"
 "PUT", "/user/mail/:id"

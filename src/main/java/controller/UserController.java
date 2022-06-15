@@ -212,9 +212,9 @@ public class UserController implements IUserController
 	}
 
 	@Override
-	public void activate(long id)
+	public void activate(User client)
 	{
-
+		service.activate(client);
 	}
 
 	@Override
