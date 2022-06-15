@@ -348,12 +348,16 @@ public class ServerFace
 				String token        = client.getToken();
 				long   tokenExpires = client.getTokenExpires();
 
-				String email           = req.params("email");
-				User   user            = userController.get(email);
-				String activateRequest = "/user/activate/" + user.getId();
-
+				String email = req.params("email");
+				User   user  = userController.get(email);
+				if (user.isEmailState())
+				{
+					halt(SEMANTIC_ERROR,"Запрошенная УЗ активирована");
+				}
+				String activateRequest = req.host() + "/user/activate/" + user.getId();
 				mailAgent.sendConfirmMail(activateRequest, user.getEmail());
-				return "ff";
+				resp.status(OK);
+				return "";
 			});
 
 			//Добавить
@@ -846,13 +850,16 @@ public class ServerFace
 
 		exception(BusinessException.class, (e, req, resp) ->
 		{
-			if (e.getCause().getClass() == NoSuchStateAction.class ||
-					e.getCause().getClass() == NoRightException.class ||
+			if (e.getCause().getClass() == NoRightException.class ||
 					e.getCause().getClass() == DeletingImportantData.class)
 			{
 				resp.status(NO_RIGHT_FOR_OPERATION);
-				resp.body(gson.toJson(new Response(e.getMessage())));
 			}
+			if (e.getCause().getClass() == NoSuchStateAction.class)
+			{
+				resp.status(SEMANTIC_ERROR);
+			}
+			resp.body(gson.toJson(new Response(e.getMessage())));
 		});
 
 		//Если ничего не получилось найти, то швыряем стак трэйс в клиентский код
