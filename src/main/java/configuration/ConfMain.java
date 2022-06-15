@@ -10,16 +10,19 @@ public class ConfMain
 	private DateAccessConf        dateAccessConf;
 	@Expose
 	private LogConf               logConf;
+	@Expose
+	private MailConf              mailConf;
 	private BusinessConfiguration businessConfiguration = new BusinessConfiguration();
 	@Expose
 	private String                resourcesPath         = "resources";
 
 	public ConfMain(HTTP_Conf http_conf, DateAccessConf dateAccessConf, LogConf logConf,
-					String resourcesPath)
+					MailConf mailConf, String resourcesPath)
 	{
 		this.http_conf      = http_conf;
 		this.dateAccessConf = dateAccessConf;
 		this.logConf        = logConf;
+		this.mailConf       = mailConf;
 		this.resourcesPath  = resourcesPath;
 	}
 
@@ -47,6 +50,11 @@ public class ConfMain
 	public LogConf getLogConf()
 	{
 		return logConf;
+	}
+
+	public MailConf getMailConf()
+	{
+		return mailConf;
 	}
 
 	public void setResourcesPath(String resourcesPath)

@@ -1,10 +1,7 @@
 package parser.JSON;
 
 import com.google.gson.*;
-import configuration.ConfMain;
-import configuration.DateAccessConf;
-import configuration.HTTP_Conf;
-import configuration.LogConf;
+import configuration.*;
 
 import java.lang.reflect.Type;
 
@@ -33,11 +30,12 @@ public class ConfMainParser implements JsonSerializer<ConfMain>, JsonDeserialize
 		DateAccessConf dateAccessConf = deserializationContext
 				.deserialize(json.get("DataAccessConf"), DateAccessConf.class);
 		LogConf logConf = deserializationContext.deserialize(json.get("LogConf"), LogConf.class);
+		MailConf mailConf = deserializationContext.deserialize(json.get("MailConf"),MailConf.class);
 
 		String resourcesPath = json.get("resourcesPath").getAsString();
 
 
-		ConfMain confMain = new ConfMain(http_conf, dateAccessConf, logConf, resourcesPath);
+		ConfMain confMain = new ConfMain(http_conf, dateAccessConf, logConf, mailConf,resourcesPath);
 		confMain.makeSubConfigs();
 
 		return confMain;

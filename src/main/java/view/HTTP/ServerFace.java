@@ -27,7 +27,9 @@ import view.HTTP.request.LoginReq;
 import view.HTTP.response.Response;
 import view.HTTP.response.data.BundleAnalysisResult;
 import view.LoggerBuilder;
+import view.mail.MailAgent;
 
+import javax.mail.MessagingException;
 import javax.servlet.MultipartConfigElement;
 import java.io.*;
 import java.lang.reflect.Type;
@@ -54,6 +56,7 @@ public class ServerFace
 	private static final int       OBJECT_NOT_FOUND               = 404;
 
 	private LoggerBuilder logBuilder;
+	private MailAgent mailAgent;
 
 	private Controller            controller;
 	private IBundleController     bundleController;
@@ -72,10 +75,12 @@ public class ServerFace
 	private Translit translit = new Translit();
 
 	public ServerFace(ConfMain confMain, Gson gson, GsonBuilder gsonBuilder,
-					  LoggerBuilder logBuilder)
+					  LoggerBuilder logBuilder) throws MessagingException
 	{
 		this.logBuilder = logBuilder;
 		logBuilder.build(confMain.getLogConf().getLog4jConfPath());
+
+		this.mailAgent = new MailAgent(confMain.getMailConf());
 
 		this.http_conf   = confMain.getHttp_conf();
 		zipFileSizeLimit = confMain.getDateAccessConf().getZipFileSizeLimit();
