@@ -38,7 +38,7 @@ public class CacheController implements Runnable
 			{
 				//20 минут
 				//20L * 60L * 1000L
-				Thread.sleep(20L * 60L * 1000L);
+				Thread.sleep(20L*60L * 1000L);
 				clean();
 			}
 			catch (InterruptedException e)

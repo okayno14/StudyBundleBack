@@ -61,14 +61,12 @@ public class UserCache implements IUserCache
 	@Override
 	public void delete(long id)
 	{
-		String token = allUsers.get(id).getToken();
 		allUsers.remove(id);
 	}
 
 	@Override
 	public void cleanNonAuth()
 	{
-		List<User> candidates = new LinkedList<>();
 		Iterator it = allUsers.entrySet().iterator();
 		while (it.hasNext())
 		{
@@ -79,6 +77,5 @@ public class UserCache implements IUserCache
 				it.remove();
 			}
 		}
-
 	}
 }

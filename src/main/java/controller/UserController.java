@@ -227,7 +227,7 @@ public class UserController implements IUserController
 	}
 
 	@Override
-	public void cleanAuth()
+	public void logoutAll()
 	{
 		for(User user:authenticatedMap.values())
 		{

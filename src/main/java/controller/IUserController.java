@@ -10,7 +10,7 @@ public interface IUserController extends IUserService
 	void add(List<User> userList);
 	boolean contains(String token);
 	User getByToken(String token);
-	void cleanAuth();
+	void logoutAll();
 	void delete(List<User> userList);
 	User getGuestUser();
 }
