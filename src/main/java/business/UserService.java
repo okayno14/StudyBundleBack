@@ -84,21 +84,16 @@ public class UserService implements IUserService
 			}
 			user.setToken(token);
 			user.setTokenExpires(tokenExpires);
-			userCache.authenticate(user.getId());
 			return true;
 		}
 	}
 
 	@Override
-	public void logout(String token)
+	public void logout(User client)
 	{
-		if(userCache.contains(token))
-		{
-			User user=userCache.get(token);
-			user.setToken(null);
-			user.setTokenExpires(0L);
-			userCache.delete(token);
-		}
+		client.setToken(null);
+		client.setTokenExpires(0L);
+		userCache.delete(client.getId());
 	}
 
 	@Override
@@ -120,20 +115,6 @@ public class UserService implements IUserService
 			}
 		}
 	}
-
-	@Override
-	public User getByToken(String token)
-	{
-		if (userCache.contains(token))
-		{
-			return userCache.get(token);
-		}
-		else
-		{
-			throw new BusinessException(new ObjectNotFoundException());
-		}
-	}
-
 	@Override
 	public User get(User fio, Role role)
 	{

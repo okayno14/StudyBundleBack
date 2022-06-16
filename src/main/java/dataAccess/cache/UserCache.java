@@ -5,15 +5,12 @@ import exception.DataAccess.DataAccessException;
 import exception.DataAccess.ObjectNotFoundException;
 import model.Core;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 public class UserCache implements IUserCache
 {
 	private CacheController   cacheController;
 	private Map<Long, User>   allUsers           = new HashMap<>();
-	private Map<String, User> authenticatedUsers = new HashMap<>();
 
 	public UserCache(CacheController cacheController)
 	{
@@ -27,12 +24,6 @@ public class UserCache implements IUserCache
 	}
 
 	@Override
-	public boolean contains(String token)
-	{
-		return authenticatedUsers.containsKey(token);
-	}
-
-	@Override
 	public boolean isEmpty()
 	{
 		return allUsers.isEmpty();
@@ -42,12 +33,6 @@ public class UserCache implements IUserCache
 	public User get(long id)
 	{
 		return allUsers.get(id);
-	}
-
-	@Override
-	public User get(String token)
-	{
-		return authenticatedUsers.get(token);
 	}
 
 	@Override
@@ -74,50 +59,26 @@ public class UserCache implements IUserCache
 	}
 
 	@Override
-	public void authenticate(long id)
-	{
-		User user = allUsers.get(id);
-		authenticatedUsers.put(user.getToken(), user);
-	}
-
-	@Override
 	public void delete(long id)
 	{
 		String token = allUsers.get(id).getToken();
-		if (contains(token))
-		{
-			authenticatedUsers.remove(token);
-		}
 		allUsers.remove(id);
-	}
-
-	@Override
-	public void delete(String token)
-	{
-		authenticatedUsers.remove(token);
 	}
 
 	@Override
 	public void cleanNonAuth()
 	{
-		allUsers.clear();
-		allUsers = new HashMap<>();
-		Iterator<User> i = authenticatedUsers.values().iterator();
-		while (i.hasNext())
+		List<User> candidates = new LinkedList<>();
+		Iterator it = allUsers.entrySet().iterator();
+		while (it.hasNext())
 		{
-			User u = i.next();
-			allUsers.put(u.getId(), u);
+			Map.Entry<Long,User> pair = (Map.Entry<Long,User>)it.next();
+			User user = pair.getValue();
+			if(user.getToken()==null)
+			{
+				it.remove();
+			}
 		}
-	}
 
-	@Override
-	public void cleanAuth()
-	{
-		Iterator<User> i = authenticatedUsers.values().iterator();
-		while (i.hasNext())
-		{
-			allUsers.remove(i.next().getId());
-		}
-		authenticatedUsers.clear();
 	}
 }

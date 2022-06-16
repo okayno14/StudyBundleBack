@@ -25,7 +25,7 @@ public class UserController implements IUserController
 	private Role ADMIN = null;
 
 	private Map<String, User> guestMap = new HashMap<>();
-
+	private Map<String, User> authenticatedMap = new HashMap<>();
 
 	public UserController(Controller controller, IUserService userService,
 						  UserValidationService userValidationService,
@@ -101,21 +101,25 @@ public class UserController implements IUserController
 				service.login(token, tokenExpires, email, pass))
 		{
 			guestMap.remove(token);
+			User user = get(email);
+			authenticatedMap.put(user.getToken(),user);
 			return true;
 		}
 		return false;
 	}
 
 	@Override
-	public void logout(String token)
+	public void logout(User client)
 	{
+		String token = client.getToken();
 		authoriser.removeToken(token);
 		if (guestMap.containsKey(token))
 		{
 			guestMap.remove(token);
 			return;
 		}
-		service.logout(token);
+		authenticatedMap.remove(token);
+		service.logout(client);
 	}
 
 	@Override
@@ -129,7 +133,6 @@ public class UserController implements IUserController
 		guestMap.put(user.getToken(), user);
 		return user;
 	}
-
 	@Override
 	public User get(long id)
 	{
@@ -143,6 +146,12 @@ public class UserController implements IUserController
 	}
 
 	@Override
+	public boolean contains(String token)
+	{
+		return authenticatedMap.containsKey(token);
+	}
+
+	@Override
 	public User getByToken(String token)
 	{
 		if (!authoriser.existsToken(token))
@@ -152,7 +161,7 @@ public class UserController implements IUserController
 		User res;
 		if ((res = guestMap.get(token)) == null)
 		{
-			res = service.getByToken(token);
+			res = authenticatedMap.get(token);
 		}
 		return res;
 	}
@@ -215,6 +224,18 @@ public class UserController implements IUserController
 	public void activate(User client)
 	{
 		service.activate(client);
+	}
+
+	@Override
+	public void cleanAuth()
+	{
+		for(User user:authenticatedMap.values())
+		{
+			service.logout(user);
+		}
+		authenticatedMap.clear();
+		guestMap.clear();
+		authoriser.clearTokens();
 	}
 
 	@Override

@@ -61,6 +61,10 @@ public class Authoriser
 		return res.longValue();
 	}
 
+	public void clearTokens()
+	{
+		tokens.clear();
+	}
 	public void removeToken(String tokenText)
 	{
 		tokens.remove(tokenText);

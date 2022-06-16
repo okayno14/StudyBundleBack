@@ -335,8 +335,7 @@ public class ServerFace
 			put("/logout", (req, resp) ->
 			{
 				User   client = authentAuthorize(req, resp);
-				String token  = client.getToken();
-				userController.logout(token);
+				userController.logout(client);
 				req.session().removeAttribute("token");
 				return gson.toJson(new Response("Успешно"));
 			});

@@ -11,10 +11,9 @@ public interface IUserService
 {
 	void add(User client);
 	boolean login(String token, long tokenExpires, String email, String pass);
-	void logout(String token);
+	void logout(User client);
 	User get(long id);
 	User get(String email);
-	User getByToken(String token);
 	User get(User fio, Role role);
 	List<User> getByCourse(User fio, String courseName);
 	Set<User> filter(List<User> userList, Course c);
