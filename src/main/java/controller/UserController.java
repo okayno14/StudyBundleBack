@@ -53,7 +53,7 @@ public class UserController implements IUserController
 	{
 		Iterator<User> i     = userList.iterator();
 		int            count = 0;
-		List<Role> roleList= controller.roleController.get();
+		List<Role> roleList= controller.getRoleController().get();
 
 		while (i.hasNext())
 		{
@@ -241,18 +241,18 @@ public class UserController implements IUserController
 	@Override
 	public void delete(User initiator, User target)
 	{
-		if (initiator.getRole().getId() == controller.roleController.getAdmin().getId())
+		if (initiator.getRole().getId() == controller.getRoleController().getAdmin().getId())
 		{
 			initiator = target;
 		}
 
 		//удалить все бандлы
-		controller.bundleController.delete(initiator, target);
+		controller.getBundleController().delete(initiator, target);
 		try
 		{
 			//удалить все курсы
-			List<Course> courseList = controller.courseController.getByOwner(initiator);
-			controller.courseController.delete(initiator, courseList);
+			List<Course> courseList = controller.getCourseController().getByOwner(initiator);
+			controller.getCourseController().delete(initiator, courseList);
 		}
 		catch (DataAccessException e)
 		{
