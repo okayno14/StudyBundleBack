@@ -1,6 +1,8 @@
 package dataAccess.cache;
 
 import dataAccess.entity.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -15,6 +17,8 @@ public class CacheController implements Runnable
 	private IRoleCache        roleCache;
 	private IUserCache        userCache;
 	private IRequirementCache requirementCache;
+
+	private Logger logger = LoggerFactory.getLogger(CacheController.class);
 
 	private Thread t;
 
@@ -205,6 +209,7 @@ public class CacheController implements Runnable
 		groupCache.clean();
 		userCache.cleanNonAuth();
 
+		logger.trace("Cache is clear");
 		//этих не трогаем
 		//		bundleTypeCache;
 		//		roleCache;
