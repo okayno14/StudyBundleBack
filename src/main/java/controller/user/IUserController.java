@@ -1,4 +1,4 @@
-package controller;
+package controller.user;
 
 import business.IUserService;
 import dataAccess.entity.User;

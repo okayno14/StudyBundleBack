@@ -1,8 +1,9 @@
-package controller;
+package controller.user;
 
 import business.IUserService;
 import business.UserValidationService;
 import configuration.BusinessConfiguration;
+import controller.Controller;
 import dataAccess.entity.Course;
 import dataAccess.entity.Role;
 import dataAccess.entity.User;
@@ -11,6 +12,8 @@ import exception.Controller.ControllerException;
 import exception.Controller.TokenNotFound;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.ObjectNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -20,6 +23,8 @@ public class UserController implements IUserController
 	private IUserService          service;
 	private UserValidationService userValidationService;
 	private Authoriser            authoriser;
+	private TokenKiller tokenKiller;
+	private Logger logger;
 
 	private Role GUEST = null;
 	private Role ADMIN = null;
@@ -35,11 +40,13 @@ public class UserController implements IUserController
 		this.service               = userService;
 		this.userValidationService = userValidationService;
 
-		GUEST = controller.roleController.getGuest();
-		ADMIN = controller.roleController.getAdmin();
+		GUEST = controller.getRoleController().getGuest();
+		ADMIN = controller.getRoleController().getAdmin();
 
 		authoriser = new Authoriser(businessConf.getTOKEN_LENGTH(),
 									businessConf.getAUTHENTICATION_TIME());
+		tokenKiller = new TokenKiller(this);
+		logger = LoggerFactory.getLogger(UserController.class);
 	}
 
 	@Override
@@ -97,12 +104,13 @@ public class UserController implements IUserController
 		//Если токен, полученный на вход валидный и не сгорел,
 		//то попробуем поискать пользователя по полученным входным данным
 		if (authoriser.existsToken(token) &&
-				authoriser.timeLeft(token) > System.currentTimeMillis() &&
+				authoriser.tokenExpires(token) > System.currentTimeMillis() &&
 				service.login(token, tokenExpires, email, pass))
 		{
 			guestMap.remove(token);
 			User user = get(email);
 			authenticatedMap.put(user.getToken(),user);
+			logger.trace("Пользователь {} аутентифицирован. Его токен {}",user.getEmail(),user.getToken());
 			return true;
 		}
 		return false;
@@ -129,7 +137,7 @@ public class UserController implements IUserController
 		user.setRole(GUEST);
 		String token = authoriser.genToken();
 		user.setToken(token);
-		user.setTokenExpires(authoriser.timeLeft(token));
+		user.setTokenExpires(authoriser.tokenExpires(token));
 		guestMap.put(user.getToken(), user);
 		return user;
 	}
@@ -148,7 +156,7 @@ public class UserController implements IUserController
 	@Override
 	public boolean contains(String token)
 	{
-		return authenticatedMap.containsKey(token);
+		return authoriser.existsToken(token);
 	}
 
 	@Override
@@ -270,5 +278,20 @@ public class UserController implements IUserController
 	public void delete(List<User> userList)
 	{
 
+	}
+
+	public Map<String, User> getGuestMap()
+	{
+		return guestMap;
+	}
+
+	public Map<String, User> getAuthenticatedMap()
+	{
+		return authenticatedMap;
+	}
+
+	public Authoriser getAuthoriser()
+	{
+		return authoriser;
 	}
 }

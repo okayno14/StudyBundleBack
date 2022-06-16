@@ -1,7 +1,7 @@
 package controller;
 
 import business.IGroupService;
-import dataAccess.entity.Bundle;
+import controller.user.IUserController;
 import dataAccess.entity.Course;
 import dataAccess.entity.Group;
 import dataAccess.entity.User;
@@ -48,8 +48,8 @@ public class GroupController implements IGroupController
 
 	private List<User> filterUserIDList(List<User> users)
 	{
-		IUserController  userController = controller.getUserController();
-		Iterator<User>   userIterator   = users.iterator();
+		IUserController userController = controller.getUserController();
+		Iterator<User>  userIterator   = users.iterator();
 		LinkedList<User> toAdd          = new LinkedList<>();
 		while (userIterator.hasNext())
 		{

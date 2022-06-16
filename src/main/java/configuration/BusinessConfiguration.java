@@ -6,7 +6,7 @@ public class BusinessConfiguration
 	private final int   META_ANALYSIS_WINDOW       = 5;
 	private final float WORD_ANALYSIS_CRITICAL_VAL = 0.75f;
 	private final int   TOKEN_LENGTH               = 10;
-	private final long  AUTHENTICATION_TIME        = 5L * 60 * 1000;
+	private final long  AUTHENTICATION_TIME        = 1L * 60 * 1000;
 
 	public BusinessConfiguration()
 	{

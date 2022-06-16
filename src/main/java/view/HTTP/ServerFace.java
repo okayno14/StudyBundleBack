@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import configuration.ConfMain;
 import configuration.HTTP_Conf;
 import controller.*;
+import controller.user.IUserController;
 import dataAccess.entity.*;
 import exception.Business.BusinessException;
 import exception.Business.DeletingImportantData;
@@ -62,9 +63,9 @@ public class ServerFace
 	private IBundleController     bundleController;
 	private IBundleTypeController bundleTypeController;
 	private ICourseController     courseController;
-	private IGroupController      groupController;
-	private IUserController       userController;
-	private IRoleController       roleController;
+	private IGroupController groupController;
+	private IUserController  userController;
+	private IRoleController  roleController;
 
 	private GsonBuilder  gsonBuilder;
 	private Gson         gson;
@@ -139,6 +140,8 @@ public class ServerFace
 			req.session(true);
 			client = userController.getGuestUser();
 			req.session().attribute("token", client.getToken());
+			long timeLeft = (client.getTokenExpires()-System.currentTimeMillis())/1000+10;
+			req.session().maxInactiveInterval((int) timeLeft);
 		}
 	}
 
@@ -213,6 +216,7 @@ public class ServerFace
 		}
 		catch (ControllerException e)
 		{
+			req.session().invalidate();
 			if (e.getCause() instanceof TokenNotFound)
 			{
 				halt(AUTHENTICATION_ERROR, "Закончился срок аренды токена");
