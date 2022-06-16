@@ -55,6 +55,7 @@ public class ServerFace
 	private static final int       INTERNAL_CRITICAL_SERVER_ERROR = 500;
 	private static final int       SEMANTIC_ERROR                 = 422;
 	private static final int       OBJECT_NOT_FOUND               = 404;
+	private final        long      SESSION_TIMEOUT_MS;
 
 	private LoggerBuilder logBuilder;
 	private MailAgent     mailAgent;
@@ -63,9 +64,9 @@ public class ServerFace
 	private IBundleController     bundleController;
 	private IBundleTypeController bundleTypeController;
 	private ICourseController     courseController;
-	private IGroupController groupController;
-	private IUserController  userController;
-	private IRoleController  roleController;
+	private IGroupController      groupController;
+	private IUserController       userController;
+	private IRoleController       roleController;
 
 	private GsonBuilder  gsonBuilder;
 	private Gson         gson;
@@ -85,6 +86,7 @@ public class ServerFace
 
 		this.http_conf   = confMain.getHttp_conf();
 		zipFileSizeLimit = confMain.getDateAccessConf().getZipFileSizeLimit();
+		SESSION_TIMEOUT_MS = confMain.getBusinessConfiguration().getSESSION_TIMEOUT_MS();
 
 		//применяем параметры конфигурации для сервера
 		Spark.port(http_conf.getPort());
@@ -140,8 +142,7 @@ public class ServerFace
 			req.session(true);
 			client = userController.getGuestUser();
 			req.session().attribute("token", client.getToken());
-			long timeLeft = (client.getTokenExpires()-System.currentTimeMillis())/1000+10;
-			req.session().maxInactiveInterval((int) timeLeft);
+			req.session().maxInactiveInterval((int) (SESSION_TIMEOUT_MS/1000));
 		}
 	}
 
@@ -338,7 +339,7 @@ public class ServerFace
 
 			put("/logout", (req, resp) ->
 			{
-				User   client = authentAuthorize(req, resp);
+				User client = authentAuthorize(req, resp);
 				userController.logout(client);
 				req.session().removeAttribute("token");
 				return gson.toJson(new Response("Успешно"));
@@ -354,7 +355,7 @@ public class ServerFace
 				User   user  = userController.get(email);
 				if (user.isEmailState())
 				{
-					halt(SEMANTIC_ERROR,"Запрошенная УЗ активирована");
+					halt(SEMANTIC_ERROR, "Запрошенная УЗ активирована");
 				}
 				String activateRequest = req.host() + "/user/activate/" + user.getId();
 				mailAgent.sendConfirmMail(activateRequest, user.getEmail());
@@ -362,13 +363,13 @@ public class ServerFace
 				return "";
 			});
 
-			get("/activate/:id",(req,resp)->
+			get("/activate/:id", (req, resp) ->
 			{
 				User   client       = authentAuthorize(req, resp);
 				String token        = client.getToken();
 				long   tokenExpires = client.getTokenExpires();
 
-				Long id = Long.parseLong(req.params("id"));
+				Long id   = Long.parseLong(req.params("id"));
 				User user = userController.get(id);
 
 				userController.activate(user);

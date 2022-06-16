@@ -1,5 +1,6 @@
 package controller.user;
 
+import configuration.BusinessConfiguration;
 import dataAccess.entity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,10 +13,16 @@ public class TokenKiller implements Runnable
 	private Thread t;
 	private UserController userController;
 	private Logger logger = LoggerFactory.getLogger(TokenKiller.class);
+	private final long AUTH_TIMER_CLOCK_MS;
 
-	public TokenKiller(UserController userController)
+
+	public TokenKiller(UserController userController, BusinessConfiguration businessConfiguration)
 	{
 		this.userController = userController;
+
+		this.AUTH_TIMER_CLOCK_MS= businessConfiguration.getAUTH_TIMER_CLOCK_MS();
+
+
 		t = new Thread(this);
 		t.setDaemon(true);
 		t.start();
@@ -28,7 +35,7 @@ public class TokenKiller implements Runnable
 		{
 			try
 			{
-				Thread.sleep(12L*1000L);
+				Thread.sleep(AUTH_TIMER_CLOCK_MS);
 				int counter = 0;
 				counter+=cleanMap(userController.getGuestMap());
 				counter+=cleanMap(userController.getAuthenticatedMap());

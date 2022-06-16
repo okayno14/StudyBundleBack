@@ -44,8 +44,8 @@ public class UserController implements IUserController
 		ADMIN = controller.getRoleController().getAdmin();
 
 		authoriser = new Authoriser(businessConf.getTOKEN_LENGTH(),
-									businessConf.getAUTHENTICATION_TIME());
-		tokenKiller = new TokenKiller(this);
+									businessConf.getAUTHENTICATION_TIME_MS());
+		tokenKiller = new TokenKiller(this, businessConf);
 		logger = LoggerFactory.getLogger(UserController.class);
 	}
 

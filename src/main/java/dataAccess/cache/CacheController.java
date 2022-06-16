@@ -1,5 +1,6 @@
 package dataAccess.cache;
 
+import configuration.BusinessConfiguration;
 import dataAccess.entity.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +23,12 @@ public class CacheController implements Runnable
 
 	private Thread t;
 
-	public CacheController()
+	private final long CACHE_CLEARING_COOLDOWN_MS;
+
+	public CacheController(BusinessConfiguration businessConfiguration)
 	{
+		this.CACHE_CLEARING_COOLDOWN_MS	= businessConfiguration.getCACHE_CLEARING_COOLDOWN_MS();
+
 		t = new Thread(this);
 		t.setDaemon(true);
 		t.start();
@@ -36,9 +41,7 @@ public class CacheController implements Runnable
 		{
 			try
 			{
-				//20 минут
-				//20L * 60L * 1000L
-				Thread.sleep(20L*60L * 1000L);
+				Thread.sleep(CACHE_CLEARING_COOLDOWN_MS);
 				clean();
 			}
 			catch (InterruptedException e)
