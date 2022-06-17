@@ -87,6 +87,7 @@ public class BundleRepoFile implements IBundleRepoFile
 		String text = wordParserReborn.parseDoc(name, doc);
 
 		bundle.getReport().setMeta(text);
+		bundle.getReport().setFileName(name);
 		doc.reset();
 		FileOutputStream fOut       = new FileOutputStream(bundleDir + "/" + name);
 		int              readed     = 0;

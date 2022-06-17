@@ -7,10 +7,10 @@ public class BusinessConfiguration
 	private final float WORD_ANALYSIS_CRITICAL_VAL = 0.75f;
 	private final int   TOKEN_LENGTH               = 10;
 	//timers
-	private final long  AUTHENTICATION_TIME_MS     = 1L * 60L * 1000L;
+	private final long  AUTHENTICATION_TIME_MS     = 5L * 60L * 1000L;
 	private final long  AUTH_TIMER_CLOCK_MS        = AUTHENTICATION_TIME_MS / 5;
 	private final long  SESSION_TIMEOUT_MS         = AUTHENTICATION_TIME_MS + 10000L;
-	private final long  CACHE_CLEARING_COOLDOWN_MS = 2L * 60L * 1000L;
+	private final long  CACHE_CLEARING_COOLDOWN_MS = 7L * 60L * 1000L;
 
 	public BusinessConfiguration()
 	{
