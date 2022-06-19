@@ -53,7 +53,7 @@ public class GroupVoters
 			}
 			res[i] = numerator /
 					(float) (Math.sqrt((double) denominator1) * Math.sqrt((double) denominator2));
-			res[i] = Math.abs(res[i]);
+			res[i] = relativize(res[i],-1.0f,1.0f);
 			numerator=0;
 			denominator1=0;
 			denominator2=0;
@@ -150,5 +150,11 @@ public class GroupVoters
 	public void setM(Matrix m)
 	{
 		this.m = m;
+	}
+
+	private float relativize(float number, float left, float right)
+	{
+		float length = right-left;
+		return (number-left)/length;
 	}
 }

@@ -322,7 +322,7 @@ public class ServerFace
 				{
 					resp.status(OK);
 					JsonElement data = gson.toJsonTree(userController.getByToken(token));
-					return gson.toJson(new Response(data, "Успешно"));
+					return gson.toJson(new Response(data));
 				}
 				halt(AUTHENTICATION_ERROR,
 					 "Неверные данные УЗ или " + "найденный пользователь аутентифицирован или " +
