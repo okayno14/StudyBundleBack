@@ -90,7 +90,7 @@ public class ServerFace
 
 		//применяем параметры конфигурации для сервера
 		Spark.port(http_conf.getPort());
-		Spark.externalStaticFileLocation("resources/Web");
+		Spark.externalStaticFileLocation(confMain.getResourcesPath()+"/Web");
 
 		//строим контроллер
 		controller           = new Controller(confMain);

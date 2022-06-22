@@ -61,4 +61,9 @@ public class ConfMain
 	{
 		this.resourcesPath = resourcesPath;
 	}
+
+	public String getResourcesPath()
+	{
+		return resourcesPath;
+	}
 }
