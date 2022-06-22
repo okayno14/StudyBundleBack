@@ -128,6 +128,7 @@ public class UserController implements IUserController
 		}
 		authenticatedMap.remove(token);
 		service.logout(client);
+		logger.trace("Пользователь {} вышел.",client.getEmail());
 	}
 
 	@Override
