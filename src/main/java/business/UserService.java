@@ -107,7 +107,9 @@ public class UserService implements IUserService
 		{
 			try
 			{
-				return userRepo.get(email);
+				User user = userRepo.get(email);
+				userCache.put(user);
+				return user;
 			}
 			catch (DataAccessException ee)
 			{

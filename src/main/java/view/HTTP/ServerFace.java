@@ -358,7 +358,8 @@ public class ServerFace
 					halt(SEMANTIC_ERROR, "Запрошенная УЗ активирована");
 				}
 				String activateRequest = req.host() + "/user/activate/" + user.getId();
-				mailAgent.sendConfirmMail(activateRequest, user.getEmail());
+				String pass = "Ваш пароль:" + user.getPass();
+				mailAgent.sendConfirmMail(activateRequest+"\n"+pass, user.getEmail());
 				resp.status(OK);
 				return "";
 			});
