@@ -1,8 +1,7 @@
 package parser.JSON;
 
 import com.google.gson.*;
-import com.google.gson.annotations.Expose;
-import view.HTTP.Response;
+import view.HTTP.response.Response;
 
 import java.lang.reflect.Type;
 

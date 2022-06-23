@@ -76,7 +76,11 @@ public class CourseService implements ICourseService
 	@Override
 	public List<Course> getByStudent(User student)
 	{
-		return null;
+		if(student.getGroup()==null)
+		{
+			throw new DataAccessException(new ObjectNotFoundException());
+		}
+		return getByGroup(student.getGroup());
 	}
 
 	@Override

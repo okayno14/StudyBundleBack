@@ -6,7 +6,11 @@ public class BusinessConfiguration
 	private final int   META_ANALYSIS_WINDOW       = 5;
 	private final float WORD_ANALYSIS_CRITICAL_VAL = 0.75f;
 	private final int   TOKEN_LENGTH               = 10;
-	private final long  AUTHENTICATION_TIME        = 5L * 60 * 1000;
+	//timers
+	private final long  AUTHENTICATION_TIME_MS     = 5L * 60L * 1000L;
+	private final long  AUTH_TIMER_CLOCK_MS        = AUTHENTICATION_TIME_MS / 5;
+	private final long  SESSION_TIMEOUT_MS         = AUTHENTICATION_TIME_MS + 10000L;
+	private final long  CACHE_CLEARING_COOLDOWN_MS = 7L * 60L * 1000L;
 
 	public BusinessConfiguration()
 	{
@@ -32,8 +36,23 @@ public class BusinessConfiguration
 		return TOKEN_LENGTH;
 	}
 
-	public long getAUTHENTICATION_TIME()
+	public long getAUTHENTICATION_TIME_MS()
 	{
-		return AUTHENTICATION_TIME;
+		return AUTHENTICATION_TIME_MS;
+	}
+
+	public long getAUTH_TIMER_CLOCK_MS()
+	{
+		return AUTH_TIMER_CLOCK_MS;
+	}
+
+	public long getSESSION_TIMEOUT_MS()
+	{
+		return SESSION_TIMEOUT_MS;
+	}
+
+	public long getCACHE_CLEARING_COOLDOWN_MS()
+	{
+		return CACHE_CLEARING_COOLDOWN_MS;
 	}
 }

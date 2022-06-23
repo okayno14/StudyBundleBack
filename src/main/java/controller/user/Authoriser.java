@@ -1,4 +1,4 @@
-package controller;
+package controller.user;
 
 import java.util.*;
 
@@ -51,7 +51,7 @@ public class Authoriser
 		return tokens.containsKey(tokenText);
 	}
 
-	public long timeLeft(String tokenText)
+	public long tokenExpires(String tokenText)
 	{
 		Long res = tokens.get(tokenText);
 		if (res == null)
@@ -61,6 +61,10 @@ public class Authoriser
 		return res.longValue();
 	}
 
+	public void clearTokens()
+	{
+		tokens.clear();
+	}
 	public void removeToken(String tokenText)
 	{
 		tokens.remove(tokenText);

@@ -54,7 +54,7 @@ public class Core
 		initHiber(dateAccessConf.getHibernateConf());
 
 		//сборка кэшей
-		CacheController cacheController = new CacheController();
+		CacheController cacheController = new CacheController(confMain.getBusinessConfiguration());
 
 		IBundleCache      bundleCache;
 		IBundleTypeCache  bundleTypeCache;

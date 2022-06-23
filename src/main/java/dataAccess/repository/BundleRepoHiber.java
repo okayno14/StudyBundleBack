@@ -217,7 +217,7 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 	}
 
 	@Override
-	public List<Bundle> get(Course course, BundleType bt, int num)
+	public List<Bundle> get(Course course, BundleType bt, int num, List<Bundle> cachedBundles)
 	{
 		Transaction t = getOrBegin();
 		HQL =
@@ -235,11 +235,13 @@ public class BundleRepoHiber extends RepoHiberBase implements IBundleRepo
 				"            c.id=:course and\n" +
 				"            b.bundleType.id =:bt and\n" +
 				"            b.num = :num and\n" +
-				"            b.state = 'ACCEPTED'";
+				"            b.state = 'ACCEPTED' and\n" +
+				"            b not in (:cachedBundles)";
 		q   = sessionFactory.getCurrentSession().createQuery(HQL);
 		q.setParameter("course", course.getId());
 		q.setParameter("bt", bt.getId());
 		q.setParameter("num", num);
+		q.setParameter("cachedBundles", cachedBundles);
 		List<Bundle> res = q.getResultList();
 		t.commit();
 		if (res.size() != 0)

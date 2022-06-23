@@ -85,7 +85,15 @@ public class BundleService implements IBundleService
 	@Override
 	public List<Bundle> get(Course course, User author)
 	{
-		return null;
+		List<Bundle> res = bundleRepo.get(course, author);
+		for (Bundle b : res)
+		{
+			if (!bundleCache.contains(b.getId()))
+			{
+				bundleCache.put(b);
+			}
+		}
+		return res;
 	}
 
 	@Override
@@ -146,21 +154,32 @@ public class BundleService implements IBundleService
 		}
 		isInitiatorInBundleACL_OR_InCourseACL(initiator, client);
 		bundleRepoFile.save(client, document);
-		Bundle bestMatchBundle = new Bundle();
-		//написать алгоритм сверки
-		List<Bundle> bundleList = null;
+		Bundle       bestMatchBundle = new Bundle();
+		List<Bundle> bundleList      = null;
+		float        bestMatchScore  = 0.0F;
 		try
 		{
-			bundleList = bundleRepo
-					.get(client.getCourse(), client.getBundleType(), client.getNum());
-
+			bundleList = this.getSameBundles(client);
+			LinkedList<Bundle> args = new LinkedList<>(bundleList);
+			args.add(client);
+			List<Bundle> base =bundleRepo.get(client.getCourse(), client.getBundleType(),
+											  client.getNum(),args);
+			bundleList.addAll(base);
 		}
 		catch (DataAccessException e)
 		{
-			client.accept();
-			bundleRepo.save(client);
-			logger.trace("Бандл id = {} принят,  работа была загружена первой", client.getId());
-			return bestMatchBundle;
+			if(bundleList.size()==0)
+			{
+				client.accept();
+				bundleRepo.save(client);
+				logger.trace("Бандл id = {} принят,  работа была загружена первой", client.getId());
+				return bestMatchBundle;
+			}
+		}
+
+		for(Bundle b:bundleList)
+		{
+			bundleCache.put(b);
 		}
 
 		BuilderMatrix builderMatrix = new BuilderMeta(client, bundleList);
@@ -189,12 +208,14 @@ public class BundleService implements IBundleService
 		res.sortDesc(methodsQuantity - 1);
 
 		bestMatchBundle = (Bundle) res.getRows()[0].getObj();
-		float bestMatchScore = res.getRows()[0].getCortege()[methodsQuantity - 1];
+		bestMatchScore  = res.getRows()[0].getCortege()[methodsQuantity - 1];
+		client.setSimScore(bestMatchScore);
 		if (bestMatchScore <= WORD_ANALYSIS_CRITICAL_VAL)
 		{
 			client.accept();
 			logger.trace("Бандл id = {} принят,  результат={}, максимальное сходство с id={}",
 						 client.getId(), bestMatchScore, bestMatchBundle.getId());
+
 		}
 		else
 		{
@@ -204,7 +225,19 @@ public class BundleService implements IBundleService
 		}
 		bundleRepo.save(client);
 		return bestMatchBundle;
+	}
 
+	@Override
+	public void accept(User initiator, Bundle client)
+	{
+		if (client.getState() != BundleState.CANCELED)
+		{
+			throw new BusinessException(new NoSuchStateAction(client.getState().toString()));
+		}
+		//может только автор курса
+		isInitiatorINCourseACL(initiator, client.getCourse());
+		client.accept();
+		bundleRepo.save(client);
 	}
 
 	@Override
@@ -281,5 +314,18 @@ public class BundleService implements IBundleService
 		{
 			isInitiatorINCourseACL(initiator, client.getCourse());
 		}
+	}
+
+	private List<Bundle> getSameBundles(Bundle b)
+	{
+		BundlePredicate bundlePredicate = (sample, bundle) ->
+		{
+			boolean f = sample.getCourse().equals(bundle.getCourse()) &&
+					sample.getBundleType().equals(bundle.getBundleType()) &&
+					sample.getNum() == bundle.getNum() && bundle.getState() == BundleState.ACCEPTED &&
+					sample.getId() != bundle.getId();
+			return f;
+		};
+		return bundleCache.filter(bundlePredicate,b);
 	}
 }

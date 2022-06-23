@@ -10,6 +10,5 @@ import java.util.List;
 
 public interface ICourseController extends ICourseService
 {
-	//List<Bundle> genBundlesForUser(Course client, User u);
 	void GroupChanged(Group g, List<User> userList);
 }

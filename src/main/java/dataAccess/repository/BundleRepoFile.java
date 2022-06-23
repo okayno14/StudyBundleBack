@@ -86,7 +86,8 @@ public class BundleRepoFile implements IBundleRepoFile
 
 		String text = wordParserReborn.parseDoc(name, doc);
 
-		bundle.getReport().setFileNameAndMeta(name, text);
+		bundle.getReport().setMeta(text);
+		bundle.getReport().setFileName(name);
 		doc.reset();
 		FileOutputStream fOut       = new FileOutputStream(bundleDir + "/" + name);
 		int              readed     = 0;
@@ -113,7 +114,7 @@ public class BundleRepoFile implements IBundleRepoFile
 		return toDel.delete();
 	}
 
-	private void srcWrite(String bundleDir, ZipInputStream zIN) throws IOException
+	private ZipEntry srcWrite(String bundleDir, ZipInputStream zIN, Bundle bundle) throws IOException
 	{
 		File srcDir = new File(bundleDir + "/src");
 		if (srcDir.exists())
@@ -131,19 +132,24 @@ public class BundleRepoFile implements IBundleRepoFile
 			{
 				file.mkdir();
 			}
+			else if(name.contains("src/"))
+			{
+					file.createNewFile();
+					BufferedOutputStream fOUT = new BufferedOutputStream(new FileOutputStream(file));
+					int                  c    = 0;
+					while ((c = zIN.read()) != -1)
+					{
+						fOUT.write(c);
+					}
+					fOUT.close();
+			}
 			else
 			{
-				file.createNewFile();
-				BufferedOutputStream fOUT = new BufferedOutputStream(new FileOutputStream(file));
-				int                  c    = 0;
-				while ((c = zIN.read()) != -1)
-				{
-					fOUT.write(c);
-				}
-				fOUT.close();
+				return zipEntry;
 			}
 			zIN.closeEntry();
 		}
+		return null;
 	}
 
 	@Override
@@ -158,17 +164,16 @@ public class BundleRepoFile implements IBundleRepoFile
 			String bundleDir = storage + "/" + bundle.getFolder();
 			checkBundleDir(bundleDir);
 			ZipEntry zipEntry = null;
+			ZipEntry reportEntry = null;
 			while ((zipEntry = zIN.getNextEntry()) != null)
 			{
 				String name = zipEntry.getName();
+				reportEntry=zipEntry;
 				if (name.equals("src/"))
 				{
-					srcWrite(bundleDir, zIN);
+					reportEntry= srcWrite(bundleDir, zIN, bundle);
 				}
-				else
-				{
-					reportWrite(bundle, bundleDir, zIN, zipEntry);
-				}
+				reportWrite(bundle,bundleDir,zIN,reportEntry);
 			}
 		}
 		catch (WordParserException | IOException e)
@@ -258,7 +263,7 @@ public class BundleRepoFile implements IBundleRepoFile
 		}
 		String name = storage + "/" + bundle.getFolder() + "/" + bundle.getReport().getFileName();
 
-		bundle.getReport().setFileNameAndMeta(name, wordParserReborn.parseDoc(name));
+		bundle.getReport().setMeta(wordParserReborn.parseDoc(name));
 	}
 
 	@Override

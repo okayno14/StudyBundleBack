@@ -13,7 +13,7 @@ public interface IBundleRepo
 	List<Bundle> get(String courseName, String groupName, User fio);
 	List<Bundle> get(Course course, User user);
 	List<Bundle> getAll(User user);
-	List<Bundle> get(Course course, BundleType bt, int num);
+	List<Bundle> get(Course course, BundleType bt, int num, List<Bundle> cachedBundles);
 	void delete(Bundle bundle);
 	//возвращает список удалённых бандлов
 	List<Bundle> delete(List<Course> courseList, List<Group> groupList);

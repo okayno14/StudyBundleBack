@@ -1,6 +1,8 @@
 package controller;
 
 import configuration.ConfMain;
+import controller.user.IUserController;
+import controller.user.UserController;
 import model.Core;
 
 
@@ -10,8 +12,8 @@ public class Controller
 	IBundleTypeController bundleTypeController;
 	ICourseController     courseController;
 	IGroupController      groupController;
-	IRoleController       roleController;
-	IUserController       userController;
+	IRoleController roleController;
+	IUserController userController;
 
 	public Controller(ConfMain confMain)
 	{

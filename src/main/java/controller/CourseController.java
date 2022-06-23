@@ -50,7 +50,7 @@ public class CourseController implements ICourseController
 	@Override
 	public List<Course> getByStudent(User student)
 	{
-		return null;
+		return service.getByStudent(student);
 	}
 
 	@Override

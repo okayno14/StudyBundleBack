@@ -5,7 +5,6 @@ import com.google.gson.annotations.Expose;
 import com.vladmihalcea.hibernate.type.basic.PostgreSQLEnumType;
 import exception.Business.BusinessException;
 import exception.Business.NoRightException;
-import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
@@ -52,6 +51,8 @@ public class Bundle implements Serializable, Similarity
 			   mappedBy = "bundle")
 	@Expose
 	private Set<BundleACL> bundleACLSet = new HashSet<BundleACL>();
+	@Transient
+	private float          simScore     = 0.0f;
 
 	public Bundle()
 	{
@@ -295,5 +296,13 @@ public class Bundle implements Serializable, Similarity
 		this.course = course;
 	}
 
+	public float getSimScore()
+	{
+		return simScore;
+	}
 
+	public void setSimScore(float simScore)
+	{
+		this.simScore = simScore;
+	}
 }

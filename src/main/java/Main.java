@@ -1,13 +1,7 @@
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import configuration.ConfMain;
-import configuration.DateAccessConf;
-import configuration.HTTP_Conf;
-import configuration.LogConf;
-import parser.JSON.ConfMainParser;
-import parser.JSON.DateAccessConfJSONParser;
-import parser.JSON.HTTP_ConfJSONParser;
-import parser.JSON.LogConfParser;
+import configuration.*;
+import parser.JSON.*;
 import view.HTTP.ServerFace;
 import view.LoggerBuilder;
 
@@ -95,6 +89,7 @@ public class Main
 				gsonBuilder.registerTypeAdapter(HTTP_Conf.class, new HTTP_ConfJSONParser());
 				gsonBuilder.registerTypeAdapter(LogConf.class, new LogConfParser());
 				gsonBuilder.registerTypeAdapter(ConfMain.class, new ConfMainParser());
+				gsonBuilder.registerTypeAdapter(MailConf.class,new MailConfParser());
 				gsonBuilder.excludeFieldsWithoutExposeAnnotation();
 
 				Gson gson = gsonBuilder.create();
@@ -105,7 +100,7 @@ public class Main
 													   new LoggerBuilder());
 			}
 		}
-		catch (Exception e)
+		catch (Error | Exception e)
 		{
 			System.out.println("ВСЁ ПЛОХО");
 			e.printStackTrace();

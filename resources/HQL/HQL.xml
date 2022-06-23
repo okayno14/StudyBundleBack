@@ -172,6 +172,7 @@
             c.id=:course and
             b.bundleType.id =:bt and
             b.num = :num and
-            b.state = 'ACCEPTED'
+            b.state = 'ACCEPTED' and
+            b not in (:cachedBundles)
     </body>
 </query>

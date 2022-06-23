@@ -41,7 +41,7 @@ public class BundleController implements IBundleController
 	@Override
 	public List<Bundle> get(Course course, User author)
 	{
-		return null;
+		return bundleService.get(course,author);
 	}
 
 	@Override
@@ -115,6 +115,16 @@ public class BundleController implements IBundleController
 			initiator = client.getAuthor();
 		}
 		return bundleService.uploadReport(initiator, client, document);
+	}
+
+	@Override
+	public void accept(User initiator, Bundle client)
+	{
+		if (initiator.getRole().getId() == controller.roleController.getAdmin().getId())
+		{
+			initiator = client.getCourse().getAuthor();
+		}
+		bundleService.accept(initiator, client);
 	}
 
 	@Override

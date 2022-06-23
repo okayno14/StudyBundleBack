@@ -1,8 +1,9 @@
-package controller;
+package controller.user;
 
 import business.IUserService;
 import business.UserValidationService;
 import configuration.BusinessConfiguration;
+import controller.Controller;
 import dataAccess.entity.Course;
 import dataAccess.entity.Role;
 import dataAccess.entity.User;
@@ -11,6 +12,8 @@ import exception.Controller.ControllerException;
 import exception.Controller.TokenNotFound;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.ObjectNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -20,12 +23,14 @@ public class UserController implements IUserController
 	private IUserService          service;
 	private UserValidationService userValidationService;
 	private Authoriser            authoriser;
+	private TokenKiller tokenKiller;
+	private Logger logger;
 
 	private Role GUEST = null;
 	private Role ADMIN = null;
 
 	private Map<String, User> guestMap = new HashMap<>();
-
+	private Map<String, User> authenticatedMap = new HashMap<>();
 
 	public UserController(Controller controller, IUserService userService,
 						  UserValidationService userValidationService,
@@ -35,11 +40,13 @@ public class UserController implements IUserController
 		this.service               = userService;
 		this.userValidationService = userValidationService;
 
-		GUEST = controller.roleController.getGuest();
-		ADMIN = controller.roleController.getAdmin();
+		GUEST = controller.getRoleController().getGuest();
+		ADMIN = controller.getRoleController().getAdmin();
 
 		authoriser = new Authoriser(businessConf.getTOKEN_LENGTH(),
-									businessConf.getAUTHENTICATION_TIME());
+									businessConf.getAUTHENTICATION_TIME_MS());
+		tokenKiller = new TokenKiller(this, businessConf);
+		logger = LoggerFactory.getLogger(UserController.class);
 	}
 
 	@Override
@@ -53,7 +60,7 @@ public class UserController implements IUserController
 	{
 		Iterator<User> i     = userList.iterator();
 		int            count = 0;
-		List<Role> roleList= controller.roleController.get();
+		List<Role> roleList= controller.getRoleController().get();
 
 		while (i.hasNext())
 		{
@@ -97,25 +104,31 @@ public class UserController implements IUserController
 		//Если токен, полученный на вход валидный и не сгорел,
 		//то попробуем поискать пользователя по полученным входным данным
 		if (authoriser.existsToken(token) &&
-				authoriser.timeLeft(token) > System.currentTimeMillis() &&
+				authoriser.tokenExpires(token) > System.currentTimeMillis() &&
 				service.login(token, tokenExpires, email, pass))
 		{
 			guestMap.remove(token);
+			User user = get(email);
+			authenticatedMap.put(user.getToken(),user);
+			logger.trace("Пользователь {} аутентифицирован. Его токен {}",user.getEmail(),user.getToken());
 			return true;
 		}
 		return false;
 	}
 
 	@Override
-	public void logout(String token)
+	public void logout(User client)
 	{
+		String token = client.getToken();
 		authoriser.removeToken(token);
 		if (guestMap.containsKey(token))
 		{
 			guestMap.remove(token);
 			return;
 		}
-		service.logout(token);
+		authenticatedMap.remove(token);
+		service.logout(client);
+		logger.trace("Пользователь {} вышел.",client.getEmail());
 	}
 
 	@Override
@@ -125,11 +138,10 @@ public class UserController implements IUserController
 		user.setRole(GUEST);
 		String token = authoriser.genToken();
 		user.setToken(token);
-		user.setTokenExpires(authoriser.timeLeft(token));
+		user.setTokenExpires(authoriser.tokenExpires(token));
 		guestMap.put(user.getToken(), user);
 		return user;
 	}
-
 	@Override
 	public User get(long id)
 	{
@@ -139,7 +151,13 @@ public class UserController implements IUserController
 	@Override
 	public User get(String email)
 	{
-		return null;
+		return service.get(email);
+	}
+
+	@Override
+	public boolean contains(String token)
+	{
+		return authoriser.existsToken(token);
 	}
 
 	@Override
@@ -152,7 +170,7 @@ public class UserController implements IUserController
 		User res;
 		if ((res = guestMap.get(token)) == null)
 		{
-			res = service.getByToken(token);
+			res = authenticatedMap.get(token);
 		}
 		return res;
 	}
@@ -212,26 +230,38 @@ public class UserController implements IUserController
 	}
 
 	@Override
-	public void activate(long id)
+	public void activate(User client)
 	{
+		service.activate(client);
+	}
 
+	@Override
+	public void logoutAll()
+	{
+		for(User user:authenticatedMap.values())
+		{
+			service.logout(user);
+		}
+		authenticatedMap.clear();
+		guestMap.clear();
+		authoriser.clearTokens();
 	}
 
 	@Override
 	public void delete(User initiator, User target)
 	{
-		if (initiator.getRole().getId() == controller.roleController.getAdmin().getId())
+		if (initiator.getRole().getId() == controller.getRoleController().getAdmin().getId())
 		{
 			initiator = target;
 		}
 
 		//удалить все бандлы
-		controller.bundleController.delete(initiator, target);
+		controller.getBundleController().delete(initiator, target);
 		try
 		{
 			//удалить все курсы
-			List<Course> courseList = controller.courseController.getByOwner(initiator);
-			controller.courseController.delete(initiator, courseList);
+			List<Course> courseList = controller.getCourseController().getByOwner(initiator);
+			controller.getCourseController().delete(initiator, courseList);
 		}
 		catch (DataAccessException e)
 		{
@@ -249,5 +279,20 @@ public class UserController implements IUserController
 	public void delete(List<User> userList)
 	{
 
+	}
+
+	public Map<String, User> getGuestMap()
+	{
+		return guestMap;
+	}
+
+	public Map<String, User> getAuthenticatedMap()
+	{
+		return authenticatedMap;
+	}
+
+	public Authoriser getAuthoriser()
+	{
+		return authoriser;
 	}
 }

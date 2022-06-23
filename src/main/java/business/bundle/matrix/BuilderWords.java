@@ -18,10 +18,10 @@ public class BuilderWords implements BuilderMatrix
 	{
 		this.bundles = new ArrayList<Bundle>();
 
-        for (Bundle bundle : bundles)
-        {
-            this.bundles.add(bundle);
-        }
+		for (Bundle bundle : bundles)
+		{
+			this.bundles.add(bundle);
+		}
 
 		this.toCompare = toCompare;
 
@@ -55,8 +55,6 @@ public class BuilderWords implements BuilderMatrix
 		{
 			Bundle bundle = i.next();
 			words.addAll(bundle.getReport().getTextVector().keySet());
-
-			//words.addAll(bundle.getReport().getText());
 		}
 		words.addAll(toCompare.getReport().getTextVector().keySet());
 		header = new ArrayList<String>(words);
@@ -69,25 +67,25 @@ public class BuilderWords implements BuilderMatrix
 		while (i.hasNext())
 		{
 			Bundle bundle = i.next();
-            if (bundle.getReport().getTextVector().containsKey(word))
-            {
-                res++;
-            }
+			if (bundle.getReport().getTextVector().containsKey(word))
+			{
+				res++;
+			}
 		}
-        if (toCompare.getReport().getTextVector().containsKey(word))
-        {
-            res++;
-        }
+		if (toCompare.getReport().getTextVector().containsKey(word))
+		{
+			res++;
+		}
 		return res;
 	}
 
 	private Float getTF_IDF(String word, Report report)
 	{
 		int buf = 0;
-        if (report.getTextVector().containsKey(word))
-        {
-            buf = report.getTextVector().get(word);
-        }
+		if (report.getTextVector().containsKey(word))
+		{
+			buf = report.getTextVector().get(word);
+		}
 		Float tf = (buf / (float) report.getTextVector().size());
 		return tf * idf.get(word);
 	}
@@ -96,10 +94,10 @@ public class BuilderWords implements BuilderMatrix
 	{
 		Float cortege[] = new Float[width];
 		int   j         = 0;
-        for (String word : header)
-        {
-            cortege[j++] = getTF_IDF(word, bundle.getReport());
-        }
+		for (String word : header)
+		{
+			cortege[j++] = getTF_IDF(word, bundle.getReport());
+		}
 		return new Row(bundle, cortege);
 	}
 

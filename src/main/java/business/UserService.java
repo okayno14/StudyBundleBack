@@ -8,6 +8,7 @@ import dataAccess.repository.IUserRepo;
 import exception.Business.AuthenticationException;
 import exception.Business.BusinessException;
 import exception.Business.NoRightException;
+import exception.Business.NoSuchStateAction;
 import exception.DataAccess.DataAccessException;
 import exception.DataAccess.ObjectNotFoundException;
 
@@ -77,27 +78,22 @@ public class UserService implements IUserService
 		}
 		finally
 		{
-			if (user != null && user.getToken() == null)
+			if(user==null || user.getToken() != null || user.isEmailState() == false)
 			{
-				user.setToken(token);
-				user.setTokenExpires(tokenExpires);
-				userCache.authenticate(user.getId());
-				return true;
+				return false;
 			}
-			return false;
+			user.setToken(token);
+			user.setTokenExpires(tokenExpires);
+			return true;
 		}
 	}
 
 	@Override
-	public void logout(String token)
+	public void logout(User client)
 	{
-		if(userCache.contains(token))
-		{
-			User user=userCache.get(token);
-			user.setToken(null);
-			user.setTokenExpires(0L);
-			userCache.delete(token);
-		}
+		client.setToken(null);
+		client.setTokenExpires(0L);
+		userCache.delete(client.getId());
 	}
 
 	@Override
@@ -111,7 +107,9 @@ public class UserService implements IUserService
 		{
 			try
 			{
-				return userRepo.get(email);
+				User user = userRepo.get(email);
+				userCache.put(user);
+				return user;
 			}
 			catch (DataAccessException ee)
 			{
@@ -119,20 +117,6 @@ public class UserService implements IUserService
 			}
 		}
 	}
-
-	@Override
-	public User getByToken(String token)
-	{
-		if (userCache.contains(token))
-		{
-			return userCache.get(token);
-		}
-		else
-		{
-			throw new BusinessException(new ObjectNotFoundException());
-		}
-	}
-
 	@Override
 	public User get(User fio, Role role)
 	{
@@ -189,9 +173,14 @@ public class UserService implements IUserService
 	}
 
 	@Override
-	public void activate(long id)
+	public void activate(User client)
 	{
-
+		if(client.isEmailState())
+		{
+			throw new NoSuchStateAction("activated");
+		}
+		client.setEmailState(true);
+		userRepo.save(client);
 	}
 
 	@Override

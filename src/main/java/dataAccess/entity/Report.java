@@ -141,14 +141,18 @@ public class Report implements Serializable, Similarity
 		return new HashMap<String, Integer>(textVector);
 	}
 
+	public void setFileName(String fileName)
+	{
+		this.fileName = fileName;
+	}
+
 	public String getFileName()
 	{
 		return fileName;
 	}
 
-	public void setFileNameAndMeta(String fileName, String textStr)
+	public void setMeta(String textStr)
 	{
-		this.fileName = fileName;
 		fillMetricAndTextVec(textStr);
 	}
 

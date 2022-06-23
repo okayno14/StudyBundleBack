@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import configuration.ConfMain;
 import configuration.HTTP_Conf;
 import controller.*;
+import controller.user.IUserController;
 import dataAccess.entity.*;
 import exception.Business.BusinessException;
 import exception.Business.DeletingImportantData;
@@ -24,8 +25,12 @@ import spark.Spark;
 import view.HTTP.request.CreateObjReq;
 import view.HTTP.request.IDReq;
 import view.HTTP.request.LoginReq;
+import view.HTTP.response.Response;
+import view.HTTP.response.data.BundleAnalysisResult;
 import view.LoggerBuilder;
+import view.mail.MailAgent;
 
+import javax.mail.MessagingException;
 import javax.servlet.MultipartConfigElement;
 import java.io.*;
 import java.lang.reflect.Type;
@@ -50,8 +55,10 @@ public class ServerFace
 	private static final int       INTERNAL_CRITICAL_SERVER_ERROR = 500;
 	private static final int       SEMANTIC_ERROR                 = 422;
 	private static final int       OBJECT_NOT_FOUND               = 404;
+	private final        long      SESSION_TIMEOUT_MS;
 
 	private LoggerBuilder logBuilder;
+	private MailAgent     mailAgent;
 
 	private Controller            controller;
 	private IBundleController     bundleController;
@@ -70,16 +77,20 @@ public class ServerFace
 	private Translit translit = new Translit();
 
 	public ServerFace(ConfMain confMain, Gson gson, GsonBuilder gsonBuilder,
-					  LoggerBuilder logBuilder)
+					  LoggerBuilder logBuilder) throws MessagingException
 	{
 		this.logBuilder = logBuilder;
 		logBuilder.build(confMain.getLogConf().getLog4jConfPath());
 
+		this.mailAgent = new MailAgent(confMain.getMailConf());
+
 		this.http_conf   = confMain.getHttp_conf();
 		zipFileSizeLimit = confMain.getDateAccessConf().getZipFileSizeLimit();
+		SESSION_TIMEOUT_MS = confMain.getBusinessConfiguration().getSESSION_TIMEOUT_MS();
 
 		//применяем параметры конфигурации для сервера
 		Spark.port(http_conf.getPort());
+		Spark.externalStaticFileLocation(confMain.getResourcesPath()+"/Web");
 
 		//строим контроллер
 		controller           = new Controller(confMain);
@@ -119,6 +130,22 @@ public class ServerFace
 		endpoints();
 	}
 
+	private void preAuthentication(Request req, spark.Response resp)
+	{
+		//Если сессия новая, то создаём её и унифициируем значение токена
+		User    client          = null;
+		boolean isNew           = req.session().isNew();
+		String  sessID          = req.session().id();
+		boolean NoTokenInCookie = !req.session().attributes().contains("token");
+		if (isNew || NoTokenInCookie)
+		{
+			req.session(true);
+			client = userController.getGuestUser();
+			req.session().attribute("token", client.getToken());
+			req.session().maxInactiveInterval((int) (SESSION_TIMEOUT_MS/1000));
+		}
+	}
+
 	//Аутентификация и авторизация клиента
 	private User authentAuthorize(Request req, spark.Response resp)
 	{
@@ -131,13 +158,14 @@ public class ServerFace
 				halt(NO_RIGHT_FOR_OPERATION, "У пользователя нет права на это действие");
 			}
 			Route firstRoleRoute = client.getRole().getRouteList().get(0);
-			if (firstRoleRoute.getMethod().toString().equals(any) && firstRoleRoute.getUrn().equals(any))
+			if (firstRoleRoute.getMethod().toString().equals(any) &&
+					firstRoleRoute.getUrn().equals(any))
 			{
 				return client;
 			}
 
 			Set<String>  reqParams = req.params().keySet();
-			String       req_URN    = req.uri();
+			String       req_URN   = req.uri();
 			StringBuffer reqName   = new StringBuffer();
 
 			Pattern      pattern = Pattern.compile("/[a-zA-z0-9]+");
@@ -153,14 +181,14 @@ public class ServerFace
 				reqName.append(iter.next());
 			}
 
-			for(Route roleRoute:client.getRole().getRouteList())
+			for (Route roleRoute : client.getRole().getRouteList())
 			{
-				String roleRoute_urn = roleRoute.getUrn().toLowerCase();
-				boolean flag = true;
+				String  roleRoute_urn = roleRoute.getUrn().toLowerCase();
+				boolean flag          = true;
 
-				if(roleRoute_urn.equalsIgnoreCase(any))
+				if (roleRoute_urn.equalsIgnoreCase(any))
 				{
-					flag=flag&&true;
+					flag = flag && true;
 				}
 				else
 				{
@@ -171,9 +199,9 @@ public class ServerFace
 					flag = flag && roleRoute_urn.contains(reqName.toString().toLowerCase());
 				}
 
-				if(roleRoute.getMethod().toString().equals(any))
+				if (roleRoute.getMethod().toString().equals(any))
 				{
-					flag=flag&&true;
+					flag = flag && true;
 				}
 				else
 				{
@@ -189,6 +217,7 @@ public class ServerFace
 		}
 		catch (ControllerException e)
 		{
+			req.session().invalidate();
 			if (e.getCause() instanceof TokenNotFound)
 			{
 				halt(AUTHENTICATION_ERROR, "Закончился срок аренды токена");
@@ -233,14 +262,11 @@ public class ServerFace
 			resp.header("Access-Control-Allow-Headers",
 						"Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin,");
 			resp.header("Access-Control-Allow-Credentials", "true");
+			resp.header("Access-Control-Expose-Headers", "true");
 
-			//Если сессия новая, то создаём её и уинициируем значение токена
-			User client = null;
-			if (req.session().isNew() || !req.session().attributes().contains("token"))
+			if (!req.requestMethod().equals("OPTIONS"))
 			{
-				req.session(true);
-				client = userController.getGuestUser();
-				req.session().attribute("token", client.getToken());
+				preAuthentication(req, resp);
 			}
 		});
 
@@ -291,33 +317,65 @@ public class ServerFace
 				long   tokenExpires = client.getTokenExpires();
 
 				LoginReq loginReq = gson.fromJson(req.body(), LoginReq.class);
-				if (userController
-						.login(token, tokenExpires, loginReq.getEmail(), loginReq.getPass()))
+				if (userController.login(token, tokenExpires, loginReq.getEmail(),
+										 loginReq.getPass()))
 				{
-					//проверим, что у пользователя активированная УЗ
-					client       = userController.getByToken(req.session().attribute("token"));
-					if(!client.isEmailState())
-					{
-						userController.logout(token);
-						req.session().removeAttribute("token");
-						halt(NO_RIGHT_FOR_OPERATION, "У пользователя нет права на это действие");
-					}
 					resp.status(OK);
 					JsonElement data = gson.toJsonTree(userController.getByToken(token));
-					return gson.toJson(new Response(data, "Успешно"));
+					return gson.toJson(new Response(data));
 				}
-				resp.status(AUTHENTICATION_ERROR);
-				return gson.toJson(new Response(
-						"У пользователя уже есть токен. Или данные не введены корректно"));
+				halt(AUTHENTICATION_ERROR,
+					 "Неверные данные УЗ или " + "найденный пользователь аутентифицирован или " +
+							 "у найденного пользователя неактивирована УЗ");
+				return "";
+			});
+
+			get("/me", (req, resp) ->
+			{
+				User client = authentAuthorize(req, resp);
+				resp.status(OK);
+				return gson.toJson(new Response(gson.toJsonTree(client), "Успешно"));
 			});
 
 			put("/logout", (req, resp) ->
 			{
-				User   client = authentAuthorize(req, resp);
-				String token  = client.getToken();
-				userController.logout(token);
+				User client = authentAuthorize(req, resp);
+				userController.logout(client);
 				req.session().removeAttribute("token");
 				return gson.toJson(new Response("Успешно"));
+			});
+
+			put("/confirm/:email", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				String email = req.params("email");
+				User   user  = userController.get(email);
+				if (user.isEmailState())
+				{
+					halt(SEMANTIC_ERROR, "Запрошенная УЗ активирована");
+				}
+				String activateRequest = req.host() + "/user/activate/" + user.getId();
+				String pass = "Ваш пароль:" + user.getPass();
+				mailAgent.sendConfirmMail(activateRequest+"\n"+pass, user.getEmail());
+				resp.status(OK);
+				return "";
+			});
+
+			get("/activate/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				Long id   = Long.parseLong(req.params("id"));
+				User user = userController.get(id);
+
+				userController.activate(user);
+				resp.status(OK);
+				return "";
 			});
 
 			//Добавить
@@ -355,6 +413,29 @@ public class ServerFace
 
 				}));
 
+				get("/students/:id", (req, resp) ->
+				{
+					User   client       = authentAuthorize(req, resp);
+					String token        = client.getToken();
+					long   tokenExpires = client.getTokenExpires();
+
+					long  groupID = Long.parseLong(req.params("id"));
+					Group group   = groupController.get(groupID);
+
+					Set<User> res = groupController.getUsers(group);
+
+					JsonArray jsonArray = new JsonArray();
+					for (User user : res)
+					{
+						JsonObject jsonObject = gson.toJsonTree(user).getAsJsonObject();
+						userParser.defendData(jsonObject);
+						jsonArray.add(jsonObject);
+					}
+
+					resp.status(OK);
+					return gson.toJson(new Response(jsonArray));
+				});
+
 				put("/addStudents/:id", ((req, resp) ->
 				{
 					User   client       = authentAuthorize(req, resp);
@@ -378,8 +459,8 @@ public class ServerFace
 					catch (DataAccessException e)
 					{
 						resp.status(OBJECT_NOT_FOUND);
-						return gson.toJson(new Response(
-								"Объект не найден\n " + e.getCause().getMessage()));
+						return gson.toJson(
+								new Response("Объект не найден\n " + e.getCause().getMessage()));
 					}
 				});
 			});
@@ -412,7 +493,59 @@ public class ServerFace
 				JsonObject resJSON = gson.toJsonTree(res).getAsJsonObject();
 				courseParser.filterGroupStudents(resJSON);
 				courseParser.defend(resJSON);
+
+				resp.status(OK);
 				return gson.toJson(new Response(resJSON));
+			});
+
+			get("/owner/:ownerID", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long ownerID = Long.parseLong(req.params("ownerID"));
+
+				User owner = client;
+
+				if (ownerID != client.getId())
+				{
+					owner = userController.get(ownerID);
+				}
+
+				List<Course> res     = courseController.getByOwner(owner);
+				JsonArray    jsonArr = gson.toJsonTree(res).getAsJsonArray();
+				for (JsonElement json : jsonArr)
+				{
+					JsonObject resJSON = json.getAsJsonObject();
+					courseParser.filterGroupStudents(resJSON);
+					courseParser.defend(resJSON);
+				}
+
+				resp.status(OK);
+				return gson.toJson(new Response(jsonArr));
+			});
+
+			get("/group/:groupID", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long  groupID = Long.parseLong(req.params("groupID"));
+				Group g       = groupController.get(groupID);
+
+				List<Course> res     = courseController.getByGroup(g);
+				JsonArray    jsonArr = gson.toJsonTree(res).getAsJsonArray();
+				for (JsonElement json : jsonArr)
+				{
+					JsonObject resJSON = json.getAsJsonObject();
+					courseParser.filterGroupStudents(resJSON);
+					courseParser.defend(resJSON);
+				}
+
+				resp.status(OK);
+				return gson.toJson(new Response(jsonArr));
 			});
 
 			put("/addGroup/:groupID/:id", (req, resp) ->
@@ -523,8 +656,6 @@ public class ServerFace
 					return gson.toJson(new Response("Успех"));
 				});
 			});
-
-
 		});
 
 		path("/bundle", () ->
@@ -558,22 +689,13 @@ public class ServerFace
 				{
 					Bundle bestMatch = bundleController.uploadReport(client, b, buf);
 
-					String      message = "";
-					JsonElement data    = null;
-					if (b.getState() == BundleState.ACCEPTED)
-					{
-						message = "Отчёт успешно прошёл проверку";
-						data    = parseWithFilterAndDefence(b);
-					}
-					else if (b.getState() == BundleState.CANCELED)
-					{
-						message = "Отчёт недостаточно оригинален.\n";
-						JsonArray arrJSON = new JsonArray();
-						arrJSON.add(parseWithFilterAndDefence(b));
-						arrJSON.add(parseWithFilterAndDefence(bestMatch));
-						data = arrJSON;
-					}
-					return gson.toJson(new Response(data, message));
+					BundleAnalysisResult bundleAnalysisResult = new BundleAnalysisResult();
+					bundleAnalysisResult.setBundle(parseWithFilterAndDefence(b));
+					bundleAnalysisResult.setBestMatch(parseWithFilterAndDefence(bestMatch));
+					bundleAnalysisResult.setPercent(b.getSimScore());
+
+					resp.status(OK);
+					return gson.toJson(new Response(gson.toJsonTree(bundleAnalysisResult)));
 				}
 				catch (DataAccessException e)
 				{
@@ -587,22 +709,6 @@ public class ServerFace
 						throw e;
 					}
 				}
-			});
-
-			get("/:id", (req, resp) ->
-			{
-				User   client       = authentAuthorize(req, resp);
-				String token        = client.getToken();
-				long   tokenExpires = client.getTokenExpires();
-
-				long bundleID = Long.parseLong(req.params("id"));
-
-				Bundle res = bundleController.get(bundleID);
-
-				JsonObject bundleJSON = parseWithFilterAndDefence(res);
-
-				resp.status(OK);
-				return gson.toJson(new Response(bundleJSON, "Успех"));
 			});
 
 			get("/download/:id", (req, resp) ->
@@ -635,6 +741,64 @@ public class ServerFace
 				}
 
 				return resp.raw();
+			});
+
+
+			get("/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long bundleID = Long.parseLong(req.params("id"));
+
+				Bundle res = bundleController.get(bundleID);
+
+				JsonObject bundleJSON = parseWithFilterAndDefence(res);
+
+				resp.status(OK);
+				return gson.toJson(new Response(bundleJSON, "Успех"));
+			});
+
+			get("/:courseID/:ownerID", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long courseID = Long.parseLong(req.params("courseID"));
+				long ownerID  = Long.parseLong(req.params("ownerID"));
+
+				Course       c     = courseController.get(courseID);
+				User         owner = userController.get(ownerID);
+				List<Bundle> res   = bundleController.get(c, owner);
+
+				JsonArray jsonArray = new JsonArray();
+
+				for (Bundle bundle : res)
+				{
+					jsonArray.add(parseWithFilterAndDefence(bundle));
+				}
+
+				resp.status(OK);
+				return gson.toJson(new Response(jsonArray));
+			});
+
+
+			put("/accept/:id", (req, resp) ->
+			{
+				User   client       = authentAuthorize(req, resp);
+				String token        = client.getToken();
+				long   tokenExpires = client.getTokenExpires();
+
+				long   bundleID = Long.parseLong(req.params("id"));
+				Bundle bundle   = bundleController.get(bundleID);
+
+				bundleController.accept(client, bundle);
+				JsonObject jsonObject = parseWithFilterAndDefence(bundle);
+
+				resp.status(OK);
+				return gson.toJson(new Response(jsonObject, "Успешно"));
 			});
 
 			put("/cancel/:id", (req, resp) ->
@@ -704,13 +868,16 @@ public class ServerFace
 
 		exception(BusinessException.class, (e, req, resp) ->
 		{
-			if (e.getCause().getClass() == NoSuchStateAction.class ||
-					e.getCause().getClass() == NoRightException.class ||
+			if (e.getCause().getClass() == NoRightException.class ||
 					e.getCause().getClass() == DeletingImportantData.class)
 			{
 				resp.status(NO_RIGHT_FOR_OPERATION);
-				resp.body(gson.toJson(new Response(e.getMessage())));
 			}
+			if (e.getCause().getClass() == NoSuchStateAction.class)
+			{
+				resp.status(SEMANTIC_ERROR);
+			}
+			resp.body(gson.toJson(new Response(e.getMessage())));
 		});
 
 		//Если ничего не получилось найти, то швыряем стак трэйс в клиентский код
